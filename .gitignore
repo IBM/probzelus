@@ -1,2 +1,9 @@
 _build
 .merlin
+*.zci
+*.cmi
+*.cmo
+*.cmx
+*.o
+*.byte
+*.opt

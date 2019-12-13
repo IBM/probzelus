@@ -1,7 +1,3 @@
-*.cmi
-*.cmo
-*.zci
-*.byte
 heat.ml
 main.ml
 mains.ml

@@ -1,9 +1,2 @@
-*.zci
-*.cmi
-*.cmo
-*.cmx
-*.o
-*.byte
-*.opt
 ex*_ds.ml
 main*.ml
