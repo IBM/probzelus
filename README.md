@@ -42,7 +42,7 @@ A set of examples is available in the `examples` directory.
 Most of them can be built and executed with:
 
 ```
-make & make exec
+make exec
 ```
 
 The probzelus code is in the `*.zls` files
