@@ -46,3 +46,9 @@ make exec
 ```
 
 The probzelus code is in the `*.zls` files
+
+
+## Contributions
+
+ProbZelus is still under development and we welcome contributions.
+Contributors are expected to submit a 'Developer's Certificate of Origin' which can be found in [DCO1.1.txt](DCO1.1.txt).
