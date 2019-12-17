@@ -404,20 +404,20 @@ let alias_method_unsafe values probabilities =
   in
   let rec while_ small large =
     begin match small, large with
-      | [], [] -> ()
-      | less :: small, more :: large ->
-          probability.(less) <- probabilities.(less) *. size_f;
-          alias.(less) <- more;
-          probabilities.(more) <-
-            (probabilities.(more) +. probabilities.(less)) -. average;
-          if (probabilities.(more) >= 1.0 /. size_f) then while_ small (more :: large)
-          else while_ (more :: small) large
-      | less :: small, [] ->
-          probability.(less) <- 1.0;
-          while_ small []
-      | [], more :: large ->
-          probability.(more) <- 1.0;
-          while_ [] large
+    | [], [] -> ()
+    | less :: small, more :: large ->
+        probability.(less) <- probabilities.(less) *. size_f;
+        alias.(less) <- more;
+        probabilities.(more) <-
+          (probabilities.(more) +. probabilities.(less)) -. average;
+        if (probabilities.(more) >= 1.0 /. size_f) then while_ small (more :: large)
+        else while_ (more :: small) large
+    | less :: small, [] ->
+        probability.(less) <- 1.0;
+        while_ small []
+    | [], more :: large ->
+        probability.(more) <- 1.0;
+        while_ [] large
     end
   in
   while_ small large;
@@ -444,8 +444,8 @@ let alias_method_list support =
   let size = List.length support in
   let values =
     begin match support with
-      | [] -> assert false
-      | (d, _) :: _ -> Array.make size d
+    | [] -> assert false
+    | (d, _) :: _ -> Array.make size d
     end
   in
   let probabilities = Array.create_float size in
@@ -466,45 +466,45 @@ let alias_method values probabilities =
 let add : float t * float t -> float t =
   fun (dist1, dist2) ->
   begin match dist1, dist2 with
-    | Dist_support s1, Dist_support s2 ->
-        Dist_support (flatten_suport (+.) s1 s2)
-    | (Dist_support _, _) | (_, Dist_support _)
-    | (Dist_sampler _, _) | (_, Dist_sampler _)
-    | (Dist_sampler_float _, _) | (_, Dist_sampler_float _)
-    | (Dist_mixture _, _) | (_, Dist_mixture _)
-    | (Dist_gaussian (_, _), _) | (_, Dist_gaussian (_, _))
-    | (Dist_beta (_, _), _) | (_, Dist_beta (_, _))
-    | (Dist_uniform_float (_, _), _) | (_, Dist_uniform_float (_, _))
-    | (Dist_exponential _, _) | (_, Dist_exponential _)
-    | (Dist_add (_, _), _) | (_, Dist_add (_, _))
-    | (Dist_mult (_, _), _) | (_, Dist_mult (_, _))
-    | (Dist_app (_, _), _) | (_, Dist_app (_, _)) ->
-        (* XXX TODO XXX *)
-        Dist_add (dist1, dist2)
-    | (Dist_mv_gaussian (_, _), Dist_mv_gaussian (_, _)) ->
-        assert false
+  | Dist_support s1, Dist_support s2 ->
+      Dist_support (flatten_suport (+.) s1 s2)
+  | (Dist_support _, _) | (_, Dist_support _)
+  | (Dist_sampler _, _) | (_, Dist_sampler _)
+  | (Dist_sampler_float _, _) | (_, Dist_sampler_float _)
+  | (Dist_mixture _, _) | (_, Dist_mixture _)
+  | (Dist_gaussian (_, _), _) | (_, Dist_gaussian (_, _))
+  | (Dist_beta (_, _), _) | (_, Dist_beta (_, _))
+  | (Dist_uniform_float (_, _), _) | (_, Dist_uniform_float (_, _))
+  | (Dist_exponential _, _) | (_, Dist_exponential _)
+  | (Dist_add (_, _), _) | (_, Dist_add (_, _))
+  | (Dist_mult (_, _), _) | (_, Dist_mult (_, _))
+  | (Dist_app (_, _), _) | (_, Dist_app (_, _)) ->
+      (* XXX TODO XXX *)
+      Dist_add (dist1, dist2)
+  | (Dist_mv_gaussian (_, _), Dist_mv_gaussian (_, _)) ->
+      assert false
   end
 
 (** [mult (d1, d2)] is the multiplication of two distributions. *)
 let mult : float t * float t -> float t =
   fun (dist1, dist2) ->
   begin match dist1, dist2 with
-    | Dist_support s1, Dist_support s2 ->
-        Dist_support (flatten_suport ( *. ) s1 s2)
-    | (Dist_support _, _) | (_, Dist_support _)
-    | (Dist_sampler _, _) | (_, Dist_sampler _)
-    | (Dist_sampler_float _, _) | (_, Dist_sampler_float _)
-    | (Dist_mixture _, _) | (_, Dist_mixture _)
-    | (Dist_gaussian (_, _), _) | (_, Dist_gaussian (_, _))
-    | (Dist_beta (_, _), _) | (_, Dist_beta (_, _))
-    | (Dist_uniform_float (_, _), _) | (_, Dist_uniform_float (_, _))
-    | (Dist_exponential _, _) | (_, Dist_exponential _)
-    | (Dist_add (_, _), _) | (_, Dist_add (_, _))
-    | (Dist_mult (_, _), _) | (_, Dist_mult (_, _))
-    | (Dist_app (_, _), _) | (_, Dist_app (_, _)) ->
-        Dist_mult (dist1, dist2)
-    | (Dist_mv_gaussian (_, _), Dist_mv_gaussian (_, _)) ->
-        assert false (* XXX TODO XXX *)
+  | Dist_support s1, Dist_support s2 ->
+      Dist_support (flatten_suport ( *. ) s1 s2)
+  | (Dist_support _, _) | (_, Dist_support _)
+  | (Dist_sampler _, _) | (_, Dist_sampler _)
+  | (Dist_sampler_float _, _) | (_, Dist_sampler_float _)
+  | (Dist_mixture _, _) | (_, Dist_mixture _)
+  | (Dist_gaussian (_, _), _) | (_, Dist_gaussian (_, _))
+  | (Dist_beta (_, _), _) | (_, Dist_beta (_, _))
+  | (Dist_uniform_float (_, _), _) | (_, Dist_uniform_float (_, _))
+  | (Dist_exponential _, _) | (_, Dist_exponential _)
+  | (Dist_add (_, _), _) | (_, Dist_add (_, _))
+  | (Dist_mult (_, _), _) | (_, Dist_mult (_, _))
+  | (Dist_app (_, _), _) | (_, Dist_app (_, _)) ->
+      Dist_mult (dist1, dist2)
+  | (Dist_mv_gaussian (_, _), Dist_mv_gaussian (_, _)) ->
+      assert false (* XXX TODO XXX *)
   end
 
 (** [app (d1, d2)] is the application of two distributions. *)
@@ -518,89 +518,89 @@ let app : ('a -> 'b) t * 'a t -> 'b t =
 let rec to_dist_support : type a. a t -> a t =
   fun dist ->
   begin match dist with
-    | Dist_sampler (_, _) -> assert false
-    | Dist_sampler_float (_, _, _) -> assert false
-    | Dist_support _ -> dist
-    | Dist_mixture _ -> assert false (* XXX TODO XXX *)
-    | Dist_pair(_, _) -> assert false (* XXX TODO XXX *)
-    | Dist_list _ -> assert false (* XXX TODO XXX *)
-    | Dist_array _ -> assert false (* XXX TODO XXX *)
-    | Dist_matrix _ -> assert false (* XXX TODO XXX *)
-    | Dist_gaussian (_, _) -> assert false
-    | Dist_mv_gaussian (_, _) -> assert false
-    | Dist_beta (_, _) -> assert false
-    | Dist_bernoulli p ->
-        Dist_support [ (true, p); (false, 1. -. p); ]
-    | Dist_uniform_int (a, b) ->
-        let p = 1. /. float (b - a) in
-        let rec build n acc =
-          if n < a then acc
-          else
-            build (n - 1) ((n, p) :: acc)
-        in
-        Dist_support (build b [])
-    | Dist_uniform_float (_, _) -> assert false
-    | Dist_exponential _ -> assert false
-    | Dist_poisson _ -> assert false
-    | Dist_add (d1, d2) ->
-        begin match to_dist_support d1, to_dist_support d2 with
-          | Dist_support s1, Dist_support s2 ->
-              Dist_support (flatten_suport ( +. ) s1 s2)
-          | _, _ -> assert false
-        end
-    | Dist_mult (d1, d2) ->
-        begin match to_dist_support d1, to_dist_support d2 with
-          | Dist_support s1, Dist_support s2 ->
-              Dist_support (flatten_suport ( *. ) s1 s2)
-          | _, _ -> assert false
-        end
-    | Dist_app (_, _) ->
-        assert false (* XXX TODO XXX *)
+  | Dist_sampler (_, _) -> assert false
+  | Dist_sampler_float (_, _, _) -> assert false
+  | Dist_support _ -> dist
+  | Dist_mixture _ -> assert false (* XXX TODO XXX *)
+  | Dist_pair(_, _) -> assert false (* XXX TODO XXX *)
+  | Dist_list _ -> assert false (* XXX TODO XXX *)
+  | Dist_array _ -> assert false (* XXX TODO XXX *)
+  | Dist_matrix _ -> assert false (* XXX TODO XXX *)
+  | Dist_gaussian (_, _) -> assert false
+  | Dist_mv_gaussian (_, _) -> assert false
+  | Dist_beta (_, _) -> assert false
+  | Dist_bernoulli p ->
+      Dist_support [ (true, p); (false, 1. -. p); ]
+  | Dist_uniform_int (a, b) ->
+      let p = 1. /. float (b - a) in
+      let rec build n acc =
+        if n < a then acc
+        else
+          build (n - 1) ((n, p) :: acc)
+      in
+      Dist_support (build b [])
+  | Dist_uniform_float (_, _) -> assert false
+  | Dist_exponential _ -> assert false
+  | Dist_poisson _ -> assert false
+  | Dist_add (d1, d2) ->
+      begin match to_dist_support d1, to_dist_support d2 with
+      | Dist_support s1, Dist_support s2 ->
+          Dist_support (flatten_suport ( +. ) s1 s2)
+      | _, _ -> assert false
+      end
+  | Dist_mult (d1, d2) ->
+      begin match to_dist_support d1, to_dist_support d2 with
+      | Dist_support s1, Dist_support s2 ->
+          Dist_support (flatten_suport ( *. ) s1 s2)
+      | _, _ -> assert false
+      end
+  | Dist_app (_, _) ->
+      assert false (* XXX TODO XXX *)
   end
 
 (** [draw dist] draws a value form the distribution [dist] *)
 let rec draw : type a. a t -> a =
   fun dist ->
   begin match dist with
-    | Dist_sampler (sampler, _) -> sampler ()
-    | Dist_sampler_float (sampler, _, _) -> sampler ()
-    | Dist_support sup ->
-        let sample = Random.float 1.0 in
-        (* TODO data structure for more efficient sampling *)
-        let rec draw sum r =
-          begin match r with
-            | [] -> raise Draw_error
-            | (v, p) :: r ->
-                let sum = sum +. p in
-                if sample <= sum then v else draw sum r
-          end
-        in
-        draw 0. sup
-    | Dist_mixture l ->
-        let d' = draw (Dist_support l) in
-        draw d'
-    | Dist_gaussian (mu, sigma) -> gaussian_draw mu sigma
-    | Dist_mv_gaussian (mu, sigma) -> mv_gaussian_draw mu sigma
-    | Dist_beta (a, b) -> beta_draw a b
-    | Dist_bernoulli p -> bernoulli_draw p
-    | Dist_uniform_int (a, b) -> uniform_int_draw a b
-    | Dist_uniform_float (a, b) -> uniform_float_draw a b
-    | Dist_exponential lambda -> exponential_draw lambda
-    | Dist_poisson lambda -> poisson_draw lambda
-    | Dist_pair (d1, d2) ->
-        (draw d1, draw d2)
-    | Dist_list a ->
-        List.map (fun ed -> draw ed) a
-    | Dist_array a ->
-        Array.map (fun ed -> draw ed) a
-    | Dist_matrix a ->
-        Array.map (Array.map (fun ed -> draw ed)) a
-    | Dist_add (d1, d2) ->
-        draw d1 +. draw d2
-    | Dist_mult (d1, d2) ->
-        draw d1 *. draw d2
-    | Dist_app (d1, d2) ->
-        (draw d1) (draw d2)
+  | Dist_sampler (sampler, _) -> sampler ()
+  | Dist_sampler_float (sampler, _, _) -> sampler ()
+  | Dist_support sup ->
+      let sample = Random.float 1.0 in
+      (* TODO data structure for more efficient sampling *)
+      let rec draw sum r =
+        begin match r with
+        | [] -> raise Draw_error
+        | (v, p) :: r ->
+            let sum = sum +. p in
+            if sample <= sum then v else draw sum r
+        end
+      in
+      draw 0. sup
+  | Dist_mixture l ->
+      let d' = draw (Dist_support l) in
+      draw d'
+  | Dist_gaussian (mu, sigma) -> gaussian_draw mu sigma
+  | Dist_mv_gaussian (mu, sigma) -> mv_gaussian_draw mu sigma
+  | Dist_beta (a, b) -> beta_draw a b
+  | Dist_bernoulli p -> bernoulli_draw p
+  | Dist_uniform_int (a, b) -> uniform_int_draw a b
+  | Dist_uniform_float (a, b) -> uniform_float_draw a b
+  | Dist_exponential lambda -> exponential_draw lambda
+  | Dist_poisson lambda -> poisson_draw lambda
+  | Dist_pair (d1, d2) ->
+      (draw d1, draw d2)
+  | Dist_list a ->
+      List.map (fun ed -> draw ed) a
+  | Dist_array a ->
+      Array.map (fun ed -> draw ed) a
+  | Dist_matrix a ->
+      Array.map (Array.map (fun ed -> draw ed)) a
+  | Dist_add (d1, d2) ->
+      draw d1 +. draw d2
+  | Dist_mult (d1, d2) ->
+      draw d1 *. draw d2
+  | Dist_app (d1, d2) ->
+      (draw d1) (draw d2)
   end
 
 (** [score(dist, x)] returns the log probability of the value [x] in the
@@ -609,75 +609,75 @@ let rec draw : type a. a t -> a =
 let rec score : type a. a t * a -> log_proba =
   fun (dist, x) ->
   begin match dist with
-    | Dist_sampler (_, scorer) -> scorer x
-    | Dist_sampler_float (_, scorer, _) -> scorer x
-    | Dist_support sup ->
-        let p =
-          List.fold_left
-            (fun acc (y, w) -> if x = y then acc +. w else acc)
-            0. sup
-        in
-        log p
-    | Dist_mixture (l) ->
-        let p =
-          List.fold_left
-            (fun acc (d', p) -> acc +. p *. exp(score (d', x)))
-            0. l
-        in
-        log p
-    | Dist_gaussian (mu, sigma) -> gaussian_score mu sigma x
-    | Dist_mv_gaussian (mu, sigma) -> mv_gaussian_score mu sigma x
-    | Dist_beta (a, b) -> beta_score a b x
-    | Dist_bernoulli p -> bernoulli_score p x
-    | Dist_uniform_int (a, b) -> uniform_int_score a b x
-    | Dist_uniform_float (a, b) -> uniform_float_score a b x
-    | Dist_exponential lambda -> exponential_score lambda x
-    | Dist_poisson lambda -> poisson_score lambda x
-    | Dist_pair (d1, d2) ->
-        (* XXX TO CHECK XXX *)
-        let v1, v2 = x in
-        score (d1, v1) +. score (d2, v2)
-    | Dist_list l ->
-        (* XXX TO CHECK XXX *)
-        begin try
-            List.fold_left2
-              (fun acc di xi -> acc +. score (di, xi))
-              0. l x
-          with Invalid_argument _ ->
-            neg_infinity
-        end
-    | Dist_array a ->
-        (* XXX TO CHECK XXX *)
-        let len = Array.length a in
-        if Array.length x = len then
-          let acc = ref 0. in
-          for i = 0 to len - 1 do
-            acc := !acc +. score (a.(i), x.(i))
-          done;
-          !acc
-        else
-          neg_infinity
-    | Dist_matrix a ->
-        (* XXX TO CHECK XXX *)
-        let x_len = Array.length a in
-        let y_len = Array.length a.(0) in
-        if Array.length x = x_len && Array.length x.(0) = y_len then
-          let acc = ref 0. in
-          for i = 0 to x_len - 1 do
-            for j = 0 to y_len -1 do
-              acc := !acc +. score (a.(i).(j), x.(i).(j))
-            done
-          done;
-          !acc
-        else
-          neg_infinity
-    | Dist_add (Dist_support [c, 1.], d) -> score (d, x -. c)
-    | Dist_add (d, Dist_support [c, 1.]) -> score (d, x -. c)
-    | Dist_add (_, _) -> score (to_dist_support dist, x)
-    | Dist_mult (Dist_support [c, 1.], d) -> score (d, x /. c)
-    | Dist_mult (d, Dist_support [c, 1.]) -> score (d, x /. c)
-    | Dist_mult (_, _) -> score (to_dist_support dist, x)
-    | Dist_app (_, _) -> assert false (* do not know how to inverse d1 *)
+  | Dist_sampler (_, scorer) -> scorer x
+  | Dist_sampler_float (_, scorer, _) -> scorer x
+  | Dist_support sup ->
+      let p =
+        List.fold_left
+          (fun acc (y, w) -> if x = y then acc +. w else acc)
+          0. sup
+      in
+      log p
+  | Dist_mixture (l) ->
+      let p =
+        List.fold_left
+          (fun acc (d', p) -> acc +. p *. exp(score (d', x)))
+          0. l
+      in
+      log p
+  | Dist_gaussian (mu, sigma) -> gaussian_score mu sigma x
+  | Dist_mv_gaussian (mu, sigma) -> mv_gaussian_score mu sigma x
+  | Dist_beta (a, b) -> beta_score a b x
+  | Dist_bernoulli p -> bernoulli_score p x
+  | Dist_uniform_int (a, b) -> uniform_int_score a b x
+  | Dist_uniform_float (a, b) -> uniform_float_score a b x
+  | Dist_exponential lambda -> exponential_score lambda x
+  | Dist_poisson lambda -> poisson_score lambda x
+  | Dist_pair (d1, d2) ->
+      (* XXX TO CHECK XXX *)
+      let v1, v2 = x in
+      score (d1, v1) +. score (d2, v2)
+  | Dist_list l ->
+      (* XXX TO CHECK XXX *)
+      begin try
+        List.fold_left2
+          (fun acc di xi -> acc +. score (di, xi))
+          0. l x
+      with Invalid_argument _ ->
+        neg_infinity
+      end
+  | Dist_array a ->
+      (* XXX TO CHECK XXX *)
+      let len = Array.length a in
+      if Array.length x = len then
+        let acc = ref 0. in
+        for i = 0 to len - 1 do
+          acc := !acc +. score (a.(i), x.(i))
+        done;
+        !acc
+      else
+        neg_infinity
+  | Dist_matrix a ->
+      (* XXX TO CHECK XXX *)
+      let x_len = Array.length a in
+      let y_len = Array.length a.(0) in
+      if Array.length x = x_len && Array.length x.(0) = y_len then
+        let acc = ref 0. in
+        for i = 0 to x_len - 1 do
+          for j = 0 to y_len -1 do
+            acc := !acc +. score (a.(i).(j), x.(i).(j))
+          done
+        done;
+        !acc
+      else
+        neg_infinity
+  | Dist_add (Dist_support [c, 1.], d) -> score (d, x -. c)
+  | Dist_add (d, Dist_support [c, 1.]) -> score (d, x -. c)
+  | Dist_add (_, _) -> score (to_dist_support dist, x)
+  | Dist_mult (Dist_support [c, 1.], d) -> score (d, x /. c)
+  | Dist_mult (d, Dist_support [c, 1.]) -> score (d, x /. c)
+  | Dist_mult (_, _) -> score (to_dist_support dist, x)
+  | Dist_app (_, _) -> assert false (* do not know how to inverse d1 *)
 
   end
 
@@ -687,74 +687,74 @@ let rec score : type a. a t * a -> log_proba =
 let draw_and_score : type a. a t -> a * log_proba =
   fun dist ->
   begin match dist with
-    | Dist_sampler (sampler, scorer) ->
-        let x = sampler () in
-        (x, scorer x)
-    | Dist_sampler_float (sampler, scorer, _) ->
-        let x = sampler () in
-        (x, scorer x)
-    | Dist_support _ ->
-        let x = draw dist in
-        (x, score (dist, x))
-    (* let sample = Random.float 1.0 in *)
-    (* (\* TODO data structure for more efficient sampling *\) *)
-    (* let rec draw sum r = *)
-    (*   begin match r with *)
-    (*     | [] -> assert false *)
-    (*     | (v, p) :: r -> *)
-    (*         let sum = sum +. p in *)
-    (*         if sample <= sum then v, (log p) else draw sum r *)
-    (*   end *)
-    (* in *)
-    (* draw  0. sup *)
-    | Dist_mixture _ ->
-        let x = draw dist in
-        (x, score (dist, x))
-    | Dist_pair _ ->
-        let x = draw dist in
-        (x, score (dist, x))
-    | Dist_list _ ->
-        let x = draw dist in
-        (x, score (dist, x))
-    | Dist_array _ ->
-        let x = draw dist in
-        (x, score (dist, x))
-    | Dist_matrix _ ->
-        let x = draw dist in
-        (x, score (dist, x))
-    | Dist_gaussian _ ->
-        let x = draw dist in
-        (x, score (dist, x))
-    | Dist_mv_gaussian _ ->
-        let x = draw dist in
-        (x, score (dist, x))
-    | Dist_beta _ ->
-        let x = draw dist in
-        (x, score (dist, x))
-    | Dist_bernoulli _ ->
-        let x = draw dist in
-        (x, score (dist, x))
-    | Dist_uniform_int _ ->
-        let x = draw dist in
-        (x, score (dist, x))
-    | Dist_uniform_float _ ->
-        let x = draw dist in
-        (x, score (dist, x))
-    | Dist_exponential _ ->
-        let x = draw dist in
-        (x, score (dist, x))
-    | Dist_poisson _ ->
-        let x = draw dist in
-        (x, score (dist, x))
-    | Dist_add _ ->
-        let x = draw dist in
-        (x, score (dist, x))
-    | Dist_mult _ ->
-        let x = draw dist in
-        (x, score (dist, x))
-    | Dist_app _ ->
-        let x = draw dist in
-        (x, score (dist, x))
+  | Dist_sampler (sampler, scorer) ->
+      let x = sampler () in
+      (x, scorer x)
+  | Dist_sampler_float (sampler, scorer, _) ->
+      let x = sampler () in
+      (x, scorer x)
+  | Dist_support _ ->
+      let x = draw dist in
+      (x, score (dist, x))
+  (* let sample = Random.float 1.0 in *)
+  (* (\* TODO data structure for more efficient sampling *\) *)
+  (* let rec draw sum r = *)
+  (*   begin match r with *)
+  (*     | [] -> assert false *)
+  (*     | (v, p) :: r -> *)
+  (*         let sum = sum +. p in *)
+  (*         if sample <= sum then v, (log p) else draw sum r *)
+  (*   end *)
+  (* in *)
+  (* draw  0. sup *)
+  | Dist_mixture _ ->
+      let x = draw dist in
+      (x, score (dist, x))
+  | Dist_pair _ ->
+      let x = draw dist in
+      (x, score (dist, x))
+  | Dist_list _ ->
+      let x = draw dist in
+      (x, score (dist, x))
+  | Dist_array _ ->
+      let x = draw dist in
+      (x, score (dist, x))
+  | Dist_matrix _ ->
+      let x = draw dist in
+      (x, score (dist, x))
+  | Dist_gaussian _ ->
+      let x = draw dist in
+      (x, score (dist, x))
+  | Dist_mv_gaussian _ ->
+      let x = draw dist in
+      (x, score (dist, x))
+  | Dist_beta _ ->
+      let x = draw dist in
+      (x, score (dist, x))
+  | Dist_bernoulli _ ->
+      let x = draw dist in
+      (x, score (dist, x))
+  | Dist_uniform_int _ ->
+      let x = draw dist in
+      (x, score (dist, x))
+  | Dist_uniform_float _ ->
+      let x = draw dist in
+      (x, score (dist, x))
+  | Dist_exponential _ ->
+      let x = draw dist in
+      (x, score (dist, x))
+  | Dist_poisson _ ->
+      let x = draw dist in
+      (x, score (dist, x))
+  | Dist_add _ ->
+      let x = draw dist in
+      (x, score (dist, x))
+  | Dist_mult _ ->
+      let x = draw dist in
+      (x, score (dist, x))
+  | Dist_app _ ->
+      let x = draw dist in
+      (x, score (dist, x))
   end
 
 
@@ -784,49 +784,49 @@ let of_pair (dist1, dist2) =
 let rec split : type a b. (a * b) t -> a t * b t =
   fun dist ->
   begin match dist with
-    | Dist_sampler (draw, _score) ->
-        Dist_sampler ((fun () -> fst (draw ())), (fun _ -> assert false)),
-        Dist_sampler ((fun () -> snd (draw ())), (fun _ -> assert false))
-    (* | Dist_support support -> *)
-    (*     let s1, s2 = *)
-    (*       List.fold_right *)
-    (*         (fun ((a, b), p) (acc1, acc2) -> *)
-    (*            let add_p o = *)
-    (*              begin match o with *)
-    (*              | None -> p *)
-    (*              | Some p' -> p +. p' *)
-    (*              end *)
-    (*            in *)
-    (*            (Misc_lib.list_replace_assoc a add_p acc1, *)
-    (*             Misc_lib.list_replace_assoc b add_p acc2)) *)
-    (*         support *)
-    (*         ([], []) *)
-    (*     in *)
-    (*     (Dist_support s1, Dist_support s2) *)
-    | Dist_support support ->
-        let s1, s2 =
-          List.fold_left
-            (fun (acc1, acc2) ((a, b), p) -> ((a,p)::acc1, (b,p)::acc2))
-            ([], [])
-            support
-        in
-        (Dist_support s1, Dist_support s2)
-    | Dist_mixture l ->
-        let s1, s2 =
-          List.fold_left
-            (fun (acc1, acc2) (d, p) ->
-               let d1, d2 = split d in
-               ((d1,p)::acc1, (d2,p)::acc2))
-            ([], [])
-            l
-        in
-        (Dist_mixture s1, Dist_mixture s2)
-    | Dist_pair (d1, d2) ->
-        d1, d2
-    | Dist_app (d1, d2) ->
-        Dist_sampler ((fun () -> fst ((draw d1) (draw d2))), (fun _ -> assert false)),
-        Dist_sampler ((fun () -> snd ((draw d1) (draw d2))), (fun _ -> assert false))
-    | Dist_mv_gaussian (_, _) -> assert false
+  | Dist_sampler (draw, _score) ->
+      Dist_sampler ((fun () -> fst (draw ())), (fun _ -> assert false)),
+      Dist_sampler ((fun () -> snd (draw ())), (fun _ -> assert false))
+  (* | Dist_support support -> *)
+  (*     let s1, s2 = *)
+  (*       List.fold_right *)
+  (*         (fun ((a, b), p) (acc1, acc2) -> *)
+  (*            let add_p o = *)
+  (*              begin match o with *)
+  (*              | None -> p *)
+  (*              | Some p' -> p +. p' *)
+  (*              end *)
+  (*            in *)
+  (*            (Misc_lib.list_replace_assoc a add_p acc1, *)
+  (*             Misc_lib.list_replace_assoc b add_p acc2)) *)
+  (*         support *)
+  (*         ([], []) *)
+  (*     in *)
+  (*     (Dist_support s1, Dist_support s2) *)
+  | Dist_support support ->
+      let s1, s2 =
+        List.fold_left
+          (fun (acc1, acc2) ((a, b), p) -> ((a,p)::acc1, (b,p)::acc2))
+          ([], [])
+          support
+      in
+      (Dist_support s1, Dist_support s2)
+  | Dist_mixture l ->
+      let s1, s2 =
+        List.fold_left
+          (fun (acc1, acc2) (d, p) ->
+             let d1, d2 = split d in
+             ((d1,p)::acc1, (d2,p)::acc2))
+          ([], [])
+          l
+      in
+      (Dist_mixture s1, Dist_mixture s2)
+  | Dist_pair (d1, d2) ->
+      d1, d2
+  | Dist_app (d1, d2) ->
+      Dist_sampler ((fun () -> fst ((draw d1) (draw d2))), (fun _ -> assert false)),
+      Dist_sampler ((fun () -> snd ((draw d1) (draw d2))), (fun _ -> assert false))
+  | Dist_mv_gaussian (_, _) -> assert false
   end
 
 (** [split_array dist] turns a distribution of arrays into an array of
@@ -835,82 +835,82 @@ let rec split : type a b. (a * b) t -> a t * b t =
 let rec split_array : type a. a array t -> a t array =
   fun dist ->
   begin match dist with
-    | Dist_sampler (draw, _score) ->
-        (* We assume that all arrays in the distribution have the same length. *)
-        let len = Array.length (draw ()) in
-        Array.init len
-          (fun i ->
-             let draw () = (draw ()).(i) in
-             let score _ = assert false in
-             Dist_sampler (draw, score))
-    | Dist_support [] -> Array.make 0 (Dist_support [])
-    | Dist_support (((a0, _) :: _) as support) ->
-        let supports = Array.make (Array.length a0) [] in
-        List.iter
-          (fun (a, p) ->
-             Array.iteri
-               (fun i v -> supports.(i) <- (v, p) :: supports.(i))
-               a)
-          support;
-        Array.map (fun supp -> Dist_support supp) supports
-    | Dist_mixture [] -> Array.make 0 (Dist_mixture [])
-    | Dist_mixture ((d0, p0) :: l) ->
-        let a0 = split_array d0 in
-        let accs = Array.map (fun d -> [(d,p0)]) a0 in
-        List.iter
-          (fun (di, pi) ->
-             let ai = split_array di in
-             Array.iteri (fun i d -> accs.(i) <- (d, pi) :: accs.(i)) ai)
-          l;
-        Array.map (fun acc -> Dist_mixture acc) accs
-    | Dist_array a -> a
-    | Dist_matrix _ -> assert false
-    | Dist_app (_, _) ->
-        (* We assume that all arrays in the distribution have the same length. *)
-        let len = Array.length (draw dist) in
-        Array.init len
-          (fun i ->
-             let draw () = (draw dist).(i) in
-             let score _ = assert false (* XXX TODO XXX *) in
-             Dist_sampler (draw, score))
-    | Dist_mv_gaussian (_, _) -> assert false
+  | Dist_sampler (draw, _score) ->
+      (* We assume that all arrays in the distribution have the same length. *)
+      let len = Array.length (draw ()) in
+      Array.init len
+        (fun i ->
+           let draw () = (draw ()).(i) in
+           let score _ = assert false in
+           Dist_sampler (draw, score))
+  | Dist_support [] -> Array.make 0 (Dist_support [])
+  | Dist_support (((a0, _) :: _) as support) ->
+      let supports = Array.make (Array.length a0) [] in
+      List.iter
+        (fun (a, p) ->
+           Array.iteri
+             (fun i v -> supports.(i) <- (v, p) :: supports.(i))
+             a)
+        support;
+      Array.map (fun supp -> Dist_support supp) supports
+  | Dist_mixture [] -> Array.make 0 (Dist_mixture [])
+  | Dist_mixture ((d0, p0) :: l) ->
+      let a0 = split_array d0 in
+      let accs = Array.map (fun d -> [(d,p0)]) a0 in
+      List.iter
+        (fun (di, pi) ->
+           let ai = split_array di in
+           Array.iteri (fun i d -> accs.(i) <- (d, pi) :: accs.(i)) ai)
+        l;
+      Array.map (fun acc -> Dist_mixture acc) accs
+  | Dist_array a -> a
+  | Dist_matrix _ -> assert false
+  | Dist_app (_, _) ->
+      (* We assume that all arrays in the distribution have the same length. *)
+      let len = Array.length (draw dist) in
+      Array.init len
+        (fun i ->
+           let draw () = (draw dist).(i) in
+           let score _ = assert false (* XXX TODO XXX *) in
+           Dist_sampler (draw, score))
+  | Dist_mv_gaussian (_, _) -> assert false
   end
 
 let rec split_matrix : type a. a array array t -> a t array array = 
   fun dist -> 
   begin match dist with
-    | Dist_matrix a -> a
-    | Dist_support [] -> Array.make_matrix 0 0 (Dist_support [])
-    | Dist_support (((m0, _) :: _) as support) ->
-        let n = (Array.length m0) in
-        let m = (Array.length m0.(0)) in
-        let supports = Array.make_matrix n m [] in
-        List.iter 
-          (fun (m, p) -> 
-             Array.iteri 
-               (fun i ai -> 
-                  Array.iteri 
-                    (fun j v -> supports.(i).(j) <- (v, p) :: supports.(i).(j))
-                    ai)
-               m)
-          support;
-        Array.map 
-          (fun ai -> 
-             Array.map 
-               (fun supp -> Dist_support supp) 
-               ai) 
-          supports
-    | Dist_mixture [] -> Array.make_matrix 0 0 (Dist_mixture [])
-    | Dist_mixture ((d0, p0) :: l) ->
-        let m0 = split_matrix d0 in
-        let accs = Array.map (fun ai -> (Array.map (fun d -> [(d,p0)]) ai)) m0 in
-        List.iter
-          (fun (di, pi) ->
-             let mi = split_matrix di in
-             Array.iteri (fun i ai -> Array.iteri (fun j d -> accs.(i).(j) <- (d, pi) :: accs.(i).(j)) ai) mi)
-          l; 
-        Array.map (fun ai -> Array.map (fun acc -> Dist_mixture acc) ai) accs
-    | _ -> assert false
+  | Dist_matrix a -> a
+  | Dist_support [] -> Array.make_matrix 0 0 (Dist_support [])
+  | Dist_support (((m0, _) :: _) as support) ->
+      let n = (Array.length m0) in
+      let m = (Array.length m0.(0)) in
+      let supports = Array.make_matrix n m [] in
+      List.iter 
+        (fun (m, p) -> 
+           Array.iteri 
+             (fun i ai -> 
+                Array.iteri 
+                  (fun j v -> supports.(i).(j) <- (v, p) :: supports.(i).(j))
+                  ai)
+             m)
+        support;
+      Array.map 
+        (fun ai -> 
+           Array.map 
+             (fun supp -> Dist_support supp) 
+             ai) 
+        supports
+  | Dist_mixture [] -> Array.make_matrix 0 0 (Dist_mixture [])
+  | Dist_mixture ((d0, p0) :: l) ->
+      let m0 = split_matrix d0 in
+      let accs = Array.map (fun ai -> (Array.map (fun d -> [(d,p0)]) ai)) m0 in
+      List.iter
+        (fun (di, pi) ->
+           let mi = split_matrix di in
+           Array.iteri (fun i ai -> Array.iteri (fun j d -> accs.(i).(j) <- (d, pi) :: accs.(i).(j)) ai) mi)
+        l; 
+      Array.map (fun ai -> Array.map (fun acc -> Dist_mixture acc) ai) accs
+  | _ -> assert false
   end
 
 (** [split_list dist] turns a distribution of lists into a list of
@@ -919,46 +919,46 @@ let rec split_matrix : type a. a array array t -> a t array array =
 let rec split_list : type a. a list t -> a t list =
   let rec map2' f1 f2 f12 l1 l2 =
     begin match l1, l2 with
-      | l1, [] -> List.map f1 l1
-      | [], l2 -> List.map f2 l2
-      | x1::l1, x2::l2 -> f12 x1 x2 :: (map2' f1 f2 f12 l1 l2)
+    | l1, [] -> List.map f1 l1
+    | [], l2 -> List.map f2 l2
+    | x1::l1, x2::l2 -> f12 x1 x2 :: (map2' f1 f2 f12 l1 l2)
     end
   in
   fun dist ->
     begin match dist with
-      | Dist_sampler (_draw, _score) ->
-          assert false (* XXX TODO XXX *)
-      | Dist_support [] -> []
-      | Dist_support sup ->
-          let split =
-            List.fold_left
-              (fun accs (l, w) ->
-                 map2'
-                   (fun acc -> acc)
-                   (fun v -> [(v, w)])
-                   (fun acc v -> (v, w)::acc)
-                   accs l)
-              [] sup
-          in
-          List.map (fun l -> Dist_support l) split
-      | Dist_mixture [] -> []
-      | Dist_mixture (l) ->
-          let l =
-            List.fold_left
-              (fun accs (d, w) ->
-                 let l = split_list d in
-                 map2'
-                   (fun acc -> acc)
-                   (fun d -> [(d, w)])
-                   (fun acc d -> (d, w)::acc)
-                   accs l)
-              [] l
-          in
-          List.map (fun l -> Dist_mixture l) l
-      | Dist_list l -> l
-      | Dist_app (_, _) ->
-          assert false (* XXX TODO XXX *)
-      | Dist_mv_gaussian (_, _) -> assert false
+    | Dist_sampler (_draw, _score) ->
+        assert false (* XXX TODO XXX *)
+    | Dist_support [] -> []
+    | Dist_support sup ->
+        let split =
+          List.fold_left
+            (fun accs (l, w) ->
+               map2'
+                 (fun acc -> acc)
+                 (fun v -> [(v, w)])
+                 (fun acc v -> (v, w)::acc)
+                 accs l)
+            [] sup
+        in
+        List.map (fun l -> Dist_support l) split
+    | Dist_mixture [] -> []
+    | Dist_mixture (l) ->
+        let l =
+          List.fold_left
+            (fun accs (d, w) ->
+               let l = split_list d in
+               map2'
+                 (fun acc -> acc)
+                 (fun d -> [(d, w)])
+                 (fun acc d -> (d, w)::acc)
+                 accs l)
+            [] l
+        in
+        List.map (fun l -> Dist_mixture l) l
+    | Dist_list l -> l
+    | Dist_app (_, _) ->
+        assert false (* XXX TODO XXX *)
+    | Dist_mv_gaussian (_, _) -> assert false
     end
 
 
@@ -969,15 +969,15 @@ let rec split_list : type a. a list t -> a t list =
 let rec to_mixture : type a. a t t -> a t =
   fun d ->
   begin match d with
-    | Dist_sampler (_draw, _score) ->
-        assert false (* XXX TODO XXX *)
-    | Dist_support l ->
-        Dist_mixture l
-    | Dist_mixture l ->
-        Dist_mixture (List.map (fun (d, w) -> (to_mixture d, w)) l)
-    | Dist_app _ ->
-        assert false (* XXX TODO XXX *)
-    | Dist_mv_gaussian (_, _) -> assert false
+  | Dist_sampler (_draw, _score) ->
+      assert false (* XXX TODO XXX *)
+  | Dist_support l ->
+      Dist_mixture l
+  | Dist_mixture l ->
+      Dist_mixture (List.map (fun (d, w) -> (to_mixture d, w)) l)
+  | Dist_app _ ->
+      assert false (* XXX TODO XXX *)
+  | Dist_mv_gaussian (_, _) -> assert false
   end
 
 (** [to_signal d] turns a distribution of signals into a signal that
@@ -985,48 +985,48 @@ let rec to_mixture : type a. a t t -> a t =
 let rec to_signal : type a. (a * bool) t -> a t * bool =
   fun d ->
   begin match d with
-    | Dist_sampler (draw, score) ->
-        let rec sample () =
+  | Dist_sampler (draw, score) ->
+      let rec sample () =
+        begin match draw () with
+        | (v, true) -> v
+        | (_, false) -> sample ()
+        end
+      in
+      let rec pres n =
+        if n <= 0 then false
+        else
           begin match draw () with
-            | (v, true) -> v
-            | (_, false) -> sample ()
+          | (_, true) -> true
+          | (_, false) -> pres (n - 1)
           end
-        in
-        let rec pres n =
-          if n <= 0 then false
-          else
-            begin match draw () with
-              | (_, true) -> true
-              | (_, false) -> pres (n - 1)
-            end
-        in
-        (Dist_sampler((fun () -> sample ()), (fun x -> score (x, true))),
-         pres 10000)
-    | Dist_support sup ->
-        let pres, norm, sup =
-          List.fold_left
-            (fun (pres, sum, sup) ((v, b), w) ->
-               if b then
-                 (true, sum +. w, (v, w) :: sup)
-               else
-                 (pres, sum, sup))
-            (false, 0., []) sup
-        in
-        (Dist_support (List.map (fun (v, w) -> (v, w /. norm)) sup), pres)
-    | Dist_mixture l ->
-        let pres, norm, l =
-          List.fold_left
-            (fun (pres, sum, l) (d, w) ->
-               begin match to_signal d with
-                 | d', true -> true, sum +. w, (d', w) :: l
-                 | _, false -> pres, sum, l
-               end)
-            (false, 0., []) l
-        in
-        (Dist_mixture (List.map (fun (v, w) -> (v, w /. norm)) l), pres)
-    | Dist_pair _ -> assert false
-    | Dist_app _ -> assert false
-    | Dist_mv_gaussian (_, _) -> assert false
+      in
+      (Dist_sampler((fun () -> sample ()), (fun x -> score (x, true))),
+       pres 10000)
+  | Dist_support sup ->
+      let pres, norm, sup =
+        List.fold_left
+          (fun (pres, sum, sup) ((v, b), w) ->
+             if b then
+               (true, sum +. w, (v, w) :: sup)
+             else
+               (pres, sum, sup))
+          (false, 0., []) sup
+      in
+      (Dist_support (List.map (fun (v, w) -> (v, w /. norm)) sup), pres)
+  | Dist_mixture l ->
+      let pres, norm, l =
+        List.fold_left
+          (fun (pres, sum, l) (d, w) ->
+             begin match to_signal d with
+             | d', true -> true, sum +. w, (d', w) :: l
+             | _, false -> pres, sum, l
+             end)
+          (false, 0., []) l
+      in
+      (Dist_mixture (List.map (fun (v, w) -> (v, w /. norm)) l), pres)
+  | Dist_pair _ -> assert false
+  | Dist_app _ -> assert false
+  | Dist_mv_gaussian (_, _) -> assert false
   end
 
 
@@ -1036,98 +1036,98 @@ let rec to_signal : type a. (a * bool) t -> a t * bool =
 let rec stats_float : float t -> float * float =
   fun dist ->
   begin match dist with
-    | Dist_sampler (draw, _) ->
-        let rec stats n sum sq_sum =
-          begin match n with
-            | 100000 ->
-                let mean = sum /. (float n) in
-                let var = sq_sum /. (float n) -. mean *. mean in
-                mean, var
-            | _ ->
-                let x = draw () in
-                stats (n+1) (sum +. x) (sq_sum +. x*.x)
-          end
-        in stats 0 0. 0.
-    | Dist_sampler_float (_, _, stats) ->
-        stats ()
-    | Dist_gaussian (a, b) ->
-        (gaussian_mean a b, gaussian_variance a b)
-    | Dist_beta (a, b) ->
-        (beta_mean a b, beta_variance a b)
-    | Dist_uniform_float (a, b) ->
-        (uniform_float_mean a b, uniform_float_variance a b)
-    | Dist_exponential a ->
-        (exponential_mean a, exponential_variance a)
-    | Dist_support sup ->
-        let rec stats sup sum sq_sum =
-          begin match sup with
-            | [] ->
-                let mean = sum in
-                let var = sq_sum -. mean *. mean in
-                mean, var
-            | (v,w) :: t ->
-                stats t (sum +. v *. w) (sq_sum +. w *. v *. v)
-          end
-        in stats sup 0. 0.
-    | Dist_mixture l ->
-        (* https://stats.stackexchange.com/questions/16608/what-is-the-variance-of-the-weighted-mixture-of-two-gaussians *)
-        let rec stats l sum sq_sum sq_var_sum =
-          begin match l with
-            | [] ->
-                let mean = sum in
-                let var = sq_var_sum +. sq_sum -. sum *. sum in
-                (mean, var)
-            | (d, w) :: l ->
-                let m, s = stats_float d in
-                stats l
-                  (sum +. w *. m)
-                  (sq_sum +. w *. m *. m)
-                  (sq_var_sum +. w *. s *. s)
-          end
-        in
-        stats l 0. 0. 0.
-    | Dist_add (d1, d2) ->
-        let m1, s1 = stats_float d1 in
-        let m2, s2 = stats_float d2 in
-        m1 +. m2, s1 +. s2
-    | Dist_mult (d1, d2) ->
-        let m1, s1 = stats_float d1 in
-        let m2, s2 = stats_float d2 in
-        m1 *. m2, s1 *. s2 +. s1 *. m2 ** 2. +. m2 *. m1 ** 2.
-    | Dist_app (_, _) as d ->
-        stats_float (Dist_sampler ((fun () -> draw d), (fun _ -> assert false)))
-    | Dist_mv_gaussian (_, _) -> assert false
+  | Dist_sampler (draw, _) ->
+      let rec stats n sum sq_sum =
+        begin match n with
+        | 100000 ->
+            let mean = sum /. (float n) in
+            let var = sq_sum /. (float n) -. mean *. mean in
+            mean, var
+        | _ ->
+            let x = draw () in
+            stats (n+1) (sum +. x) (sq_sum +. x*.x)
+        end
+      in stats 0 0. 0.
+  | Dist_sampler_float (_, _, stats) ->
+      stats ()
+  | Dist_gaussian (a, b) ->
+      (gaussian_mean a b, gaussian_variance a b)
+  | Dist_beta (a, b) ->
+      (beta_mean a b, beta_variance a b)
+  | Dist_uniform_float (a, b) ->
+      (uniform_float_mean a b, uniform_float_variance a b)
+  | Dist_exponential a ->
+      (exponential_mean a, exponential_variance a)
+  | Dist_support sup ->
+      let rec stats sup sum sq_sum =
+        begin match sup with
+        | [] ->
+            let mean = sum in
+            let var = sq_sum -. mean *. mean in
+            mean, var
+        | (v,w) :: t ->
+            stats t (sum +. v *. w) (sq_sum +. w *. v *. v)
+        end
+      in stats sup 0. 0.
+  | Dist_mixture l ->
+      (* https://stats.stackexchange.com/questions/16608/what-is-the-variance-of-the-weighted-mixture-of-two-gaussians *)
+      let rec stats l sum sq_sum sq_var_sum =
+        begin match l with
+        | [] ->
+            let mean = sum in
+            let var = sq_var_sum +. sq_sum -. sum *. sum in
+            (mean, var)
+        | (d, w) :: l ->
+            let m, s = stats_float d in
+            stats l
+              (sum +. w *. m)
+              (sq_sum +. w *. m *. m)
+              (sq_var_sum +. w *. s *. s)
+        end
+      in
+      stats l 0. 0. 0.
+  | Dist_add (d1, d2) ->
+      let m1, s1 = stats_float d1 in
+      let m2, s2 = stats_float d2 in
+      m1 +. m2, s1 +. s2
+  | Dist_mult (d1, d2) ->
+      let m1, s1 = stats_float d1 in
+      let m2, s2 = stats_float d2 in
+      m1 *. m2, s1 *. s2 +. s1 *. m2 ** 2. +. m2 *. m1 ** 2.
+  | Dist_app (_, _) as d ->
+      stats_float (Dist_sampler ((fun () -> draw d), (fun _ -> assert false)))
+  | Dist_mv_gaussian (_, _) -> assert false
   end
 
 (** [mean_float d] computes the mean of a [float Distribution.t]. *)
 let rec mean_float d =
   begin match d with
-    | Dist_sampler (draw, _) ->
-        let n = 100000 in
-        let acc = ref 0. in
-        for _ = 1 to n do acc := !acc +. draw () done;
-        !acc /. (float n)
-    | Dist_sampler_float (_, _, stats) ->
-        fst (stats())
-    | Dist_support sup ->
-        List.fold_left (fun acc (v, w) -> acc +. v *. w) 0. sup
-    | Dist_gaussian (a, b) -> gaussian_mean a b
-    | Dist_beta (a, b) -> beta_mean a b
-    | Dist_uniform_float (a, b) -> uniform_float_mean a b
-    | Dist_exponential a -> exponential_mean a
-    | Dist_mixture l ->
-        List.fold_left (fun acc (d, w) -> acc +. w *. mean_float d) 0. l
-    | Dist_add (d1, d2) ->
-        let m1= mean_float d1 in
-        let m2 = mean_float d2 in
-        m1 +. m2
-    | Dist_mult (d1, d2) ->
-        let m1 = mean_float d1 in
-        let m2 = mean_float d2 in
-        m1 *. m2
-    | Dist_app (_, _) ->
-        mean_float (Dist_sampler ((fun () -> draw d), (fun _ -> assert false)))
-    | Dist_mv_gaussian (_, _) -> assert false
+  | Dist_sampler (draw, _) ->
+      let n = 100000 in
+      let acc = ref 0. in
+      for _ = 1 to n do acc := !acc +. draw () done;
+      !acc /. (float n)
+  | Dist_sampler_float (_, _, stats) ->
+      fst (stats())
+  | Dist_support sup ->
+      List.fold_left (fun acc (v, w) -> acc +. v *. w) 0. sup
+  | Dist_gaussian (a, b) -> gaussian_mean a b
+  | Dist_beta (a, b) -> beta_mean a b
+  | Dist_uniform_float (a, b) -> uniform_float_mean a b
+  | Dist_exponential a -> exponential_mean a
+  | Dist_mixture l ->
+      List.fold_left (fun acc (d, w) -> acc +. w *. mean_float d) 0. l
+  | Dist_add (d1, d2) ->
+      let m1= mean_float d1 in
+      let m2 = mean_float d2 in
+      m1 +. m2
+  | Dist_mult (d1, d2) ->
+      let m1 = mean_float d1 in
+      let m2 = mean_float d2 in
+      m1 *. m2
+  | Dist_app (_, _) ->
+      mean_float (Dist_sampler ((fun () -> draw d), (fun _ -> assert false)))
+  | Dist_mv_gaussian (_, _) -> assert false
   end
 
 
@@ -1203,42 +1203,42 @@ let mean_list (type a) : (a -> float) -> a list t -> float list =
 (** [mean_int d] computes the mean of a [int Distribution.t]. *)
 let rec mean_int (d: int t) =
   begin match d with
-    | Dist_sampler (draw, _) ->
-        let n = 100000 in
-        let acc = ref 0 in
-        for _ = 1 to n do
-          acc := !acc + draw ();
-        done;
-        float !acc /. float n
-    | Dist_support sup ->
-        List.fold_left (fun acc (v, w) -> acc +. float v *. w) 0. sup
-    | Dist_mixture l ->
-        List.fold_left (fun acc (d, w) -> acc +. w *. mean_int d) 0. l
-    | Dist_app (_, _) ->
-        mean_int (Dist_sampler ((fun () -> draw d), (fun _ -> assert false)))
-    | Dist_uniform_int (a, b) -> uniform_int_mean a b
-    | Dist_poisson a ->
-        poisson_mean a
-    | Dist_mv_gaussian (_, _) -> assert false
+  | Dist_sampler (draw, _) ->
+      let n = 100000 in
+      let acc = ref 0 in
+      for _ = 1 to n do
+        acc := !acc + draw ();
+      done;
+      float !acc /. float n
+  | Dist_support sup ->
+      List.fold_left (fun acc (v, w) -> acc +. float v *. w) 0. sup
+  | Dist_mixture l ->
+      List.fold_left (fun acc (d, w) -> acc +. w *. mean_int d) 0. l
+  | Dist_app (_, _) ->
+      mean_int (Dist_sampler ((fun () -> draw d), (fun _ -> assert false)))
+  | Dist_uniform_int (a, b) -> uniform_int_mean a b
+  | Dist_poisson a ->
+      poisson_mean a
+  | Dist_mv_gaussian (_, _) -> assert false
   end
 
 (** [mean_bool d] computes the mean of a [bool Distribution.t]. *)
 let rec mean_bool (d: bool t) =
   begin match d with
-    | Dist_sampler (draw, _) ->
-        let n = 100000 in
-        let acc = ref 0 in
-        for _ = 1 to n do
-          if draw () then acc := !acc + 1 done;
-        float !acc /. float n
-    | Dist_bernoulli p -> bernoulli_mean p
-    | Dist_support sup ->
-        List.fold_left (fun acc (v, w) -> if v then acc +. w else acc) 0. sup
-    | Dist_mixture l ->
-        List.fold_left (fun acc (d, w) -> acc +. w *. mean_bool d) 0. l
-    | Dist_app (_, _) ->
-        mean_bool (Dist_sampler ((fun () -> draw d), (fun _ -> assert false)))
-    | Dist_mv_gaussian (_, _) -> assert false
+  | Dist_sampler (draw, _) ->
+      let n = 100000 in
+      let acc = ref 0 in
+      for _ = 1 to n do
+        if draw () then acc := !acc + 1 done;
+      float !acc /. float n
+  | Dist_bernoulli p -> bernoulli_mean p
+  | Dist_support sup ->
+      List.fold_left (fun acc (v, w) -> if v then acc +. w else acc) 0. sup
+  | Dist_mixture l ->
+      List.fold_left (fun acc (d, w) -> acc +. w *. mean_bool d) 0. l
+  | Dist_app (_, _) ->
+      mean_bool (Dist_sampler ((fun () -> draw d), (fun _ -> assert false)))
+  | Dist_mv_gaussian (_, _) -> assert false
   end
 
 (** [mean_signal_present d] computes the mean of the presence of ['a
@@ -1246,57 +1246,57 @@ let rec mean_bool (d: bool t) =
 let rec mean_signal_present : type a. (a * bool) t -> float =
   fun d ->
   begin match d with
-    | Dist_sampler (draw, _) ->
-        let n = 100000 in
-        let acc = ref 0 in
-        for _ = 1 to n do
-          if snd (draw ()) then acc := !acc + 1 done;
-        float !acc /. float n
-    | Dist_support sup ->
-        List.fold_left (fun acc ((_, b), w) -> if b then acc +. w else acc) 0. sup
-    | Dist_mixture l ->
-        List.fold_left (fun acc (d, w) -> acc +. w *. mean_signal_present d) 0. l
-    | Dist_pair _ -> assert false
-    | Dist_app (_, _) ->
-        mean_signal_present
-          (Dist_sampler ((fun () -> draw d), (fun _ -> assert false)))
-    | Dist_mv_gaussian (_, _) -> assert false
+  | Dist_sampler (draw, _) ->
+      let n = 100000 in
+      let acc = ref 0 in
+      for _ = 1 to n do
+        if snd (draw ()) then acc := !acc + 1 done;
+      float !acc /. float n
+  | Dist_support sup ->
+      List.fold_left (fun acc ((_, b), w) -> if b then acc +. w else acc) 0. sup
+  | Dist_mixture l ->
+      List.fold_left (fun acc (d, w) -> acc +. w *. mean_signal_present d) 0. l
+  | Dist_pair _ -> assert false
+  | Dist_app (_, _) ->
+      mean_signal_present
+        (Dist_sampler ((fun () -> draw d), (fun _ -> assert false)))
+  | Dist_mv_gaussian (_, _) -> assert false
   end
 
 
 let rec mean_matrix (d: Mat.mat t)=
   begin match d with
-    | Dist_sampler (draw, _) ->
-        let n = 100000 in
-        let acc = ref (draw ()) in
-        for _ = 1 to n - 1 do
-          acc := Owl.Mat.(!acc @= draw ())
-        done;
-        Owl.Mat.mean ~axis:0 !acc
-    | Dist_support ((v, w)::sup) ->
-        List.fold_left
-          (fun acc (v, w) -> Owl.Mat.(acc + (v *$ w)))
-          Owl.Mat.(v *$ w) sup
-    | Dist_support [] -> assert false
-    | Dist_mixture ((v, w)::sup) ->
-        List.fold_left
-          (fun acc (v, w) -> Owl.Mat.(acc + (mean_matrix v *$ w)))
-          Owl.Mat.(mean_matrix v *$ w) sup
-    | Dist_mixture [] -> assert false
-    | Dist_mv_gaussian (mu, _) -> mu
-    | Dist_sampler_float _ -> assert false
-    | Dist_pair _ -> assert false
-    | Dist_list _ -> assert false
-    | Dist_array _ -> assert false
-    | Dist_matrix _ -> assert false
-    | Dist_gaussian _ -> assert false
-    | Dist_beta _ -> assert false
-    | Dist_bernoulli _ -> assert false
-    | Dist_uniform_int _ -> assert false
-    | Dist_uniform_float _ -> assert false
-    | Dist_exponential _ -> assert false
-    | Dist_poisson _ -> assert false
-    | Dist_add _ -> assert false
-    | Dist_mult _ -> assert false
-    | Dist_app _ -> assert false
+  | Dist_sampler (draw, _) ->
+      let n = 100000 in
+      let acc = ref (draw ()) in
+      for _ = 1 to n - 1 do
+        acc := Owl.Mat.(!acc @= draw ())
+      done;
+      Owl.Mat.mean ~axis:0 !acc
+  | Dist_support ((v, w)::sup) ->
+      List.fold_left
+        (fun acc (v, w) -> Owl.Mat.(acc + (v *$ w)))
+        Owl.Mat.(v *$ w) sup
+  | Dist_support [] -> assert false
+  | Dist_mixture ((v, w)::sup) ->
+      List.fold_left
+        (fun acc (v, w) -> Owl.Mat.(acc + (mean_matrix v *$ w)))
+        Owl.Mat.(mean_matrix v *$ w) sup
+  | Dist_mixture [] -> assert false
+  | Dist_mv_gaussian (mu, _) -> mu
+  | Dist_sampler_float _ -> assert false
+  | Dist_pair _ -> assert false
+  | Dist_list _ -> assert false
+  | Dist_array _ -> assert false
+  | Dist_matrix _ -> assert false
+  | Dist_gaussian _ -> assert false
+  | Dist_beta _ -> assert false
+  | Dist_bernoulli _ -> assert false
+  | Dist_uniform_int _ -> assert false
+  | Dist_uniform_float _ -> assert false
+  | Dist_exponential _ -> assert false
+  | Dist_poisson _ -> assert false
+  | Dist_add _ -> assert false
+  | Dist_mult _ -> assert false
+  | Dist_app _ -> assert false
   end

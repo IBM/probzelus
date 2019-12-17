@@ -94,7 +94,7 @@ let wait_event () =
   | 'q' -> exit 0
   | _ -> 0
   end
-  (* ignore (Graphics.read_key ()) *)
+(* ignore (Graphics.read_key ()) *)
 
 let width = 50
 let height = 50
@@ -120,34 +120,34 @@ let draw_position_dist d =
 
 let draw_map_dist map_dist =
   let mw = Array.map
-    (fun d ->
-      let d_true, d_false = Distribution.split d in
-      let n_t, n_f = mean_float d_true, mean_float d_false in
-      n_t /. (n_t +. n_f))
-    (Distribution.split_array map_dist)
+      (fun d ->
+         let d_true, d_false = Distribution.split d in
+         let n_t, n_f = mean_float d_true, mean_float d_false in
+         n_t /. (n_t +. n_f))
+      (Distribution.split_array map_dist)
   in
   Array.iteri (fun i w ->
-    let gray = int_of_float (w *. 255.) in
-    Graphics.set_color (Graphics.rgb gray gray gray);
-    Graphics.fill_rect (i * width)  0  width height)
+      let gray = int_of_float (w *. 255.) in
+      Graphics.set_color (Graphics.rgb gray gray gray);
+      Graphics.fill_rect (i * width)  0  width height)
     mw
 
 let draw_map_dist_ds map_dist =
   let mw = Array.map
-    (fun d -> Distribution.mean_float d)
-    (Distribution.split_array map_dist)
+      (fun d -> Distribution.mean_float d)
+      (Distribution.split_array map_dist)
   in
   Array.iteri (fun i w ->
-    let gray = int_of_float (w *. 255.) in
-    Graphics.set_color (Graphics.rgb gray gray gray);
-    Graphics.fill_rect (i * width)  0  width height)
+      let gray = int_of_float (w *. 255.) in
+      Graphics.set_color (Graphics.rgb gray gray gray);
+      Graphics.fill_rect (i * width)  0  width height)
     mw
 
 let draw_map m =
   Array.iteri (fun i b ->
-    if b then Graphics.set_color (Graphics.white)
-    else Graphics.set_color (Graphics.black);
-    Graphics.fill_rect (i * width)  height  width height)
+      if b then Graphics.set_color (Graphics.white)
+      else Graphics.set_color (Graphics.black);
+      Graphics.fill_rect (i * width)  height  width height)
     m
 
 let random n theta =
@@ -185,8 +185,8 @@ let output_ds =
        clear ())
   else
     (fun _ -> assert false)
-    (* (fun real_map real_x obs map_dist pos_dist -> *)
-    (*    print_map_dist map_dist) *)
+(* (fun real_map real_x obs map_dist pos_dist -> *)
+(*    print_map_dist map_dist) *)
 
 let float_of_bool b =
   if b then 1. else 0.

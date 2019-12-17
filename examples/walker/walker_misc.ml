@@ -30,10 +30,10 @@ let pi = 3.14
 type motion_type = Stationary | Walking | Running
 
 type walker = {
-    position : float * float;
-    velocity : float * float;
-    motion_type : motion_type;
-  }
+  position : float * float;
+  velocity : float * float;
+  motion_type : motion_type;
+}
 
 let pos_noise = 0.01
 
@@ -132,7 +132,7 @@ let walker_step =
 let walker_init' (prob, ()) =
   let mt =
     sample' (prob,
-            weighted_list [(0.7, Stationary); (0.25, Walking); (0.05, Running)])
+             weighted_list [(0.7, Stationary); (0.25, Walking); (0.05, Running)])
   in
   let vel = init_velocity' (prob, mt) in
   { position = (0., 0.); velocity = vel; motion_type = mt }
@@ -151,9 +151,9 @@ let print_mt_dist mt_dist =
         ~pp_sep:(fun fmt () -> Format.fprintf fmt ",")
         (fun fmt (mt, p) ->
            begin match mt with
-             | Stationary -> Format.fprintf fmt "(%f, Stationary)" p
-             | Walking -> Format.fprintf fmt "(%f, Walking)" p
-             | Running -> Format.fprintf fmt "(%f, Running)" p
+           | Stationary -> Format.fprintf fmt "(%f, Stationary)" p
+           | Walking -> Format.fprintf fmt "(%f, Walking)" p
+           | Running -> Format.fprintf fmt "(%f, Running)" p
            end)
         Format.std_formatter
         sup;

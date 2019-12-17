@@ -54,7 +54,7 @@ type state = { mutable ch : in_channel option }
 (*     res *)
 (*   in *)
 (*   let copy src dst = *)
-    
+
 (*   in *)
 (*   Cnode { alloc; reset; copy; step } *)
 

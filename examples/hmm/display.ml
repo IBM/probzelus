@@ -32,7 +32,7 @@ let mouse_pos () =
 
 let draw_point color pos =
   begin match pos with
-    | [ x ; y ] ->
+  | [ x ; y ] ->
       Graphics.set_color color;
       Graphics.fill_circle (int_of_float x) (int_of_float y) 3;
   | _ -> assert false
@@ -119,10 +119,10 @@ let traj_draw t =
   if List.length t > 1 then begin
     Graphics.set_color (Graphics.rgb 133 189 255);
     let l = List.map (fun p ->
-      match p with
-      | [x; y] -> (int_of_float x), (int_of_float y)
-      | _ -> assert false)
-      (List.tl t)
+        match p with
+        | [x; y] -> (int_of_float x), (int_of_float y)
+        | _ -> assert false)
+        (List.tl t)
     in
     let a = Array.of_list l in
     Graphics.draw_poly_line a

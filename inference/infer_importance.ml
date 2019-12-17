@@ -37,8 +37,8 @@ let infer_decay n decay (Cnode { alloc; reset; copy; step }) =
     let values =
       Array.mapi
         (fun i state ->
-          let value = step state ({ idx = i; scores = scores; }, input) in
-          value)
+           let value = step state ({ idx = i; scores = scores; }, input) in
+           value)
         states
     in
     let weights, norm =
@@ -46,9 +46,9 @@ let infer_decay n decay (Cnode { alloc; reset; copy; step }) =
       let acc = ref [] in
       Array.iteri
         (fun i score ->
-          let w = max (exp score) epsilon_float in
-          acc := (values.(i), w) :: !acc;
-          sum := !sum +. w)
+           let w = max (exp score) epsilon_float in
+           acc := (values.(i), w) :: !acc;
+           sum := !sum +. w)
         scores;
       (!acc, !sum)
     in

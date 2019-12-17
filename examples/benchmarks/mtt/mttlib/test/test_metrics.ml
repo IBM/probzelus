@@ -33,7 +33,7 @@ let v2 = Mat.of_arrays [| [| 1. |];
                           [| 1. |] |];;
 
 print_string ("dist(" ^ string_of_vec2 v1 ^ ", " ^ string_of_vec2 v2 ^ ") = " ^ 
-string_of_float (dist v1 v2) ^"\n")
+              string_of_float (dist v1 v2) ^"\n")
 
 let v3 = Mat.of_arrays [| [| 0. |];
                           [| 1. |]; |];;
@@ -42,12 +42,12 @@ let v4 = Mat.of_arrays [| [| 1. |];
                           [| 0. |] |];;
 
 print_string ("dist(" ^ string_of_vec2 v3 ^ ", " ^ string_of_vec2 v4 ^ ") = " ^ 
-string_of_float (dist v3 v4) ^"\n");;
+              string_of_float (dist v3 v4) ^"\n");;
 
 let assoc_list_tostring lst =
   "[" ^ (String.concat "," (List.map (fun (x,y) ->
-    "(" ^ string_of_int x ^ ", " ^ string_of_int y ^ ")"
-  ) lst)) ^ "]"
+      "(" ^ string_of_int x ^ ", " ^ string_of_int y ^ ")"
+    ) lst)) ^ "]"
 
 let cmat1 = Mat.of_arrays [| [| 1. ;  2. ; 3. |];
                              [| 2. ;  4. ; 6. |];

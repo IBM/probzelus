@@ -88,14 +88,14 @@ module Make(M: sig
 
     let () =
       begin match !seed with
-        | None -> Random.self_init()
-        | Some i -> Random.init i
+      | None -> Random.self_init()
+      | Some i -> Random.init i
       end
 
     let () =
       begin match !select_particle with
-        | Some i -> min_particles := i; max_particles := i
-        | None -> ()
+      | Some i -> min_particles := i; max_particles := i
+      | None -> ()
       end
 
     let parts = ref !min_particles
@@ -135,17 +135,17 @@ module Make(M: sig
 
   let gc_stat () =
     begin match !Config.mem, !Config.mem_ideal with
-      | Some _, None ->
-          let st = Gc.stat () in
-          let words = float_of_int (st.live_words) in
-          words /. 1000.
-      | None, Some _ ->
-          let () = Gc.compact () in
-          let st = Gc.stat () in
-          let words = float_of_int (st.live_words) in
-          words /. 1000.
-      | None, None -> 0.
-      | Some _, Some _ -> assert false
+    | Some _, None ->
+        let st = Gc.stat () in
+        let words = float_of_int (st.live_words) in
+        words /. 1000.
+    | None, Some _ ->
+        let () = Gc.compact () in
+        let st = Gc.stat () in
+        let words = float_of_int (st.live_words) in
+        words /. 1000.
+    | None, None -> 0.
+    | Some _, Some _ -> assert false
     end
 
   let stats = Stats.stats (Config.lower_quantile,
@@ -228,14 +228,14 @@ module Make(M: sig
       let _, _, mse_max = stats mse_runs in
       let r = abs_float (log10 mse_max -. log10 mse_target) in
       begin match k with
-        | Exp when r > mag ->
-            if (10 * p < 100000)
-            then search Exp (10 * p) p
-            else search Linear (2 * p) p
-        | Exp when r <= mag -> search Linear incr incr
-        | Linear when r > mag -> search Linear (p + incr) incr
-        | Linear when r <= mag -> p
-        | _ -> assert false
+      | Exp when r > mag ->
+          if (10 * p < 100000)
+          then search Exp (10 * p) p
+          else search Linear (2 * p) p
+      | Exp when r <= mag -> search Linear incr incr
+      | Linear when r > mag -> search Linear (p + incr) incr
+      | Linear when r <= mag -> p
+      | _ -> assert false
       end
     in
     search Exp 1 1
@@ -314,16 +314,16 @@ module Make(M: sig
     let num_runs = !Config.num_runs in
     let particles_list =
       begin match !Config.mse_target, !Config.exp_seq_flag with
-        | Some mt, false ->
-            [search_particles_target mt !Config.mse_mag num_runs inp]
-        | None, false ->
-            seq !Config.min_particles !Config.increment !Config.max_particles
-        | None, true ->
-            exp_seq !Config.max_particles
-        | Some _, true ->
-            Arg.usage Config.args
-              "options -exp and -mse-target cannot be used simultaneously";
-            exit 1
+      | Some mt, false ->
+          [search_particles_target mt !Config.mse_mag num_runs inp]
+      | None, false ->
+          seq !Config.min_particles !Config.increment !Config.max_particles
+      | None, true ->
+          exp_seq !Config.max_particles
+      | Some _, true ->
+          Arg.usage Config.args
+            "options -exp and -mse-target cannot be used simultaneously";
+          exit 1
 
       end
     in

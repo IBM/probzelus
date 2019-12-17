@@ -26,10 +26,10 @@ module Config = struct
     Arg.align [
       ("-target", Float (fun f -> perf_target := f),
        "n Target value");
-      ]
+    ]
 
-    let () =
-      Arg.parse args (fun f -> file := Some f) "search target latency"
+  let () =
+    Arg.parse args (fun f -> file := Some f) "search target latency"
 
 end
 

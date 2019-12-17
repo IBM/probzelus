@@ -15,7 +15,7 @@
  *)
 
 (* The Zélus compiler, version 2.0
-  (Wed Nov  6 18:58:20 UTC 2019) *)
+   (Wed Nov  6 18:58:20 UTC 2019) *)
 open Ztypes
 open Probzelus
 open Mttlib
@@ -25,20 +25,20 @@ open Util
 type _init_fn = unit
 
 let init_fn  = 
-   let init_fn_alloc _ = () in let init_fn_copy source dest = () in
+  let init_fn_alloc _ = () in let init_fn_copy source dest = () in
   let init_fn_reset self  =
     ((()):unit) in 
   let init_fn_step self ((prob_21:'a4) , (i_20:'a201)) =
     (i_20:'a) in
   Cnode { alloc = init_fn_alloc; copy = init_fn_copy ;
-                                 reset = init_fn_reset ; step = init_fn_step }
+          reset = init_fn_reset ; step = init_fn_step }
 type ('b , 'a) _model =
   { mutable i_28 : 'b ; mutable t_24 : 'a }
 
 let model  = 
   let Cnode { alloc = i_28_alloc; copy = i_28_copy ;
-                                  step = i_28_step ; reset = i_28_reset } = 
-  ListP.ini init_fn  in
+              step = i_28_step ; reset = i_28_reset } = 
+    ListP.ini init_fn  in
   let model_alloc _ =
     ();{ t_24 = (42:int);i_28 = i_28_alloc () (* proba *)  } in
   let model_copy source dest =
@@ -51,14 +51,14 @@ let model  =
       (let (ret_23:(int)list) = i_28_step self.i_28 (prob_22 , self.t_24) in
        ret_23)):int list) in
   Cnode { alloc = model_alloc; copy = model_copy ;
-                               reset = model_reset ; step = model_step }
+          reset = model_reset ; step = model_step }
 type ('a) _main =
   { mutable i_29 : 'a }
 
 let main  = 
   let Cnode { alloc = i_29_alloc; copy = i_29_copy ;
-                                  step = i_29_step ; reset = i_29_reset } = 
-  Infer_pf.infer 1  model  in
+              step = i_29_step ; reset = i_29_reset } = 
+    Infer_pf.infer 1  model  in
   let main_alloc _ =
     ();{ i_29 = i_29_alloc () (* discrete *)  } in
   let main_copy source dest =
@@ -71,4 +71,4 @@ let main  =
       let () = print_string ((^) (Util.string_of_int_list lst_26)  "\n") in
       ()):unit) in
   Cnode { alloc = main_alloc; copy = main_copy ;
-                              reset = main_reset ; step = main_step }
+          reset = main_reset ; step = main_step }

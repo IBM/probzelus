@@ -31,7 +31,7 @@ let mouse_pos () =
 
 let draw_point color pos =
   begin match pos with
-    | [ x ; y ] ->
+  | [ x ; y ] ->
       Graphics.set_color color;
       Graphics.draw_circle (int_of_float x) (int_of_float y) 2;
   | _ -> assert false
@@ -39,7 +39,7 @@ let draw_point color pos =
 
 let draw_obs color pos =
   begin match pos with
-    | [ x ; y ] ->
+  | [ x ; y ] ->
       Graphics.set_color color;
       Graphics.fill_circle (int_of_float x) (int_of_float y) 8;
   | _ -> assert false

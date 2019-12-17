@@ -98,24 +98,24 @@ let ( +@ ) = Mat.add
 let string_of_tr vec_lst =
   "[" ^
   String.concat "," (List.map (fun (num, vec) ->
-    "(" ^ string_of_int num ^ ", " ^ string_of_float (Mat.get vec 0 0) ^ ", " ^ 
-    string_of_float (Mat.get vec 1 0) ^ ")"
-  ) vec_lst)
+      "(" ^ string_of_int num ^ ", " ^ string_of_float (Mat.get vec 0 0) ^ ", " ^ 
+      string_of_float (Mat.get vec 1 0) ^ ")"
+    ) vec_lst)
   ^ "]" 
 
 let string_of_vec2_list vec_lst =
   "[" ^
   String.concat "," (List.map (fun vec ->
-    "(" ^ string_of_float (Mat.get vec 0 0) ^ ", " ^ 
-    string_of_float (Mat.get vec 1 0) ^ ")"
-  ) vec_lst)
+      "(" ^ string_of_float (Mat.get vec 0 0) ^ ", " ^ 
+      string_of_float (Mat.get vec 1 0) ^ ")"
+    ) vec_lst)
   ^ "]" 
 
 let string_of_int_list lst =
   "[" ^
   String.concat "," (List.map (fun i ->
-    string_of_int i
-  ) lst) ^
+      string_of_int i
+    ) lst) ^
   "]\n"
 
 let string_of_vec2 vec = 
@@ -131,8 +131,8 @@ type tr_map = int TrMap.t
 
 let match_tostring (matching : tr_map) (num : int) : string =
   (String.concat "\n" (List.map (fun (i,j) ->
-    (string_of_int i) ^ " -> " ^ (string_of_int j)
-  ) (TrMap.bindings matching))) ^ "\n"
+       (string_of_int i) ^ " -> " ^ (string_of_int j)
+     ) (TrMap.bindings matching))) ^ "\n"
 
 let thresh = 5.0
 
@@ -182,7 +182,7 @@ let optimal_assignment (cost : Mat.mat) : (int * int) list =
         if Mat.get cost i j = 0. && 
            Array.get row_cover i = false &&
            Array.get col_cover j = false then
-         ret := Some (i,j)
+          ret := Some (i,j)
         else ()
       done
     done;
@@ -223,12 +223,12 @@ let optimal_assignment (cost : Mat.mat) : (int * int) list =
     match path with
     | [] -> ()
     | (i, j) :: ret ->
-      begin if get_mask i j = 1 then
-        set_mask i j 0
-      else 
-        set_mask i j 1
-      end;
-      augment_path ret
+        begin if get_mask i j = 1 then
+            set_mask i j 0
+          else 
+            set_mask i j 1
+        end;
+        augment_path ret
   in
 
   let clear_covers _ =
@@ -266,7 +266,7 @@ let optimal_assignment (cost : Mat.mat) : (int * int) list =
 
   let rec step_1 _ =
     (*print_string "step_1\n";
-    print_debug ();*)
+      print_debug ();*)
     for i = 0 to rows - 1 do
       let max_in_row = ref infinity in
       for j = 0 to cols - 1 do
@@ -284,7 +284,7 @@ let optimal_assignment (cost : Mat.mat) : (int * int) list =
     step_2 ()
   and step_2 _ =
     (*print_string "step_2\n";
-    print_debug ();*)
+      print_debug ();*)
     for i = 0 to rows - 1 do
       for j = 0 to cols - 1 do
         if Mat.get cost i j = 0. && 
@@ -305,7 +305,7 @@ let optimal_assignment (cost : Mat.mat) : (int * int) list =
     step_3 ()
   and step_3 _ =
     (*print_string "step_3\n";
-    print_debug ();*)
+      print_debug ();*)
     for i = 0 to rows - 1 do
       for j = 0 to cols - 1 do
         if get_mask i j = 1 then
@@ -325,32 +325,32 @@ let optimal_assignment (cost : Mat.mat) : (int * int) list =
       step_4 ()
   and step_4 _ =
     (*print_string "step_4\n";
-    print_debug ();*)
+      print_debug ();*)
 
     let is_done = ref false in
     while not !is_done do
       let zero = find_noncovered_zero () in
       match zero with
       | None ->
-        is_done := true;
-        step_6 ()
+          is_done := true;
+          step_6 ()
       | Some (i, j) ->
-        set_mask i j 2;
-        match star_in_row i with
-        | None ->
-          begin
-            is_done := true;
-            step_5 i j
-          end
-        | Some j_star ->
-          begin
-            Array.set row_cover i true;
-            Array.set col_cover j_star false;
-          end
+          set_mask i j 2;
+          match star_in_row i with
+          | None ->
+              begin
+                is_done := true;
+                step_5 i j
+              end
+          | Some j_star ->
+              begin
+                Array.set row_cover i true;
+                Array.set col_cover j_star false;
+              end
     done
   and step_5 init_path_i init_path_j =
     (*print_string "step_5\n";
-    print_debug ();*)
+      print_debug ();*)
 
     let path = ref [ (init_path_i, init_path_j) ] in
     let cur_i = ref init_path_i in
@@ -360,15 +360,15 @@ let optimal_assignment (cost : Mat.mat) : (int * int) list =
       match find_star_in_col !cur_j with
       | None -> is_done := true
       | Some i ->
-        cur_i := i;
-        path := (!cur_i, !cur_j) :: !path;
-      if not !is_done then
-        match find_prime_in_row !cur_i with
-        | None -> assert false
-        | Some j ->
-          cur_j := j;
-          path := (!cur_i, !cur_j) :: !path
-      else ()
+          cur_i := i;
+          path := (!cur_i, !cur_j) :: !path;
+          if not !is_done then
+            match find_prime_in_row !cur_i with
+            | None -> assert false
+            | Some j ->
+                cur_j := j;
+                path := (!cur_i, !cur_j) :: !path
+          else ()
     done;
     augment_path !path;
     clear_covers ();
@@ -376,27 +376,27 @@ let optimal_assignment (cost : Mat.mat) : (int * int) list =
     step_3 ()
   and step_6 _ =
     (*print_string "step_6\n";
-    print_debug ();*)
+      print_debug ();*)
 
     let minval = find_smallest () in
     for i = 0 to rows - 1 do
       for j = 0 to cols - 1 do
         begin if Array.get row_cover i then
-          Mat.set cost i j (Mat.get cost i j +. minval)
-        else
-          ()
+            Mat.set cost i j (Mat.get cost i j +. minval)
+          else
+            ()
         end;
         begin if not (Array.get col_cover j) then
-          Mat.set cost i j (Mat.get cost i j -. minval)
-        else
-          ()
+            Mat.set cost i j (Mat.get cost i j -. minval)
+          else
+            ()
         end;
       done
     done;
     step_4 ()
   and step_7 _ = 
     (*print_string "step_7\n";
-    print_debug ();*)
+      print_debug ();*)
     () 
   in
 
@@ -418,10 +418,10 @@ let  bignum = 1000000000.
 
 (* returns (distance, matches, false_positives, misses, mismatches, objects, and new map)*)
 let matching_helper   (prev_matching : tr_map) 
-                      (truth : (int * Mat.mat) list)
-                      (hyp : (int * Mat.mat) list) : 
-                      ((float * int * int * int * int * int) * tr_map) =
-                 
+    (truth : (int * Mat.mat) list)
+    (hyp : (int * Mat.mat) list) : 
+  ((float * int * int * int * int * int) * tr_map) =
+
   let sum_dist = ref 0. in
   let num_matches = ref 0 in
   let false_positives = ref 0 in
@@ -437,13 +437,13 @@ let matching_helper   (prev_matching : tr_map)
     match TrMap.find_opt i prev_matching with
     | None -> ()
     | Some j ->
-      try
-        let other_vec = List.assoc j hyp in
-        if dist vec other_vec < thresh then
-          init_matching := TrMap.add i j !init_matching
-        else
-          ()
-      with Not_found -> ()
+        try
+          let other_vec = List.assoc j hyp in
+          if dist vec other_vec < thresh then
+            init_matching := TrMap.add i j !init_matching
+          else
+            ()
+        with Not_found -> ()
   done;
 
   let best_matching : tr_map ref = ref !init_matching in
@@ -470,12 +470,12 @@ let matching_helper   (prev_matching : tr_map)
       match assoc with
       | [] -> ()
       | (x, y) :: rst ->
-        let (i, vec) = Array.get truth_a x in
-        let (j, other_vec) = Array.get hyp_a y in
-        if dist vec other_vec < thresh then
-          best_matching := TrMap.add i j !best_matching
-        else ();
-        compute_best_matching rst
+          let (i, vec) = Array.get truth_a x in
+          let (j, other_vec) = Array.get hyp_a y in
+          if dist vec other_vec < thresh then
+            best_matching := TrMap.add i j !best_matching
+          else ();
+          compute_best_matching rst
     in
     compute_best_matching assoc
   end else begin
@@ -484,12 +484,12 @@ let matching_helper   (prev_matching : tr_map)
       match assoc with
       | [] -> ()
       | (y, x) :: rst ->
-        let (i, vec) = Array.get truth_a x in
-        let (j, other_vec) = Array.get hyp_a y in
-        if dist vec other_vec < thresh then
-          best_matching := TrMap.add i j !best_matching
-        else ();
-        compute_best_matching rst
+          let (i, vec) = Array.get truth_a x in
+          let (j, other_vec) = Array.get hyp_a y in
+          if dist vec other_vec < thresh then
+            best_matching := TrMap.add i j !best_matching
+          else ();
+          compute_best_matching rst
     in
     compute_best_matching assoc
   end;
@@ -504,37 +504,37 @@ let matching_helper   (prev_matching : tr_map)
   *)
 
   let final_match = TrMap.merge (fun i jo jo' ->
-    match jo, jo' with
-    | (None, None) -> 
-      (*print_string ("Neither has i:" ^ (string_of_int i) ^ "\n");*)
-      None
-    | (Some j, None) -> 
-      (*print_string ("Init matching has i: " ^ string_of_int i ^ 
-                    " j: " ^ string_of_int j ^ "\n");*)
-      None
-    | (None, Some j') -> 
-      (*print_string ("Best matching has i: " ^ string_of_int i ^ 
-                    " j': " ^ string_of_int j' ^ "\n");*)
-      let vec = List.assoc i truth in
-      let other_vec = List.assoc j' hyp in
-      sum_dist := !sum_dist +. (dist vec other_vec);
-      num_matches := !num_matches + 1;
-      Some j'
-    | (Some j, Some j') ->
-      (*(print_string ("Conflict! i: " ^ string_of_int i ^ 
-                    ", j: " ^ string_of_int j ^
-                    ", j': " ^ string_of_int j' ^ "\n"));*)
-      let vec = List.assoc i truth in
-      let other_vec = List.assoc j' hyp in
-      sum_dist := !sum_dist +. (dist vec other_vec);
-      num_matches := !num_matches + 1;
-      if j = j' then
-        Some j'
-      else begin
-        mismatches := !mismatches + 1;
-        Some j'
-      end
-  ) prev_matching !best_matching in
+      match jo, jo' with
+      | (None, None) -> 
+          (*print_string ("Neither has i:" ^ (string_of_int i) ^ "\n");*)
+          None
+      | (Some j, None) -> 
+          (*print_string ("Init matching has i: " ^ string_of_int i ^ 
+                        " j: " ^ string_of_int j ^ "\n");*)
+          None
+      | (None, Some j') -> 
+          (*print_string ("Best matching has i: " ^ string_of_int i ^ 
+                        " j': " ^ string_of_int j' ^ "\n");*)
+          let vec = List.assoc i truth in
+          let other_vec = List.assoc j' hyp in
+          sum_dist := !sum_dist +. (dist vec other_vec);
+          num_matches := !num_matches + 1;
+          Some j'
+      | (Some j, Some j') ->
+          (*(print_string ("Conflict! i: " ^ string_of_int i ^ 
+                        ", j: " ^ string_of_int j ^
+                        ", j': " ^ string_of_int j' ^ "\n"));*)
+          let vec = List.assoc i truth in
+          let other_vec = List.assoc j' hyp in
+          sum_dist := !sum_dist +. (dist vec other_vec);
+          num_matches := !num_matches + 1;
+          if j = j' then
+            Some j'
+          else begin
+            mismatches := !mismatches + 1;
+            Some j'
+          end
+    ) prev_matching !best_matching in
 
   misses := Array.length truth_a - TrMap.cardinal final_match;
   false_positives := Array.length hyp_a - TrMap.cardinal final_match;
@@ -547,17 +547,17 @@ let matching_helper   (prev_matching : tr_map)
   *)
 
   ((!sum_dist, 
-   !num_matches, 
-   !false_positives, 
-   !misses, 
-   !mismatches, 
-   Array.length truth_a),
+    !num_matches, 
+    !false_positives, 
+    !misses, 
+    !mismatches, 
+    Array.length truth_a),
    final_match)
 
 let matching (prev_matching : tr_map) 
-             (truth : (int * Mat.mat) list)
-             (hyp : (int * Mat.mat) list) : 
-             ((float * int * int * int * int * int) * tr_map) =
+    (truth : (int * Mat.mat) list)
+    (hyp : (int * Mat.mat) list) : 
+  ((float * int * int * int * int * int) * tr_map) =
   if List.length truth = 0 then begin
     if List.length hyp = 0 then
       ((0., 0, 0, 0, 0, 0), TrMap.empty)
@@ -569,4 +569,4 @@ let matching (prev_matching : tr_map)
     else
       matching_helper prev_matching truth hyp
   end
- 
+

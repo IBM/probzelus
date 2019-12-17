@@ -47,10 +47,10 @@ let cart_observation_of_json : json -> cart_observation = begin
     let obs = List.map (to_float) (to_list observation) in
     begin match obs with
     | [cp; cv; pa; pv] ->
-      { cart_position = cp;
-        cart_velocity = cv;
-        pole_angle = pa;
-        pole_velocity = pv; }
+        { cart_position = cp;
+          cart_velocity = cv;
+          pole_angle = pa;
+          pole_velocity = pv; }
     | _ -> assert false
     end
 end

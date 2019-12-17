@@ -107,14 +107,14 @@ let print string_of_value map state =
           | Wall -> " # "
           | Empty -> "   "
           | Value v ->
-            let s = string_of_value v in
-            begin match String.length s with
-            | 0 -> "   "
-            | 1 -> " "^s^" "
-            | 2 -> " "^s
-            | 3 -> s
-            | _ -> (String.sub s 0 2)^"."
-            end
+              let s = string_of_value v in
+              begin match String.length s with
+              | 0 -> "   "
+              | 1 -> " "^s^" "
+              | 2 -> " "^s
+              | 3 -> s
+              | _ -> (String.sub s 0 2)^"."
+              end
           end
       in
       Format.printf "%s|" s;

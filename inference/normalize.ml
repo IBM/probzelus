@@ -65,7 +65,7 @@ let normalize_nohist values scores =
 (** [resample copy size probabilities states] resample the array of
     states [states] of length [size] according the probabilities distribution
     [probabilities]. The states are copied using the [copy] function.
- *)
+*)
 
 let resample copy size probabilities states =
   let states_idx = Array.init size (fun i -> i) in

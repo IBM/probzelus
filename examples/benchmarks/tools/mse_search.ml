@@ -31,10 +31,10 @@ module Config = struct
        "n MSE Target value");
       ("-mse-mag", Float (fun f -> mse_mag := f),
        "n Magnitude compared to the MSE Target (log scale)");
-      ]
+    ]
 
-    let () =
-      Arg.parse args (fun f -> file := Some f) "search target mse"
+  let () =
+    Arg.parse args (fun f -> file := Some f) "search target mse"
 
 end
 

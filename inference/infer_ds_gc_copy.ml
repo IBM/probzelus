@@ -105,80 +105,80 @@ type ('a, 'b) ds_node = ('a, 'b) Infer_ds_ll_gc.ds_node
 
 
 module Gnodes = struct
-   module E = Ephemeron.K1
+  module E = Ephemeron.K1
 
-   module M = Map.Make(struct
+  module M = Map.Make(struct
       type t = int
       let compare (x:int) (y:int) = compare x y
     end)
 
-   (* type t = (Obj.t random_var, (Obj.t, Obj.t) ds_node) E.t  M.t ref *)
-   type ephemeron = (Obj.t random_var, unit) E.t
-   type t =
+  (* type t = (Obj.t random_var, (Obj.t, Obj.t) ds_node) E.t  M.t ref *)
+  type ephemeron = (Obj.t random_var, unit) E.t
+  type t =
     { mutable live_nodes : (ephemeron * (Obj.t, Obj.t) ds_node) M.t;
       mutable ephemeron_pool: ephemeron list; }
 
-   let create _ =
+  let create _ =
     { live_nodes = M.empty;
       ephemeron_pool = []; }
 
-   let new_ephemeron g =
+  let new_ephemeron g =
     begin match g.ephemeron_pool with
-      | [] ->  E.create ()
-      | e::p -> g.ephemeron_pool <- p; e
+    | [] ->  E.create ()
+    | e::p -> g.ephemeron_pool <- p; e
     end
 
-   let add: type a p.
+  let add: type a p.
     t -> a random_var -> (p, a) ds_node -> unit =
     fun g x y ->
-      let e = new_ephemeron g in
-      E.set_key e (Obj.magic x: Obj.t random_var);
-      (* E.set_data e (Obj.magic y: (Obj.t, Obj.t) ds_node); *)
-      let n =  (Obj.magic y: (Obj.t, Obj.t) ds_node) in
-      g.live_nodes <- M.add x.rv_id (e, n) g.live_nodes
+    let e = new_ephemeron g in
+    E.set_key e (Obj.magic x: Obj.t random_var);
+    (* E.set_data e (Obj.magic y: (Obj.t, Obj.t) ds_node); *)
+    let n =  (Obj.magic y: (Obj.t, Obj.t) ds_node) in
+    g.live_nodes <- M.add x.rv_id (e, n) g.live_nodes
 
-   let find_opt: type a p.
+  let find_opt: type a p.
     t -> a random_var -> (p, a) ds_node option =
     fun g x ->
-      let k = (Obj.magic x: Obj.t random_var).rv_id in
-      begin match M.find_opt k g.live_nodes with
-        | None -> None
-        | Some (_e, n) -> Some (Obj.magic n: (p, a) ds_node)
-      end
+    let k = (Obj.magic x: Obj.t random_var).rv_id in
+    begin match M.find_opt k g.live_nodes with
+    | None -> None
+    | Some (_e, n) -> Some (Obj.magic n: (p, a) ds_node)
+    end
 
-   let clear: t -> unit =
+  let clear: t -> unit =
     fun g ->
-      g.ephemeron_pool <-
-        M.fold
-          (fun _ (e, _) acc -> E.unset_key e; e::acc)
-          g.live_nodes
-          g.ephemeron_pool;
-      g.live_nodes <- M.empty
+    g.ephemeron_pool <-
+      M.fold
+        (fun _ (e, _) acc -> E.unset_key e; e::acc)
+        g.live_nodes
+        g.ephemeron_pool;
+    g.live_nodes <- M.empty
 
-   let clean: t -> unit =
-     fun g ->
-     g.live_nodes <- M.filter
-         (fun _ (e, _) ->
-            let b = E.check_key e in
-            if not b then g.ephemeron_pool <- e::g.ephemeron_pool;
-            b)
-         g.live_nodes
+  let clean: t -> unit =
+    fun g ->
+    g.live_nodes <- M.filter
+        (fun _ (e, _) ->
+           let b = E.check_key e in
+           if not b then g.ephemeron_pool <- e::g.ephemeron_pool;
+           b)
+        g.live_nodes
 
-   let copy: t -> t -> unit =
+  let copy: t -> t -> unit =
     fun src dst ->
-      let tbl = Hashtbl.create 41 in
-      (* clean src; *)
-      clear dst;
-      dst.live_nodes <- M.map (fun (e, n) ->
-          let e' = new_ephemeron dst in
-          begin match E.get_key e with
-            | Some x ->  E.set_key e' x;
-            | _ -> ()
-          end;
-          let n' = Infer_ds_ll_gc.copy_node tbl n in
-          (e', n'))
-          src.live_nodes
- end
+    let tbl = Hashtbl.create 41 in
+    (* clean src; *)
+    clear dst;
+    dst.live_nodes <- M.map (fun (e, n) ->
+        let e' = new_ephemeron dst in
+        begin match E.get_key e with
+        | Some x ->  E.set_key e' x;
+        | _ -> ()
+        end;
+        let n' = Infer_ds_ll_gc.copy_node tbl n in
+        (e', n'))
+        src.live_nodes
+end
 
 (* module Gnodes = struct *)
 (*    module E = Ephemeron.K1 *)
@@ -231,19 +231,19 @@ type pstate =
 let rv_node : type a p.
   pstate -> a random_var -> (p, a) Infer_ds_ll_gc.ds_node =
   fun prob x ->
-    let g = prob.ds_graph in
-    begin match Gnodes.find_opt g x with
-      | None ->
-          Format.eprintf "Failed %d@." x.rv_id;
-          assert false
-      | Some o -> o
-    end
+  let g = prob.ds_graph in
+  begin match Gnodes.find_opt g x with
+  | None ->
+      Format.eprintf "Failed %d@." x.rv_id;
+      assert false
+  | Some o -> o
+  end
 
 let add_random_var: type a p.
   pstate -> a random_var -> (p, a) Infer_ds_ll_gc.ds_node -> unit =
   fun prob rv n ->
-    let g = prob.ds_graph in
-    Gnodes.add g rv n
+  let g = prob.ds_graph in
+  Gnodes.add g rv n
 
 let rv_kind prob rv =
   let n = rv_node prob rv in
@@ -281,8 +281,8 @@ let const : 'a. 'a -> 'a expr =
 let add : float expr * float expr -> float expr =
   begin fun (e1, e2) ->
     begin match e1.value, e2.value with
-      | Econst x, Econst y -> { value = Econst (x +. y); }
-      | _ -> { value = Eadd (e1, e2); }
+    | Econst x, Econst y -> { value = Econst (x +. y); }
+    | _ -> { value = Eadd (e1, e2); }
     end
   end
 
@@ -291,9 +291,9 @@ let ( +~ ) x y = add (x, y)
 let mult : float expr * float expr -> float expr =
   begin fun (e1, e2) ->
     begin match e1.value, e2.value with
-      | Econst x, Econst y -> { value = Econst (x *. y); }
-      | Ervar _, Econst _ -> { value = Emult(e2, e1); }
-      | _ -> { value = Emult(e1, e2); }
+    | Econst x, Econst y -> { value = Econst (x *. y); }
+    | Ervar _, Econst _ -> { value = Emult(e2, e1); }
+    | _ -> { value = Emult(e1, e2); }
     end
   end
 
@@ -302,8 +302,8 @@ let ( *~ ) x y = mult (x, y)
 let app  : type t1 t2. (t1 -> t2) expr * t1 expr -> t2 expr =
   begin fun (e1, e2) ->
     begin match e1.value, e2.value with
-      | Econst f, Econst x -> { value = Econst (f x); }
-      | _ -> { value = Eapp(e1, e2); }
+    | Econst f, Econst x -> { value = Econst (f x); }
+    | _ -> { value = Eapp(e1, e2); }
     end
   end
 
@@ -319,30 +319,30 @@ let rec eval' : type t.
   pstate -> t expr -> t =
   begin fun prob e ->
     begin match e.value with
-      | Econst v -> v
-      | Ervar x ->
-          let n = rv_node prob x in
-          let v = Infer_ds_ll_gc.value n in
-          e.value <- Econst v;
-          v
-      | Eadd (e1, e2) ->
-          let v = eval' prob e1 +. eval' prob e2 in
-          e.value <- Econst v;
-          v
-      | Emult (e1, e2) ->
-          let v = eval' prob e1 *. eval' prob e2 in
-          e.value <- Econst v;
-          v
-      | Eapp (e1, e2) ->
-          let v = (eval' prob e1) (eval' prob e2) in
-          e.value <- Econst v;
-          v
-      | Epair (e1, e2) ->
-          let v = (eval' prob e1, eval' prob e2) in
-          e.value <- Econst v;
-          v
-      | Earray a ->
-          Array.map (eval' prob) a
+    | Econst v -> v
+    | Ervar x ->
+        let n = rv_node prob x in
+        let v = Infer_ds_ll_gc.value n in
+        e.value <- Econst v;
+        v
+    | Eadd (e1, e2) ->
+        let v = eval' prob e1 +. eval' prob e2 in
+        e.value <- Econst v;
+        v
+    | Emult (e1, e2) ->
+        let v = eval' prob e1 *. eval' prob e2 in
+        e.value <- Econst v;
+        v
+    | Eapp (e1, e2) ->
+        let v = (eval' prob e1) (eval' prob e2) in
+        e.value <- Econst v;
+        v
+    | Epair (e1, e2) ->
+        let v = (eval' prob e1, eval' prob e2) in
+        e.value <- Econst v;
+        v
+    | Earray a ->
+        Array.map (eval' prob) a
     end
   end
 
@@ -370,11 +370,11 @@ let eval =
 
 let rec string_of_expr e =
   begin match e.value with
-    | Econst v -> string_of_float v
-    | Ervar x -> "RV_" ^ string_of_int x.rv_id
-    | Eadd (e1, e2) -> "(" ^ string_of_expr e1 ^ " + " ^ string_of_expr e2 ^ ")"
-    | Emult (e1, e2) -> "(" ^ string_of_expr e1 ^ " * " ^ string_of_expr e2 ^ ")"
-    | Eapp (_, _) -> "App"
+  | Econst v -> string_of_float v
+  | Ervar x -> "RV_" ^ string_of_int x.rv_id
+  | Eadd (e1, e2) -> "(" ^ string_of_expr e1 ^ " + " ^ string_of_expr e2 ^ ")"
+  | Emult (e1, e2) -> "(" ^ string_of_expr e1 ^ " * " ^ string_of_expr e2 ^ ")"
+  | Eapp (_, _) -> "App"
   end
 
 (* High level delayed sampling distribution (pdistribution in Haskell) *)
@@ -409,23 +409,23 @@ let ds_distr_with_fallback d is iobs =
     let state = ref None in
     (fun prob ->
        begin match !state with
-         | None ->
-             let dsd = of_distribution (d prob) in
-             state := Some dsd;
-             dsd
-         | Some dsd -> dsd
+       | None ->
+           let dsd = of_distribution (d prob) in
+           state := Some dsd;
+           dsd
+       | Some dsd -> dsd
        end)
   in
   let is' prob =
     begin match is prob with
-      | None -> (dsd prob).isample prob
-      | Some x -> x
+    | None -> (dsd prob).isample prob
+    | Some x -> x
     end
   in
   let iobs' (prob, obs) =
     begin match iobs (prob, obs) with
-      | None -> (dsd prob).iobserve (prob, obs)
-      | Some () -> ()
+    | None -> (dsd prob).iobserve (prob, obs)
+    | Some () -> ()
     end
   in
   { isample = is'; iobserve = iobs'; }
@@ -440,47 +440,47 @@ type affine_expr =
 let rec affine_of_expr : float expr -> affine_expr option =
   begin fun expr ->
     begin match expr.value with
-      | Econst v -> Some (AEconst v)
-      | Ervar var -> Some (AErvar (1., var, 0.))
-      | Eadd (e1, e2) ->
-          begin match (affine_of_expr e1, affine_of_expr e2) with
-            | (Some (AErvar (m, x, b)), Some (AEconst v))
-            | (Some (AEconst v), Some (AErvar (m, x, b))) -> Some (AErvar (m, x, b +. v))
-            | _ -> None
-          end
-      | Emult (e1, e2) ->
-          begin match (affine_of_expr e1, affine_of_expr e2) with
-            | (Some (AErvar (m, x, b)), Some (AEconst v))
-            | (Some (AEconst v), Some (AErvar (m, x, b))) -> Some (AErvar (m *. v, x, b *. v))
-            | _ -> None
-          end
-      | Eapp (_, _) -> None
+    | Econst v -> Some (AEconst v)
+    | Ervar var -> Some (AErvar (1., var, 0.))
+    | Eadd (e1, e2) ->
+        begin match (affine_of_expr e1, affine_of_expr e2) with
+        | (Some (AErvar (m, x, b)), Some (AEconst v))
+        | (Some (AEconst v), Some (AErvar (m, x, b))) -> Some (AErvar (m, x, b +. v))
+        | _ -> None
+        end
+    | Emult (e1, e2) ->
+        begin match (affine_of_expr e1, affine_of_expr e2) with
+        | (Some (AErvar (m, x, b)), Some (AEconst v))
+        | (Some (AEconst v), Some (AErvar (m, x, b))) -> Some (AErvar (m *. v, x, b *. v))
+        | _ -> None
+        end
+    | Eapp (_, _) -> None
     end
   end
 
 let assume_constant : type a.
   pstate -> a mdistr -> a random_var =
   fun prob d ->
-    let n = Infer_ds_ll_gc.assume_constant d in
-    let rv = { rv_id = n.ds_node_id } in
-    add_random_var prob rv n;
-    rv
+  let n = Infer_ds_ll_gc.assume_constant d in
+  let rv = { rv_id = n.ds_node_id } in
+  add_random_var prob rv n;
+  rv
 
 let assume_conditional : type b c.
   pstate -> b random_var -> (b, c) cdistr -> c random_var =
   fun prob p d ->
-    let par = rv_node prob p in
-    let n = Infer_ds_ll_gc.assume_conditional par d in
-    let rv = { rv_id = n.ds_node_id } in
-    add_random_var prob rv n;
-    rv
+  let par = rv_node prob p in
+  let n = Infer_ds_ll_gc.assume_conditional par d in
+  let rv = { rv_id = n.ds_node_id } in
+  add_random_var prob rv n;
+  rv
 
 let observe_conditional : type b c.
   pstate -> b random_var -> (b, c) cdistr -> c -> unit =
   fun prob p cdistr obs ->
-    let par = rv_node prob p in
-    let _ = assume_conditional prob p cdistr in
-    Infer_ds_ll_gc.observe_conditional prob.pf_state par cdistr obs
+  let par = rv_node prob p in
+  let _ = assume_conditional prob p cdistr in
+  Infer_ds_ll_gc.observe_conditional prob.pf_state par cdistr obs
 
 
 (** Gaussian distribution (gaussianPD in Haskell) *)
@@ -488,32 +488,32 @@ let gaussian (mu, std) =
   let d prob = Distribution.gaussian(eval' prob mu, std) in
   let is prob =
     begin match affine_of_expr mu with
-      | Some (AEconst v) ->
-          let rv = assume_constant prob (Dist_gaussian(v, std)) in
-          Some { value = (Ervar rv) }
-      | Some (AErvar (m, x, b)) ->
-          begin match rv_kind prob x with
-            | KGaussian ->
-                let rv =
-                  assume_conditional prob x (AffineMeanGaussian(m, b, std))
-                in
-                Some { value = (Ervar rv) }
-            | _ -> None
-          end
-      | None -> None
+    | Some (AEconst v) ->
+        let rv = assume_constant prob (Dist_gaussian(v, std)) in
+        Some { value = (Ervar rv) }
+    | Some (AErvar (m, x, b)) ->
+        begin match rv_kind prob x with
+        | KGaussian ->
+            let rv =
+              assume_conditional prob x (AffineMeanGaussian(m, b, std))
+            in
+            Some { value = (Ervar rv) }
+        | _ -> None
+        end
+    | None -> None
     end
   in
   let iobs (prob, obs) =
     begin match affine_of_expr mu with
-      | Some (AEconst _) ->
-          None
-      | Some (AErvar (m, x, b)) ->
-          begin match rv_kind prob x with
-            | KGaussian ->
-                Some (observe_conditional prob x (AffineMeanGaussian(m, b, std)) obs)
-            | _ -> None
-          end
-      | None -> None
+    | Some (AEconst _) ->
+        None
+    | Some (AErvar (m, x, b)) ->
+        begin match rv_kind prob x with
+        | KGaussian ->
+            Some (observe_conditional prob x (AffineMeanGaussian(m, b, std)) obs)
+        | _ -> None
+        end
+    | None -> None
     end
   in
   ds_distr_with_fallback d is iobs
@@ -532,12 +532,12 @@ let bernoulli p =
   let d prob = Distribution.bernoulli (eval' prob p) in
   let with_beta_prior prob f =
     begin match p.value with
-      | Ervar par ->
-          begin match rv_kind prob par with
-            | KBeta -> Some (f par)
-            | _ -> None
-          end
-      | _ -> None
+    | Ervar par ->
+        begin match rv_kind prob par with
+        | KBeta -> Some (f par)
+        | _ -> None
+        end
+    | _ -> None
     end
   in
   let is prob =
@@ -556,18 +556,18 @@ let bernoulli p =
 let rec distribution_of_expr : type a. pstate -> a expr -> a Distribution.t =
   fun prob expr ->
   begin match expr.value with
-    | Econst c -> Dist_support [c, 1.]
-    | Ervar x -> rv_distr prob x
-    | Eadd (e1, e2) ->
-        Dist_add (distribution_of_expr prob e1, distribution_of_expr prob e2)
-    | Emult (e1, e2) ->
-        Dist_mult (distribution_of_expr prob e1, distribution_of_expr prob e2)
-    | Eapp (e1, e2) ->
-        Dist_app (distribution_of_expr prob e1, distribution_of_expr prob e2)
-    | Epair (e1, e2) ->
-        Dist_pair (distribution_of_expr prob e1, distribution_of_expr prob e2)
-    | Earray a ->
-        Dist_array (Array.map (distribution_of_expr prob) a)
+  | Econst c -> Dist_support [c, 1.]
+  | Ervar x -> rv_distr prob x
+  | Eadd (e1, e2) ->
+      Dist_add (distribution_of_expr prob e1, distribution_of_expr prob e2)
+  | Emult (e1, e2) ->
+      Dist_mult (distribution_of_expr prob e1, distribution_of_expr prob e2)
+  | Eapp (e1, e2) ->
+      Dist_app (distribution_of_expr prob e1, distribution_of_expr prob e2)
+  | Epair (e1, e2) ->
+      Dist_pair (distribution_of_expr prob e1, distribution_of_expr prob e2)
+  | Earray a ->
+      Dist_array (Array.map (distribution_of_expr prob) a)
   end
 
 type 'a node_state =

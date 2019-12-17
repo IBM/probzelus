@@ -93,8 +93,8 @@ let clear () =
 let wait_event () =
   let c = Graphics.read_key () in
   begin match c with
-    | 'q' -> exit 0
-    | _ -> 0
+  | 'q' -> exit 0
+  | _ -> 0
   end
 (* ignore (Graphics.read_key ()) *)
 

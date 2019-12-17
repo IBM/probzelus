@@ -15,7 +15,7 @@
  *)
 
 (* The Zélus compiler, version 2.0
-  (Wed Nov  6 18:58:20 UTC 2019) *)
+   (Wed Nov  6 18:58:20 UTC 2019) *)
 open Ztypes
 open Probzelus
 open Util
@@ -34,8 +34,8 @@ type ('g , 'f , 'e , 'd , 'c , 'b , 'a) _metrics =
 
 let metrics  = 
   let Cnode { alloc = i_107_alloc; copy = i_107_copy ;
-                                   step = i_107_step ; reset = i_107_reset } = Infer_pf.sample 
-   in
+              step = i_107_step ; reset = i_107_reset } = Infer_pf.sample 
+  in
   let metrics_alloc _ =
     ();
     { i_100 = (false:bool) ;
@@ -55,14 +55,14 @@ let metrics  =
       self.i_100 <- true ;
       self.agg_g_73 <- 0 ;
       self.agg_mme_75 <- 0 ; self.agg_m_74 <- 0 ; self.agg_fp_72 <- 0):
-    unit) in 
+       unit) in 
   let metrics_step self ((prob_69:'a4) ,
                          ((true_tr_68:((int  * Mat.mat))list) ,
                           (tr_dist_67:(((int  * Mat.mat))list)Distribution.t))) =
     ((let (est_tr_79:((int  * Mat.mat))list) =
-          i_107_step self.i_107 (prob_69 , tr_dist_67) in
+        i_107_step self.i_107 (prob_69 , tr_dist_67) in
       let (est_tr_pos_80:((int  * Mat.mat))list) =
-          List.map position  est_tr_79 in
+        List.map position  est_tr_79 in
       (if self.i_100 then self.tr_match_92 <- Util.empty_matching) ;
       (let (l_99:Util.tr_map) = self.tr_match_92 in
        let ((_ ,
@@ -70,7 +70,7 @@ let metrics  =
              (metrics_86:int) ,
              (metrics_87:int) , (metrics_88:int) , (metrics_89:int)) ,
             (copy_106:Util.tr_map)) =
-           Util.matching l_99  true_tr_68  est_tr_pos_80 in
+         Util.matching l_99  true_tr_68  est_tr_pos_80 in
        self.tr_match_92 <- copy_106 ;
        self.i_100 <- false ;
        (let (l_96:int) = self.agg_g_73 in
@@ -82,23 +82,23 @@ let metrics  =
           (let (l_95:int) = self.agg_fp_72 in
            self.agg_fp_72 <- (+) l_95  metrics_86 ;
            (let (one_minus_mota_91:float) =
-                (/.) (float_of_int ((+) ((+) self.agg_fp_72  self.agg_m_74) 
-                                        self.agg_mme_75)) 
-                     (float_of_int self.agg_g_73) in
+              (/.) (float_of_int ((+) ((+) self.agg_fp_72  self.agg_m_74) 
+                                    self.agg_mme_75)) 
+                (float_of_int self.agg_g_73) in
             let (err_78:float) =
-                if (>=) one_minus_mota_91  1.
-                then infinity
-                else (-.) ((/.) 1.  ((-.) 1.  one_minus_mota_91))  1. in
+              if (>=) one_minus_mota_91  1.
+              then infinity
+              else (-.) ((/.) 1.  ((-.) 1.  one_minus_mota_91))  1. in
             err_78))))))):float) in
   Cnode { alloc = metrics_alloc; copy = metrics_copy ;
-                                 reset = metrics_reset ; step = metrics_step }
+          reset = metrics_reset ; step = metrics_step }
 type ('a) _main =
   { mutable i_108 : 'a }
 
 let main (particles_101:int) = 
   let Cnode { alloc = i_108_alloc; copy = i_108_copy ;
-                                   step = i_108_step ; reset = i_108_reset } = 
-  Infer_pf.infer particles_101  metrics  in
+              step = i_108_step ; reset = i_108_reset } = 
+    Infer_pf.infer particles_101  metrics  in
   let main_alloc _ =
     ();{ i_108 = i_108_alloc () (* discrete *)  } in
   let main_copy source dest =
@@ -108,8 +108,8 @@ let main (particles_101:int) =
   let main_step self (((true_tr_103:((int  * Mat.mat))list) , _) ,
                       (tr_distr_102:(((int  * Mat.mat))list)Distribution.t)) =
     ((let (err_distr_105:(float)Distribution.t) =
-          i_108_step self.i_108 (true_tr_103 , tr_distr_102) in
+        i_108_step self.i_108 (true_tr_103 , tr_distr_102) in
       let (err_104:float) = Distribution.mean_float err_distr_105 in
       err_104):float) in
   Cnode { alloc = main_alloc; copy = main_copy ;
-                              reset = main_reset ; step = main_step }
+          reset = main_reset ; step = main_step }

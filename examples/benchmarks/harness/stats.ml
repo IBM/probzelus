@@ -17,8 +17,8 @@
 
 let option_iter f o =
   begin match o with
-    | Some x -> f x
-    | None -> ()
+  | Some x -> f x
+  | None -> ()
   end
 
 let array_flatten arr =
@@ -49,8 +49,8 @@ let array_assoc x a =
     (fun (y, v) -> if x = y then res := Some v)
     a;
   begin match !res with
-    | None -> raise Not_found
-    | Some v -> v
+  | None -> raise Not_found
+  | Some v -> v
   end
 
 
@@ -91,14 +91,14 @@ let read_stats file =
   let ic = Scanf.Scanning.from_channel ch in
   let acc = ref [] in
   begin try
-      while true do
-        let entry =
-          Scanf.bscanf ic ("%d, %f, %f, %f\n")
-            (fun idx low mid high -> (idx, (low, mid, high)))
-        in
-        acc := entry :: !acc
+    while true do
+      let entry =
+        Scanf.bscanf ic ("%d, %f, %f, %f\n")
+          (fun idx low mid high -> (idx, (low, mid, high)))
+      in
+      acc := entry :: !acc
 
-      done
-    with End_of_file -> ()
+    done
+  with End_of_file -> ()
   end;
   Array.of_list (List.rev !acc)

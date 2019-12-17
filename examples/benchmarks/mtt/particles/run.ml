@@ -24,8 +24,8 @@ module M = struct
 
   let read_input () =
     let mk_vec a b =
-        Mat.of_arrays [| [| a |];
-                         [| b |] |]
+      Mat.of_arrays [| [| a |];
+                       [| b |] |]
     in
     let process_vec_list _ = 
       let rec process_list_helper fst =
@@ -34,9 +34,9 @@ module M = struct
           []
         with Scanf.Scan_failure _ ->
           let this_elem = if fst then
-            Scanf.scanf "(%f, %f)" (fun x y -> mk_vec x y) 
-          else 
-            Scanf.scanf ",(%f, %f)" (fun x y -> mk_vec x y) 
+              Scanf.scanf "(%f, %f)" (fun x y -> mk_vec x y) 
+            else 
+              Scanf.scanf ",(%f, %f)" (fun x y -> mk_vec x y) 
           in
           this_elem :: (process_list_helper false)
       in
@@ -51,9 +51,9 @@ module M = struct
           []
         with Scanf.Scan_failure _ ->
           let this_elem = if fst then
-            Scanf.scanf "(%i, %f, %f)" (fun i x y -> (i, mk_vec x y))
-          else 
-            Scanf.scanf ",(%i, %f, %f)" (fun i x y -> (i, mk_vec x y))
+              Scanf.scanf "(%i, %f, %f)" (fun i x y -> (i, mk_vec x y))
+            else 
+              Scanf.scanf ",(%i, %f, %f)" (fun i x y -> (i, mk_vec x y))
           in
           this_elem :: (process_list_helper false)
       in
