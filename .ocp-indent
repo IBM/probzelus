@@ -77,7 +77,7 @@ max_indent = 4
 # For example, the following is not indented if set to `always`:
 #    let f = function
 #    ^^| Foo -> bar
-strict_with = never
+strict_with = auto
 
 # Controls indentation after the `else` keyword. `always` indents after the
 # `else` keyword normally, like after `then`.
