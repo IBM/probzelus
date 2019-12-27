@@ -19,8 +19,14 @@ num_trials = 500
 def do_accuracy_run(num_particles, exe, fdir, subdir="tmp/"):
     acc_name = result_path + fdir + subdir + "acc" + str(num_particles) + ".csv"
 
+    rand = os.urandom(12)
+    seed = ""
+    for i in range(0,12):
+        seed += str(rand[i])
+        if i != 11:
+            seed += ","
+
     seed_name = result_path + fdir + subdir + "seed" + str(num_particles)
-    seed = datetime.now().microsecond
     f = open(seed_name, 'w')
     f.write(str(seed) + "\n")
     f.close()
@@ -30,7 +36,7 @@ def do_accuracy_run(num_particles, exe, fdir, subdir="tmp/"):
               "-max-particles " + str(num_particles) + " "\
               "-num-runs " + str(num_trials) + " "\
               "-acc " + acc_name + " "\
-              "-seed " + str(seed)
+              "-seed-long " + str(seed)
     cmd = "cat " + data_path + " | " + exe + " " + options
     print(cmd)
     os.system(cmd)
@@ -79,7 +85,7 @@ def write_data_sds(data, fn, subdir="tmp/"):
 def read_seed(seed_num, fdir, subdir="tmp/"):
     fname = result_path + fdir + subdir + "seed" + str(seed_num)
     f = open(fname, 'r')
-    return int(f.read())
+    return (f.read())
 
 def read_seed_particles(seed_num, subdir="tmp/"):
     return read_seed(seed_num, particle_dir, subdir)
@@ -88,7 +94,7 @@ def write_seeds(seeds, fn, fdir, subdir="tmp/"):
     fname = result_path + fdir + subdir + fn
     f = open(fname, 'w')
     for seed in seeds:
-        f.write(str(seed) + "\n")
+        f.write(seed)
 
 def write_seeds_particles(seeds, fn, subdir="tmp/"):
     write_seeds(seeds, fn, particle_dir, subdir)

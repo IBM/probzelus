@@ -41,6 +41,7 @@ module Make(M: sig
     let select_particle = ref None
     let num_runs = ref 10
     let seed = ref None
+    let seed_long = ref None
     let upper_quantile = 0.9
     let lower_quantile = 0.1
     let middle_quantile = 0.5
@@ -79,15 +80,22 @@ module Make(M: sig
          "n Increment in the particles interval");
         ("-seed", Int (fun i -> seed := Some i),
          "n Set seed of random number generator");
+        ("-seed-long", String (fun s -> seed_long := Some s),
+         "n Set seed of random number generator (extra bits)");
       ]
 
     let () =
       Arg.parse args (fun _ -> ()) "particles test harness"
 
     let () =
-      begin match !seed with
-      | None -> Random.self_init()
-      | Some i -> Random.init i
+      begin match (!seed, !seed_long) with
+      | None, None -> Random.self_init()
+      | Some i, None -> Random.init i
+      | _, Some s ->
+        let ints = List.map (fun si -> int_of_string si)
+          (String.split_on_char ',' s)
+        in
+        Random.full_init (Array.of_list ints)
       end
 
     let () =
