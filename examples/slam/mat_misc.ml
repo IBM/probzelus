@@ -19,12 +19,14 @@ open Ztypes
 
 let with_graphics, max_x, max_y =
   let with_graphics = ref true in
-  let n = ref 5 in
+  let x = ref 5 in
+  let y = ref 5 in
   Arg.parse
     [ "-nox", Arg.Clear with_graphics, "Disable the graphics interface";
-      "-n", Arg.Set_int n, "Set the size of the map"; ]
+      "-x", Arg.Set_int x, "Set the xsize of the map";
+      "-y", Arg.Set_int y, "Set the ysize of the map"; ]
     (fun _ -> ()) "options:";
-  !with_graphics, !n - 1, !n - 1
+  !with_graphics, !x - 1, !y - 1
 
 type 'a t = 'a array array
 

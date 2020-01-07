@@ -20,9 +20,9 @@ open Infer_ds_gc
 
 type direction = Up | Down | Left | Right
 
-let particles = 1000
-let sensor_noise = 0.1
-let wheel_noise = 0.05
+let particles = 500
+let sensor_noise = 0.05
+let wheel_noise = 0.01
 let max_x = Mat_misc.max_x
 let max_y = Mat_misc.max_y
 
@@ -76,11 +76,6 @@ let node slam_ctrl (event, pos_dist) = dir where
       end
 
 
-
-
-
-
-
 let node slam_obs real_map dir = (obs, x, y) where
   rec init x = 0
   and init y = 0
@@ -102,18 +97,30 @@ let node slam_obs real_map dir = (obs, x, y) where
 let random_init = Random.self_init ()
 
 let real_map =
-    Mat_misc.of_list
+    (*Mat_misc.of_list
     [[false; true; false; false; false];
      [true; false; false; true; false];
      [true; false; false; false; false];
      [true; false; false; true; false];
-     [false; true; false; false; false]]
+     [false; true; false; false; false]]*)
+    Mat_misc.of_list
+    [[false; false; false; false; false];
+     [true ; false; false; false; true ];
+     [true ; true ; true ; true ; true ];
+     [true ; false; false; false; true ];
+     [false; false; false; false; false ];
+     [true ; true ; true ; true ; true ];
+     [true ; false; true ; false; true ];
+     [true ; false; true ; false; true ];
+     [false; true ; false; true ; false];
+     [false; false; false; false; false ];
+     [true ; true ; true ; true ; true ];
+     [false; false; false; true; false ];
+     [false; false; true ; false; false ];
+     [false; false; false; true; false ];
+     [true ; true ; true ; true ; true ];
+     [false; false; false; false; false]]
   (*Mat_misc.random (max_x + 1) (max_y + 1) 0.6 *)
-
-
-
-
-
 
 
 let node main_2d () = () where
@@ -121,14 +128,14 @@ let node main_2d () = () where
   and d0 = Distribution.of_pair (Distribution.uniform_int(0, max_x), Distribution.uniform_int(0, max_y))
   and dir = Right -> (slam_ctrl (event, d0 -> pre pos_dist))
   and (obs, real_x, real_y) = slam_obs real_map dir
-  and event = Mat_misc.input ()
-  and t = 1. fby (t +. 1.)
+  and event = present (t mod 100 = 2) -> Mat_misc.input () else 0
+  and t = 1 fby (t + 1)
   and map_d = Distribution.split_matrix map_dist
   and d_x, d_y = Distribution.split pos_dist
   and error = Mat_misc.error (real_map, real_x, real_y) map_d d_x d_y
   and total_error = error -> (pre total_error) +. error
-  and mse = total_error /. t
-  and () = print_float t; print_string ": "; print_float mse; print_newline()
+  and mse = total_error /. (float t)
+  and () = print_int t; print_string ": "; print_float mse; print_newline()
   and automaton
       | Init -> do () = Mat_misc.draw_map real_map then Go
       | Go -> do () = Mat_misc.output_ds real_map real_x real_y obs map_dist pos_dist done
