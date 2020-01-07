@@ -523,7 +523,7 @@ module Make(DS_ll: DS_ll_S) = struct
     | Earray a ->
         Dist_array (Array.map distribution_of_expr a)
     | Ematrix a ->
-        Dist_matrix (Array.map (fun ai -> Array.map distribution_of_expr ai) a)
+        Dist_array (Array.map (fun ai -> Distribution.Dist_array (Array.map distribution_of_expr ai)) a)
     | Elist l ->
         Dist_list (List.map distribution_of_expr l)
     | Emat_add (_, _) ->

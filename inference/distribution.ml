@@ -38,7 +38,6 @@ type _ t =
   | Dist_pair : 'a t * 'b t -> ('a * 'b) t
   | Dist_list : 'a t list -> 'a list t
   | Dist_array : 'a t array -> 'a array t
-  | Dist_matrix : 'a t array array -> 'a array array t
   | Dist_gaussian : float * float -> float t
   | Dist_beta : float * float -> float t
   | Dist_bernoulli : float -> bool t
@@ -525,7 +524,6 @@ let rec to_dist_support : type a. a t -> a t =
   | Dist_pair(_, _) -> assert false (* XXX TODO XXX *)
   | Dist_list _ -> assert false (* XXX TODO XXX *)
   | Dist_array _ -> assert false (* XXX TODO XXX *)
-  | Dist_matrix _ -> assert false (* XXX TODO XXX *)
   | Dist_gaussian (_, _) -> assert false
   | Dist_mv_gaussian (_, _) -> assert false
   | Dist_beta (_, _) -> assert false
@@ -593,8 +591,6 @@ let rec draw : type a. a t -> a =
       List.map (fun ed -> draw ed) a
   | Dist_array a ->
       Array.map (fun ed -> draw ed) a
-  | Dist_matrix a ->
-      Array.map (Array.map (fun ed -> draw ed)) a
   | Dist_add (d1, d2) ->
       draw d1 +. draw d2
   | Dist_mult (d1, d2) ->
@@ -657,20 +653,6 @@ let rec score : type a. a t * a -> log_proba =
         !acc
       else
         neg_infinity
-  | Dist_matrix a ->
-      (* XXX TO CHECK XXX *)
-      let x_len = Array.length a in
-      let y_len = Array.length a.(0) in
-      if Array.length x = x_len && Array.length x.(0) = y_len then
-        let acc = ref 0. in
-        for i = 0 to x_len - 1 do
-          for j = 0 to y_len -1 do
-            acc := !acc +. score (a.(i).(j), x.(i).(j))
-          done
-        done;
-        !acc
-      else
-        neg_infinity
   | Dist_add (Dist_support [c, 1.], d) -> score (d, x -. c)
   | Dist_add (d, Dist_support [c, 1.]) -> score (d, x -. c)
   | Dist_add (_, _) -> score (to_dist_support dist, x)
@@ -717,9 +699,6 @@ let draw_and_score : type a. a t -> a * log_proba =
       let x = draw dist in
       (x, score (dist, x))
   | Dist_array _ ->
-      let x = draw dist in
-      (x, score (dist, x))
-  | Dist_matrix _ ->
       let x = draw dist in
       (x, score (dist, x))
   | Dist_gaussian _ ->
@@ -864,7 +843,6 @@ let rec split_array : type a. a array t -> a t array =
         l;
       Array.map (fun acc -> Dist_mixture acc) accs
   | Dist_array a -> a
-  | Dist_matrix _ -> assert false
   | Dist_app (_, _) ->
       (* We assume that all arrays in the distribution have the same length. *)
       let len = Array.length (draw dist) in
@@ -879,7 +857,7 @@ let rec split_array : type a. a array t -> a t array =
 let rec split_matrix : type a. a array array t -> a t array array = 
   fun dist -> 
   begin match dist with
-  | Dist_matrix a -> a
+  | Dist_array a -> Array.map split_array a
   | Dist_support [] -> Array.make_matrix 0 0 (Dist_support [])
   | Dist_support (((m0, _) :: _) as support) ->
       let n = (Array.length m0) in
@@ -1179,8 +1157,6 @@ let rec mean : type a. (a -> float) -> a t -> float =
         assert false (* XXX TODO XXX *)
     | Dist_array _ ->
         assert false (* XXX TODO XXX *)
-    | Dist_matrix _ ->
-        assert false (* XXX TODO XXX *)
     (* Array.fold_left (fun acc d -> acc +. mean meanfn d) 0. a *)
     | Dist_add (d1, d2) ->
         let m1= mean meanfn d1 in
@@ -1288,7 +1264,6 @@ let rec mean_matrix (d: Mat.mat t)=
   | Dist_pair _ -> assert false
   | Dist_list _ -> assert false
   | Dist_array _ -> assert false
-  | Dist_matrix _ -> assert false
   | Dist_gaussian _ -> assert false
   | Dist_beta _ -> assert false
   | Dist_bernoulli _ -> assert false
