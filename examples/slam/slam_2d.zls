@@ -42,17 +42,13 @@ let proba move (x_init, y_init, cmd) = x, y where
   and wheel_slip = sample (bernoulli (const wheel_noise))
 
 
-let proba read (obs) = o where
-  rec error = sample (bernoulli (const sensor_noise))
-  and o = if eval error then not obs else obs
-
 let proba beta_priors i = sample (beta (1., 1.))
 
 let proba slam (obs, cmd) = pair (matrix map, pair (const x, const y)) where
   rec init map = Mat_misc.ini (max_x + 1) (max_y + 1) beta_priors ()
   and x, y = move (0, 0, cmd)
   and o = Mat_misc.get map x y
-  and () = observe (bernoulli o, read(obs))
+  and () = observe (bernoulli o, obs)
 
 let node slam_ctrl (event, pos_dist) = dir where
   rec x, y = Distribution.draw pos_dist
