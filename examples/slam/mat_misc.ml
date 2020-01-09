@@ -19,7 +19,7 @@ open Ztypes
 
 let with_graphics, max_x, max_y =
   let with_graphics = ref true in
-  let x = ref 5 in
+  let x = ref 16 in
   let y = ref 5 in
   Arg.parse
     [ "-nox", Arg.Clear with_graphics, "Disable the graphics interface";
