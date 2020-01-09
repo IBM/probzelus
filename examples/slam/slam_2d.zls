@@ -50,9 +50,8 @@ let proba slam (obs, cmd) = pair (matrix map, pair (const x, const y)) where
   and o = Mat_misc.get map x y
   and () = observe (bernoulli o, obs)
 
-let node slam_ctrl (event, pos_dist) = dir where
-  rec x, y = Distribution.draw pos_dist
-  and automaton
+let node slam_ctrl_auto (x,y) = dir where
+  rec automaton
       | Horz(right) ->
           do dir = if right then Right else Left
           unless (x = max_x) then Vert(true)
@@ -69,6 +68,17 @@ let node slam_ctrl (event, pos_dist) = dir where
       | Down ->
            do vdir = Down
            unless (y = 0) then Up
+      end
+
+let node slam_ctrl (event, pos_dist) = dir where
+  rec x, y = Distribution.draw pos_dist
+  and () = print_int event; print_newline ()
+  and match event with
+      | 1 -> do dir = Right done
+      | -1 -> do dir = Left done
+      | 2 -> do dir = Up done
+      | -2 -> do dir = Down done
+      | _ -> do dir = slam_ctrl_auto (x, y) done
       end
 
 
@@ -122,9 +132,17 @@ let real_map =
 let node main_2d () = () where
   rec map_dist, pos_dist = Distribution.split (infer particles slam (obs, dir))
   and d0 = Distribution.of_pair (Distribution.uniform_int(0, max_x), Distribution.uniform_int(0, max_y))
-  and dir = Right -> (slam_ctrl (event, d0 -> pre pos_dist))
+  and dir = slam_ctrl (event, d0 -> pre pos_dist)
   and (obs, real_x, real_y) = slam_obs real_map dir
-  and event = present (t mod 100 = 2) -> Mat_misc.input () else 0
+  and automaton
+      | Manual ->
+          do event = Mat_misc.input ()
+          until (event = 0) then Auto
+      | Auto ->
+          local cpt in
+          do cpt = 1 fby (cpt + 1)
+          until (cpt = 100) then Manual
+      end
   and t = 1 fby (t + 1)
   and map_d = Distribution.split_matrix map_dist
   and d_x, d_y = Distribution.split pos_dist

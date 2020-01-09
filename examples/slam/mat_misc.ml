@@ -95,6 +95,10 @@ let clear () =
 let wait_event () =
   let c = Graphics.read_key () in
   begin match c with
+  | 'l' | 's' ->  -1
+  | 'r' | 'f' ->  1
+  | 'u' | 'e' -> 2
+  | 'd' -> -2
   | 'q' -> exit 0
   | _ -> 0
   end
