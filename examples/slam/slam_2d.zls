@@ -22,7 +22,7 @@ type direction = Up | Down | Left | Right
 
 let particles = 500
 let sensor_noise = 0.05
-let wheel_noise = 0.01
+let wheel_noise = 0.025
 let max_x = Mat_misc.max_x
 let max_y = Mat_misc.max_y
 
@@ -72,7 +72,6 @@ let node slam_ctrl_auto (x,y) = dir where
 
 let node slam_ctrl (event, pos_dist) = dir where
   rec x, y = Distribution.draw pos_dist
-  and () = print_int event; print_newline ()
   and match event with
       | 1 -> do dir = Right done
       | -1 -> do dir = Left done
@@ -131,17 +130,26 @@ let real_map =
 
 let node main_2d () = () where
   rec map_dist, pos_dist = Distribution.split (infer particles slam (obs, dir))
+  and automaton
+      (* | Init -> do () = Mat_misc.draw_map real_map then Go *)
+      | Go -> do () = Mat_misc.output_ds real_map real_x real_y obs map_dist pos_dist done
   and d0 = Distribution.of_pair (Distribution.uniform_int(0, max_x), Distribution.uniform_int(0, max_y))
   and dir = slam_ctrl (event, d0 -> pre pos_dist)
   and (obs, real_x, real_y) = slam_obs real_map dir
   and automaton
+      | Init -> do event = -1 then Manual
       | Manual ->
           do event = Mat_misc.input ()
-          until (event = 0) then Auto
-      | Auto ->
-          local cpt in
-          do cpt = 1 fby (cpt + 1)
-          until (cpt = 100) then Manual
+          until (* (event = 0) then Auto *)
+          (* else  *)(event = 42) then Monitoring
+      | Monitoring ->
+          do event = 0
+          until (pmse <= 6.) then Manual
+      (* | Auto -> *)
+      (*     local cpt in *)
+      (*     do cpt = 1 fby (cpt + 1) *)
+      (*     and event = 0 *)
+      (*     until (cpt = 1) then Manual *)
       end
   and t = 1 fby (t + 1)
   and map_d = Distribution.split_matrix map_dist
@@ -149,7 +157,5 @@ let node main_2d () = () where
   and error = Mat_misc.error (real_map, real_x, real_y) map_d d_x d_y
   and total_error = error -> (pre total_error) +. error
   and mse = total_error /. (float t)
+  and pmse = 10. fby mse
   and () = print_int t; print_string ": "; print_float mse; print_newline()
-  and automaton
-      | Init -> do () = Mat_misc.draw_map real_map then Go
-      | Go -> do () = Mat_misc.output_ds real_map real_x real_y obs map_dist pos_dist done
