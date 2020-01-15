@@ -161,7 +161,9 @@ let mv_gaussian_draw mu sigma =
   let u, s, _ = Linalg.Generic.svd sigma in
   let a = Mat.(u *@ (sqrt (diagm s))) in
   let n = (Arr.shape mu).(0) in
-  let xs = Arr.gaussian ~mu:0. ~sigma:1. [| n; 1 |] in
+  let xs = Arr.init [| n; 1 |] (fun _ ->
+    gaussian_draw 0. 1.
+  ) in
   Mat.(mu + a *@ xs)
 
 let mv_gaussian_score mu sigma x =
