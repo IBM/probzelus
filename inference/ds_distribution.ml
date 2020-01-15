@@ -34,6 +34,7 @@ type ('m1, 'm2) cdistr =
   | AffineMeanGaussianMV :
       Mat.mat * Mat.mat * Mat.mat -> (Mat.mat, Mat.mat) cdistr
   | CBernoulli : (float, bool) cdistr
+  | CBernBern : (bool -> float) -> (bool, bool) cdistr
 
 
 (** {2 Distribution manipulations} *)
@@ -48,6 +49,8 @@ let cdistr_to_mdistr : type a b.
       Distribution.bernoulli obs
   | AffineMeanGaussianMV (m, b, sigma) ->
       Distribution.mv_gaussian (Mat.add (Mat.dot m obs) b, sigma)
+  | CBernBern (bfn) ->
+      Distribution.bernoulli (bfn obs)
   end
 
 let make_marginal : type a b.
@@ -66,6 +69,11 @@ let make_marginal : type a b.
       Distribution.mv_gaussian (mu', sigma')
   | Dist_beta (a, b),  CBernoulli ->
       Distribution.bernoulli (a /. (a +. b))
+  | Dist_bernoulli (p_prior), CBernBern bfn ->
+    let p_marg = (p_prior *. (bfn true)) +. 
+                 ((1. -. p_prior) *. (bfn false)) in
+    Distribution.bernoulli p_marg
+
   | _ -> assert false
   end
 
@@ -102,5 +110,9 @@ let make_conditional : type a b.
     | Dist_beta (a, b),  CBernoulli ->
         if obs then Dist_beta (a +. 1., b)
         else Dist_beta (a, b +. 1.)
+    | Dist_bernoulli (p_prior), CBernBern bfn ->
+        let p_true = p_prior *. (bfn true) in
+        let p_false= (1. -. p_prior) *. (bfn false) in
+        Distribution.bernoulli (p_true /. (p_true +. p_false))
     | _, _ -> assert false
     end

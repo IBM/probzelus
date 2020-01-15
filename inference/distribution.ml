@@ -1140,7 +1140,7 @@ let rec mean : type a. (a -> float) -> a t -> float =
         sample_mean meanfn (fun () -> mv_gaussian_draw mu sigma)
     | Dist_beta (a, b) -> beta_draw a b
     | Dist_bernoulli p ->
-        sample_mean meanfn (fun () -> bernoulli_draw p)
+        (p *. (meanfn true)) +. ((1. -. p) *. (meanfn false))
     | Dist_uniform_int (a, b) ->
         sample_mean meanfn (fun () -> uniform_int_draw a b)
     | Dist_uniform_float (a, b) ->

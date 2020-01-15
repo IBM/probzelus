@@ -43,6 +43,14 @@ let of_list = Array.of_list
 
 let make = Array.make
 
+let mean_bool = Distribution.mean (fun b ->
+    if b then
+        1.
+    else
+        0.
+  ) 
+
+
 let ini n (Cnode f)  =
   let alloc () = f.alloc () in
   let reset state = f.reset state in
@@ -134,7 +142,7 @@ let draw_map_dist map_dist =
 
 let draw_map_dist_ds map_dist =
   let mw = Array.map
-      (fun d -> Distribution.mean_float d)
+      (fun d -> Distribution.mean_bool d)
       (Distribution.split_array map_dist)
   in
   Array.iteri (fun i w ->
@@ -172,8 +180,10 @@ let output =
        draw_position_dist pos_dist;
        clear ())
   else
+    (fun _ -> assert false)
+(*
     (fun real_map real_x obs map_dist pos_dist ->
-       print_map_dist map_dist)
+       print_map_dist map_dist) *)
 
 let output_ds =
   if with_graphics then
@@ -199,6 +209,6 @@ let error (map, x) map_d d_x =
   let len = Array.length map in
   let e = ref ((float x -. Distribution.mean_int d_x) ** 2.) in
   for i = 0 to len - 1 do
-    e := !e +. (float_of_bool map.(i) -. mean_float map_d.(i)) ** 2.
+    e := !e +. (float_of_bool map.(i) -. mean_bool map_d.(i)) ** 2.
   done;
   !e

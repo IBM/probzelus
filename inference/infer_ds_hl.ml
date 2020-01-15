@@ -57,6 +57,7 @@ module Make(DS_ll: DS_ll_S) = struct
     | Earray : 'a expr array -> 'a array expr_tree
     | Ematrix : 'a expr array array -> 'a array array expr_tree
     | Elist : 'a expr list -> 'a list expr_tree
+    | Eite : bool expr * 'a expr * 'a expr -> 'a expr_tree
     | Emat_add : Mat.mat expr * Mat.mat expr -> Mat.mat expr_tree
     | Emat_scalar_mul : float expr * Mat.mat expr -> Mat.mat expr_tree
     | Emat_dot : Mat.mat expr * Mat.mat expr -> Mat.mat expr_tree
@@ -113,6 +114,11 @@ module Make(DS_ll: DS_ll_S) = struct
 
   let lst l =
     { value = Elist l}
+
+  let ite : type a. bool expr -> a expr -> a expr -> a expr =
+    begin fun i t e ->
+      { value = Eite (i,t,e) }
+    end
 
   let mat_add : (Mat.mat expr * Mat.mat expr) -> Mat.mat expr =
     begin fun (e1, e2) ->
@@ -181,6 +187,15 @@ module Make(DS_ll: DS_ll_S) = struct
           Array.map (Array.map eval) a
       | Elist l ->
           List.map eval l
+      | Eite (i,t,e) ->
+          let v =
+            if eval i then
+              eval t
+            else
+              eval e
+          in
+          e.value <- Econst v;
+          v
       | Emat_add (e1, e2) ->
           let v = Mat.add (eval e1) (eval e2) in
           e.value <- Econst v;
@@ -223,6 +238,7 @@ module Make(DS_ll: DS_ll_S) = struct
         "(" ^ string_of_expr e1 ^ " * " ^ string_of_expr e2 ^ ")"
     | Eapp (_e1, _e2) -> "App"
     | Evec_get _ -> "Get"
+    | Eite (_, t, e) -> "(if ... then " ^ string_of_expr t ^ " else " ^ string_of_expr e ^ ")" 
     | Emat_add (_, _) -> assert false
     | Emat_scalar_mul (_, _) -> assert false
     | Emat_dot (_, _) -> assert false
@@ -311,6 +327,7 @@ module Make(DS_ll: DS_ll_S) = struct
           | _ -> None
           end
       | Eapp (_, _) -> None
+      | Eite (_, _, _) -> None
       | Emat_add (_, _) -> assert false
       | Emat_scalar_mul (_, _) -> assert false
       | Emat_dot (_, _) -> assert false
@@ -484,24 +501,25 @@ module Make(DS_ll: DS_ll_S) = struct
   (** Bernoulli distribution (bernoulliPD in Haskell) *)
   let bernoulli p =
     let d () = Distribution.bernoulli (eval p) in
-    let with_beta_prior f =
+    let is _prob =
       begin match p.value with
       | Ervar (RV par) ->
           begin match DS_ll.get_distr_kind par with
-          | KBeta -> Some (f (RV par))
+          | KBeta -> Some { value = Ervar (RV (DS_ll.assume_conditional par CBernoulli)) }
           | _ -> None
           end
       | _ -> None
       end
     in
-    let is _prob =
-      with_beta_prior
-        (fun (RV par) ->
-           { value = Ervar (RV (DS_ll.assume_conditional par CBernoulli)) })
-    in
     let iobs (prob, obs) =
-      with_beta_prior
-        (fun (RV par) -> DS_ll.observe_conditional prob par CBernoulli obs)
+      begin match p.value with
+      | Ervar (RV par) ->
+          begin match DS_ll.get_distr_kind par with
+          | KBeta -> Some (DS_ll.observe_conditional prob par CBernoulli obs)
+          | _ -> None
+          end
+      | _ -> None
+      end
     in
     ds_distr_with_fallback d is iobs
 
@@ -526,6 +544,8 @@ module Make(DS_ll: DS_ll_S) = struct
         Dist_array (Array.map (fun ai -> Distribution.Dist_array (Array.map distribution_of_expr ai)) a)
     | Elist l ->
         Dist_list (List.map distribution_of_expr l)
+    | Eite (_, _, _) -> (* XXX TODO XXX *)
+        assert false
     | Emat_add (_, _) ->
         assert false (* XXX TODO XXX *)
     | Emat_scalar_mul (_e1, _e2) ->

@@ -199,6 +199,7 @@ let get_distr_kind : type a b.
   | Initialized (_, AffineMeanGaussianMV (_, _, _)) -> KMVGaussian
   | Marginalized (Dist_mv_gaussian (_, _), _) -> KMVGaussian
   | Initialized (_, CBernoulli) -> KBernoulli
+  | Initialized (_, CBernBern _) -> KBernoulli
   | Marginalized (Dist_bernoulli _, _) -> KBernoulli
   | Marginalized (Dist_beta _, _) -> KBeta
   | Marginalized (( Dist_sampler _
