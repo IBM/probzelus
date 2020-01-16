@@ -41,6 +41,11 @@ val draw : 'a t -> 'a
 val score : 'a t * 'a -> float
 val draw_and_score : 'a t -> 'a * float
 
+val print_any_t : 'a t -AD-> unit
+val print_float_t : float t -AD-> unit
+val print_int_t : int t -AD-> unit
+val print_bool_t : bool t -AD-> unit
+
 val stats_float : float t -> float * float
 val mean_float : float t -> float
 val stats_float_list : float list t -> (float * float) list

@@ -53,6 +53,111 @@ type _ t =
 
 (** {2 Utils}*)
 
+let pp_print_any : type a. Format.formatter -> a -> unit =
+  fun ppf _ ->
+  Format.fprintf ppf "_"
+
+let pp_print_array :
+  type a. ?pp_sep:(Format.formatter -> unit -> unit) ->
+  (Format.formatter -> a -> unit) -> Format.formatter -> a array -> unit =
+  fun ?pp_sep pp_v ppf a ->
+  let l = Array.to_list a in
+  begin match pp_sep with
+  | None -> Format.pp_print_list pp_v ppf l
+  | Some pp_s -> Format.pp_print_list ~pp_sep:pp_s pp_v ppf l
+  end
+
+let rec pp_print :
+  type a. (Format.formatter -> a -> unit) -> Format.formatter -> a t -> unit =
+  fun pp_v ppf dist ->
+  begin match dist with
+  | Dist_sampler (_, _) ->
+      Format.fprintf ppf "sample(_, _)"
+  | Dist_sampler_float (_, _, _) ->
+      Format.fprintf ppf "sample(_, _)"
+  | Dist_support l ->
+      Format.fprintf ppf "support [ @[%a@] ]"
+        (Format.pp_print_list
+           ~pp_sep:(fun ppf () -> Format.fprintf ppf ",@ ")
+           (fun ppf (v, p) -> Format.fprintf ppf "(%a, %f)" pp_v v p))
+        l
+  | Dist_mixture l ->
+      Format.fprintf ppf "mixture [ @[%a@] ]"
+        (Format.pp_print_list
+           ~pp_sep:(fun ppf () -> Format.fprintf ppf ",@ ")
+           (fun ppf (v, p) ->
+              Format.fprintf ppf "(%a, %f)" (pp_print pp_v) v p))
+        l
+  | Dist_pair (d1, d2) ->
+      Format.fprintf ppf "(%a, %a)"
+      (pp_print pp_print_any) d1
+      (pp_print pp_print_any) d2
+  | Dist_list l ->
+      Format.fprintf ppf "[ @[%a@] ]"
+        (Format.pp_print_list
+           ~pp_sep:(fun ppf () -> Format.fprintf ppf ",@ ")
+           (fun ppf d ->
+              Format.fprintf ppf "%a" (pp_print pp_print_any) d))
+        l
+  | Dist_array a ->
+      Format.fprintf ppf "[| @[%a@] |]"
+        (pp_print_array
+           ~pp_sep:(fun ppf () -> Format.fprintf ppf ",@ ")
+           (fun ppf d ->
+              Format.fprintf ppf "%a" (pp_print pp_print_any) d))
+        a
+  | Dist_gaussian (mean, sigma2) ->
+      Format.fprintf ppf "gaussian (%f, %f)" mean sigma2
+  | Dist_beta (a, b) ->
+      Format.fprintf ppf "beta (%f, %f)" a b
+  | Dist_bernoulli p ->
+      Format.fprintf ppf "bernoulli %f" p
+  | Dist_uniform_int (a, b) ->
+      Format.fprintf ppf "uniform_int (%d, %d)" a b
+  | Dist_uniform_float (a, b) ->
+      Format.fprintf ppf "uniform_float (%f, %f)" a b
+  | Dist_exponential lambda ->
+      Format.fprintf ppf "exponential %f" lambda
+  | Dist_poisson lambda ->
+      Format.fprintf ppf "poisson %f" lambda
+  | Dist_add (a, b) ->
+      Format.fprintf ppf "(%a + %a)"
+        (pp_print pp_v) a (pp_print pp_v) b
+  | Dist_mult (a, b) ->
+      Format.fprintf ppf "(%a * %a)"
+        (pp_print pp_v) a (pp_print pp_v) b
+  | Dist_app (f, x) ->
+      Format.fprintf ppf "(%a) (%a)"
+        (pp_print pp_print_any) f (pp_print pp_print_any) x
+  | Dist_mv_gaussian (mu, sigma) ->
+      (* XXX TODO XXX *)
+      Format.fprintf ppf "mv_gaussian (%a, %a)"
+        pp_print_any mu
+        pp_print_any sigma
+  end
+
+let print_any_t : type a. a t -> unit =
+  fun dist ->
+  Format.printf "%a@?" (pp_print pp_print_any) dist
+
+let print_float_t : float t -> unit =
+  fun dist ->
+  Format.printf "%a@?"
+    (pp_print (fun ppf v -> Format.fprintf ppf "%f" v))
+    dist
+
+let print_int_t : int t -> unit =
+  fun dist ->
+  Format.printf "%a@?"
+    (pp_print (fun ppf v -> Format.fprintf ppf "%d" v))
+    dist
+
+let print_bool_t : bool t -> unit =
+  fun dist ->
+  Format.printf "%a@?"
+    (pp_print (fun ppf v -> Format.fprintf ppf "%B" v))
+    dist
+
 module Map_float = Map.Make(struct
     (* type key = float *)
     type t = float
