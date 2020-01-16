@@ -39,6 +39,13 @@ let set a i j v =
   ai.(j) <- v;
   a.(i) <- ai;
   a
+  
+let mean_bool = Distribution.mean (fun b ->
+  if b then
+      1.
+  else
+      0.
+) 
 
 let of_list l = Array.of_list (List.map (Array.of_list) l)
 
@@ -155,7 +162,7 @@ let draw_map_dist_ds map_dist =
   let mw = Array.map 
       (fun ai -> 
          Array.map 
-           (fun d -> Distribution.mean_float d) 
+           (fun d -> Distribution.mean_bool d) 
            ai)
       (Distribution.split_matrix map_dist)
   in
@@ -232,7 +239,7 @@ let error (map, x, y) map_d d_x d_y =
   in
   for i = 0 to len_x - 1 do
     for j = 0 to len_y -1 do 
-      e := !e +. (float_of_bool map.(i).(j) -. mean_float map_d.(i).(j)) ** 2.
+      e := !e +. (float_of_bool map.(i).(j) -. mean_bool map_d.(i).(j)) ** 2.
     done
   done;
   !e

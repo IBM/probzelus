@@ -42,13 +42,15 @@ let proba move (x_init, y_init, cmd) = x, y where
   and wheel_slip = sample (bernoulli (const wheel_noise))
 
 
+let proba bernoulli_priors i = sample (bernoulli (const 0.5))
 let proba beta_priors i = sample (beta (1., 1.))
 
 let proba slam (obs, cmd) = pair (matrix map, pair (const x, const y)) where
-  rec init map = Mat_misc.ini (max_x + 1) (max_y + 1) beta_priors ()
+  rec init map = Mat_misc.ini (max_x + 1) (max_y + 1) bernoulli_priors ()
   and x, y = move (0, 0, cmd)
   and o = Mat_misc.get map x y
-  and () = observe (bernoulli o, obs)
+  and () = observe (bernoulli (Infer_ds_gc.ite o (const (1. -. sensor_noise)) (const sensor_noise)), obs)
+  (* and () = observe (bernoulli o, obs) *)
 
 let node slam_ctrl_auto (x,y) = dir where
   rec automaton

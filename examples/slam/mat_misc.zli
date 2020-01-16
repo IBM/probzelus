@@ -39,6 +39,6 @@ val output : bool t -> int -> int ->
     bool -> (float * float) t Distribution.t -> (int * int) Distribution.t -AD-> unit
 
 val output_ds : bool t -> int -> int ->
-    bool -> float t Distribution.t -> (int * int) Distribution.t -AD-> unit
+    bool -> bool t Distribution.t -> (int * int) Distribution.t -AD-> unit
 
-val error : bool array array * int * int -> float Distribution.t array array -> int Distribution.t -> int Distribution.t -> float
+val error : bool array array * int * int -> bool Distribution.t array array -> int Distribution.t -> int Distribution.t -> float
