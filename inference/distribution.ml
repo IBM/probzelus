@@ -1155,29 +1155,29 @@ let rec stats_float : float t -> float * float =
       in stats sup 0. 0.
   | Dist_mixture l ->
       (* https://stats.stackexchange.com/questions/16608/what-is-the-variance-of-the-weighted-mixture-of-two-gaussians *)
-      let rec stats l sum sq_sum sq_var_sum =
+      let rec stats l sum_mu sum_mu2 sum_sigma2 =
         begin match l with
         | [] ->
-            let mean = sum in
-            let var = sq_var_sum +. sq_sum -. sum *. sum in
+            let mean = sum_mu in
+            let var = sum_sigma2 +. sum_mu2 -. sum_mu *. sum_mu in
             (mean, var)
         | (d, w) :: l ->
-            let m, s = stats_float d in
+            let m, sigma2 = stats_float d in
             stats l
-              (sum +. w *. m)
-              (sq_sum +. w *. m *. m)
-              (sq_var_sum +. w *. s *. s)
+              (sum_mu +. w *. m)
+              (sum_mu2 +. w *. m *. m)
+              (sum_sigma2 +. w *. sigma2)
         end
       in
       stats l 0. 0. 0.
   | Dist_add (d1, d2) ->
-      let m1, s1 = stats_float d1 in
-      let m2, s2 = stats_float d2 in
-      m1 +. m2, s1 +. s2
+      let m1, var1 = stats_float d1 in
+      let m2, var2 = stats_float d2 in
+      m1 +. m2, var1 +. var2
   | Dist_mult (d1, d2) ->
-      let m1, s1 = stats_float d1 in
-      let m2, s2 = stats_float d2 in
-      m1 *. m2, s1 *. s2 +. s1 *. m2 ** 2. +. m2 *. m1 ** 2.
+      let m1, var1 = stats_float d1 in
+      let m2, var2 = stats_float d2 in
+      m1 *. m2, var1 *. var2 +. var1 *. m2 ** 2. +. m2 *. m1 ** 2.
   | Dist_app (_, _) as d ->
       stats_float (Dist_sampler ((fun () -> draw d), (fun _ -> assert false)))
   | Dist_mv_gaussian (_, _) -> assert false
