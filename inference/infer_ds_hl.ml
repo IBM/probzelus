@@ -508,6 +508,19 @@ module Make(DS_ll: DS_ll_S) = struct
           | KBeta -> Some { value = Ervar (RV (DS_ll.assume_conditional par CBernoulli)) }
           | _ -> None
           end
+      | Eite ({value = (Ervar (RV par))}, e_t, e_f) ->
+          begin match DS_ll.get_distr_kind par with
+          | KBernoulli -> 
+              let v_t = eval e_t in
+              let v_f = eval e_f in
+              Some {value = Ervar (RV (DS_ll.assume_conditional par (CBernBern (fun b ->
+                  if b then
+                      v_t
+                  else
+                      v_f
+              ))))}
+          | _ -> None
+          end
       | _ -> None
       end
     in
@@ -516,6 +529,19 @@ module Make(DS_ll: DS_ll_S) = struct
       | Ervar (RV par) ->
           begin match DS_ll.get_distr_kind par with
           | KBeta -> Some (DS_ll.observe_conditional prob par CBernoulli obs)
+          | _ -> None
+          end
+      | Eite ({value = (Ervar (RV par))}, e_t, e_f) ->
+          begin match DS_ll.get_distr_kind par with
+          | KBernoulli -> 
+              let v_t = eval e_t in
+              let v_f = eval e_f in
+              Some (DS_ll.observe_conditional prob par (CBernBern (fun b ->
+                  if b then
+                      v_t
+                  else
+                      v_f
+              )) obs)
           | _ -> None
           end
       | _ -> None
