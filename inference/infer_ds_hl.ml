@@ -371,17 +371,17 @@ module Make(DS_ll: DS_ll_S) = struct
     end
 
   (** Gaussian distribution (gaussianPD in Haskell) *)
-  let gaussian (mu, std) =
-    let d () = Distribution.gaussian(eval mu, std) in
+  let gaussian (mu, sigma2) =
+    let d () = Distribution.gaussian(eval mu, sigma2) in
     let is _prob =
       begin match affine_of_expr mu with
       | Some (AEconst v) ->
-          let rv = DS_ll.assume_constant (Dist_gaussian(v, std)) in
+          let rv = DS_ll.assume_constant (Dist_gaussian(v, sigma2)) in
           Some { value = (Ervar (RV rv)) }
       | Some (AErvar (m, RV x, b)) ->
           begin match DS_ll.get_distr_kind x with
           | KGaussian ->
-              let rv = DS_ll.assume_conditional x (AffineMeanGaussian(m, b, std)) in
+              let rv = DS_ll.assume_conditional x (AffineMeanGaussian(m, b, sigma2)) in
               Some { value = (Ervar (RV rv)) }
           | _ -> None
           end
@@ -393,7 +393,7 @@ module Make(DS_ll: DS_ll_S) = struct
                   let n, _ = Mat.shape v in
                   let mask = Mat.zeros 1 n in Mat.set mask 0 i 1.0;
                   let mu' = Mat.dot mask v in
-                  let cov = Mat.create 1 1 (std ** 2.) in
+                  let cov = Mat.create 1 1 sigma2 in
                   let rv = DS_ll.assume_constant (Dist_mv_gaussian(mu', cov)) in
                   Some { value = Evec_get ({ value = Ervar (RV rv)}, i)}
               | Some (AErvar (m, RV x, b)) ->
@@ -403,7 +403,7 @@ module Make(DS_ll: DS_ll_S) = struct
                       let mask = Mat.zeros 1 n in Mat.set mask 0 i 1.0;
                       let m' = Mat.dot mask m in
                       let b' = Mat.dot mask b in
-                      let cov = Mat.create 1 1 (std ** 2.) in
+                      let cov = Mat.create 1 1 sigma2 in
                       let rv = DS_ll.assume_conditional x (AffineMeanGaussianMV(m', b', cov)) in
                       Some { value = Evec_get ({ value = Ervar (RV rv)}, i)}
                   | _ -> None
@@ -421,7 +421,7 @@ module Make(DS_ll: DS_ll_S) = struct
       | Some (AErvar (m, RV x, b)) ->
           begin match DS_ll.get_distr_kind x with
           | KGaussian ->
-              Some (DS_ll.observe_conditional prob x (AffineMeanGaussian(m, b, std)) obs)
+              Some (DS_ll.observe_conditional prob x (AffineMeanGaussian(m, b, sigma2)) obs)
           | _ -> None
           end
       | None ->
@@ -436,7 +436,7 @@ module Make(DS_ll: DS_ll_S) = struct
                       let mask = Mat.zeros 1 n in Mat.set mask 0 i 1.0;
                       let m' = Mat.dot mask m in
                       let b' = Mat.dot mask b in
-                      let cov = Mat.create 1 1 (std ** 2.) in
+                      let cov = Mat.create 1 1 sigma2 in
                       let obs' = Mat.create 1 1 obs in
                       Some (DS_ll.observe_conditional prob x (AffineMeanGaussianMV(m', b', cov)) obs')
                   | _ -> None

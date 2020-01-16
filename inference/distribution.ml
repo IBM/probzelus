@@ -121,8 +121,8 @@ let bernoulli p =
   Dist_bernoulli p
 
 
-(** [gaussian(mu, sigma)] is a normal distribution of mean [mu] and
-    standard deviation [sigma].
+(** [gaussian(mu, sigma2)] is a normal distribution of mean [mu] and
+    variance [sigma2].
     @see<https://en.wikipedia.org/wiki/Normal_distribution>
 *)
 
@@ -133,24 +133,23 @@ let gaussian_draw =
     if u1 < epsilon_float then rand_pair ()
     else u1, u2
   in
-  fun mu sigma ->
+  fun mu sigma2 ->
     let u1, u2 = rand_pair() in
     let z = sqrt (-.2. *. log u1) *. cos (two_pi *. u2) in
-    z *. sigma +. mu
+    z *. sqrt sigma2 +. mu
 
-let gaussian_score mu sigma x =
-  let sigma2 = sigma ** 2. in
+let gaussian_score mu sigma2 x =
   -. 0.5 *. log (two_pi *. sigma2) -.
   (x -. mu) ** 2. /. (2. *. sigma2)
 
-let gaussian_mean mu _sigma =
+let gaussian_mean mu _sigma2 =
   mu
 
-let gaussian_variance _mu sigma =
-  sigma *. sigma
+let gaussian_variance _mu sigma2 =
+  sigma2
 
-let gaussian (mu, sigma) =
-  Dist_gaussian (mu, sigma)
+let gaussian (mu, sigma2) =
+  Dist_gaussian (mu, sigma2)
 
 (** [mv_gaussian(mu, sigma)] is a multivariate normal distribution of
     mean [mu] and standard deviation [sigma].
@@ -250,11 +249,11 @@ let beta (a, b) =
   assert (b > 0.);
   Dist_beta (a, b)
 
-(** [sph_gaussian(mus, sigmas)] is a spherical normal distribution.
+(** [sph_gaussian(mus, sigma2s)] is a spherical normal distribution.
     @see<https://en.wikipedia.org/wiki/Multivariate_normal_distribution>
 *)
-let sph_gaussian (mus, sigmas) =
-  Dist_list (List.map2 (fun mu sigma -> gaussian(mu, sigma)) mus sigmas)
+let sph_gaussian (mus, sigma2s) =
+  Dist_list (List.map2 (fun mu sigma2 -> gaussian(mu, sigma2)) mus sigma2s)
 
 
 (** [uniform_int(low, up)] is a uniform distribution over integers
@@ -579,7 +578,7 @@ let rec draw : type a. a t -> a =
   | Dist_mixture l ->
       let d' = draw (Dist_support l) in
       draw d'
-  | Dist_gaussian (mu, sigma) -> gaussian_draw mu sigma
+  | Dist_gaussian (mu, sigma2) -> gaussian_draw mu sigma2
   | Dist_mv_gaussian (mu, sigma) -> mv_gaussian_draw mu sigma
   | Dist_beta (a, b) -> beta_draw a b
   | Dist_bernoulli p -> bernoulli_draw p
@@ -623,7 +622,7 @@ let rec score : type a. a t * a -> log_proba =
           0. l
       in
       log p
-  | Dist_gaussian (mu, sigma) -> gaussian_score mu sigma x
+  | Dist_gaussian (mu, sigma2) -> gaussian_score mu sigma2 x
   | Dist_mv_gaussian (mu, sigma) -> mv_gaussian_score mu sigma x
   | Dist_beta (a, b) -> beta_score a b x
   | Dist_bernoulli p -> bernoulli_score p x
@@ -1025,13 +1024,13 @@ let rec stats_float : float t -> float * float =
             mean, var
         | _ ->
             let x = draw () in
-            stats (n+1) (sum +. x) (sq_sum +. x*.x)
+            stats (n+1) (sum +. x) (sq_sum +. x *. x)
         end
       in stats 0 0. 0.
   | Dist_sampler_float (_, _, stats) ->
       stats ()
-  | Dist_gaussian (a, b) ->
-      (gaussian_mean a b, gaussian_variance a b)
+  | Dist_gaussian (mu, sigma2) ->
+      (gaussian_mean mu sigma2, gaussian_variance mu sigma2)
   | Dist_beta (a, b) ->
       (beta_mean a b, beta_variance a b)
   | Dist_uniform_float (a, b) ->
@@ -1043,7 +1042,7 @@ let rec stats_float : float t -> float * float =
         begin match sup with
         | [] ->
             let mean = sum in
-            let var = sq_sum -. mean *. mean in
+            let var = sq_sum  -. mean *. mean in
             mean, var
         | (v,w) :: t ->
             stats t (sum +. v *. w) (sq_sum +. w *. v *. v)
@@ -1134,8 +1133,8 @@ let rec mean : type a. (a -> float) -> a t -> float =
     match dist with
     | Dist_sampler (draw, _) -> sample_mean meanfn draw
     | Dist_sampler_float (draw, _ , _) -> sample_mean meanfn draw
-    | Dist_gaussian (mu, sigma) ->
-        sample_mean meanfn (fun () -> gaussian_draw mu sigma)
+    | Dist_gaussian (mu, sigma2) ->
+        sample_mean meanfn (fun () -> gaussian_draw mu sigma2)
     | Dist_mv_gaussian (mu, sigma) ->
         sample_mean meanfn (fun () -> mv_gaussian_draw mu sigma)
     | Dist_beta (a, b) -> beta_draw a b
