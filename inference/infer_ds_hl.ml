@@ -245,6 +245,18 @@ module Make(DS_ll: DS_ll_S) = struct
 
     end
 
+  let string_of_bool_expr : bool expr -> string =
+    fun e ->
+    begin match e.value with
+    | Econst _ -> "Econst"
+    | Ervar _ -> "Ervar"
+    | Eapp _ -> "App"
+    | Eite (_, _, _) -> "Ite"
+    | Emat_add (_, _) -> assert false
+    | Emat_scalar_mul (_, _) -> assert false
+    | Emat_dot (_, _) -> assert false
+    end
+
   (* High level delayed sampling distribution (pdistribution in Haskell) *)
   type 'a ds_distribution =
     { isample : (pstate -> 'a expr);
@@ -508,20 +520,26 @@ module Make(DS_ll: DS_ll_S) = struct
           | KBeta -> Some { value = Ervar (RV (DS_ll.assume_conditional par CBernoulli)) }
           | _ -> None
           end
-      | Eite ({value = (Ervar (RV par))}, e_t, e_f) ->
-          begin match DS_ll.get_distr_kind par with
-          | KBernoulli -> 
-              let v_t = eval e_t in
-              let v_f = eval e_f in
-              Some {value = Ervar (RV (DS_ll.assume_conditional par (CBernBern (fun b ->
-                  if b then
-                      v_t
-                  else
-                      v_f
-              ))))}
+      | Eite (e_i, e_t, e_f) ->
+          begin match e_i.value with
+          | Ervar (RV par) ->
+              begin match DS_ll.get_distr_kind par with
+              | KBernoulli -> 
+                  let v_t = eval e_t in
+                  let v_f = eval e_f in
+                  Some {value = Ervar (RV (DS_ll.assume_conditional par (CBernBern (fun b ->
+                      if b then
+                          v_t
+                      else
+                          v_f
+                  ))))}
+              | _ -> None
+              end
           | _ -> None
           end
-      | _ -> None
+      | _ ->
+          let p_v = eval p in
+          Some {value = Ervar (RV (DS_ll.assume_constant (Dist_bernoulli p_v)))}
       end
     in
     let iobs (prob, obs) =
@@ -531,17 +549,21 @@ module Make(DS_ll: DS_ll_S) = struct
           | KBeta -> Some (DS_ll.observe_conditional prob par CBernoulli obs)
           | _ -> None
           end
-      | Eite ({value = (Ervar (RV par))}, e_t, e_f) ->
-          begin match DS_ll.get_distr_kind par with
-          | KBernoulli -> 
-              let v_t = eval e_t in
-              let v_f = eval e_f in
-              Some (DS_ll.observe_conditional prob par (CBernBern (fun b ->
-                  if b then
-                      v_t
-                  else
-                      v_f
-              )) obs)
+      | Eite (e_i, e_t, e_f) ->
+          begin match e_i.value with
+          | Ervar (RV par) ->
+              begin match DS_ll.get_distr_kind par with
+              | KBernoulli -> 
+                  let v_t = eval e_t in
+                  let v_f = eval e_f in
+                  Some (DS_ll.observe_conditional prob par (CBernBern (fun b ->
+                      if b then
+                          v_t
+                      else
+                          v_f
+                  )) obs)
+              | _ -> None
+              end
           | _ -> None
           end
       | _ -> None

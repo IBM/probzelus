@@ -78,6 +78,10 @@ let print_map_dist a =
        ^(string_of_float (mean_float d_false))^")")
     (Distribution.split_array a)
 
+let print_map_dist_ds a =
+  print
+    (fun d -> string_of_float (Distribution.mean_bool d))
+    (Distribution.split_array a)
 
 let init_graph max_pos =
   let size = " "^(string_of_int ((max_pos + 1) * 50))^"x100" in
@@ -194,9 +198,8 @@ let output_ds =
        draw_position_dist pos_dist;
        clear ())
   else
-    (fun _ -> assert false)
-(* (fun real_map real_x obs map_dist pos_dist -> *)
-(*    print_map_dist map_dist) *)
+    (fun real_map real_x obs map_dist pos_dist -> 
+      print_map_dist_ds map_dist) 
 
 let float_of_bool b =
   if b then 1. else 0.

@@ -36,7 +36,6 @@ type ('m1, 'm2) cdistr =
   | CBernoulli : (float, bool) cdistr
   | CBernBern : (bool -> float) -> (bool, bool) cdistr
 
-
 (** {2 Distribution manipulations} *)
 
 let cdistr_to_mdistr : type a b.
@@ -111,8 +110,12 @@ let make_conditional : type a b.
         if obs then Dist_beta (a +. 1., b)
         else Dist_beta (a, b +. 1.)
     | Dist_bernoulli (p_prior), CBernBern bfn ->
-        let p_true = p_prior *. (bfn true) in
-        let p_false= (1. -. p_prior) *. (bfn false) in
+        let p_true, p_false = 
+            if obs then
+                (p_prior *. (bfn true), (1. -. p_prior) *. (bfn false))
+            else
+                (p_prior *. (1. -. (bfn true)), (1. -. p_prior) *. (1. -. (bfn false)))
+        in
         Distribution.bernoulli (p_true /. (p_true +. p_false))
     | _, _ -> assert false
     end
