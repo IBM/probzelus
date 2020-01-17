@@ -19,22 +19,22 @@ open Distribution
 open Infer_pf
 
 
-let proba gaussian_model o = pair (mu, sigma) where
+let proba gaussian_model o = pair (mu, sigma2) where
   rec init mu = sample (gaussian (const 0., 10.))
-  and init sqrt_sigma = sample (gaussian (const 0., 1.))
-  and sigma = mult (sqrt_sigma, sqrt_sigma)
-  and () = observe (gaussian (mu, eval sigma), o)
+  and init sigma = sample (gaussian (const 0., 1.))
+  and sigma2 = mult (sigma, sigma)
+  and () = observe (gaussian (mu, eval sigma2), o)
 
 
 let node main particles (tr, observed) =
   let rec t = 1. fby (t +. 1.) in
 
-  let mu_d, sigma_d = split (infer particles gaussian_model observed) in
+  let mu_d, sigma2_d = split (infer particles gaussian_model observed) in
   let mu = mean_float mu_d in
-  let sigma = mean_float sigma_d in
-  let (mu_tr, sigma_tr) = tr in
-  let error = (mu -. mu_tr) ** 2. +. (sigma -. sigma_tr) ** 2. in
+  let sigma2 = mean_float sigma2_d in
+  let (mu_tr, sigma2_tr) = tr in
+  let error = (mu -. mu_tr) ** 2. +. (sigma2 -. sigma2_tr) ** 2. in
   let rec total_error = error -> (pre total_error) +. error in
   let mse = total_error /. t in
 
-  (mu, sigma), mse
+  (mu, sigma2), mse
