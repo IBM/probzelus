@@ -84,7 +84,7 @@ let real_map =
   Array_misc.random (max_pos + 1) 0.6
 
 let node main_ds () =
-  let rec map_dist, pos_dist = Distribution.split (infer 1 slam (obs, dir))
+  let rec map_dist, pos_dist = Distribution.split (infer 600 slam (obs, dir))
   and dir = Right -> (slam_ctrl (event, Distribution.uniform_int(0, max_pos) fby pos_dist))
   and (obs, real_x) = slam_obs real_map dir
   and event = Array_misc.input ()
