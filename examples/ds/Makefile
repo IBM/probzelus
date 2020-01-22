@@ -1,7 +1,7 @@
 INFERLIB=../../inference
 ZELUC=zeluc -copy -I $(INFERLIB)
 
-NUMS=1 2 3 4 5 6
+NUMS=1 2 3 4 5 6 7
 SRCS=$(patsubst %, ex%_ds.zls,$(NUMS))
 MLS=$(patsubst %, ex%_ds.ml,$(NUMS))
 MAINS=$(patsubst %, main%,$(NUMS))
