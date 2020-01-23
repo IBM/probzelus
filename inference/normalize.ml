@@ -55,12 +55,38 @@ let normalize values =
   Distribution.Dist_support
     (List.map (fun (v, n) -> (v, float n /. norm)) return_histogram)
 
+let to_distribution : type a. a array -> float array -> a Distribution.t =
+  let rec to_distribution i len acc values probabilities =
+    if i < len then
+      let value = Array.unsafe_get values i in
+      let prob = Array.unsafe_get probabilities i in
+      begin match acc with
+      | [] -> to_distribution (i + 1) len  [value, prob] values probabilities
+      | (v,p) :: acc' ->
+          if value = v then
+            to_distribution (i + 1) len
+              ((value, p +. prob)::acc') values probabilities
+          else
+            to_distribution (i + 1) len
+              ((value, prob):: acc) values probabilities
+      end
+    else
+      Distribution.Dist_support acc
+  in
+  fun values probabilities ->
+    let len1 = Array.length values in
+    let len2 = Array.length probabilities in
+    assert (len1 = len2);
+    to_distribution 0 len1 [] values probabilities
+
 let normalize_nohist values scores =
   let norm = log_sum_exp scores in
   let probabilities = Array.map (fun score -> exp (score -. norm)) scores in
-  (probabilities,
-   Distribution.Dist_support
-     (Array.to_list (Array.map2 (fun value prob -> (value, prob)) values probabilities)))
+  (* (probabilities, *)
+  (*  Distribution.Dist_support *)
+  (*    (Array.to_list (Array.map2 (fun value prob -> (value, prob)) values probabilities))) *)
+  (probabilities, to_distribution values probabilities)
+
 
 (** [resample copy size probabilities states] resample the array of
     states [states] of length [size] according the probabilities distribution

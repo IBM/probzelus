@@ -1055,8 +1055,12 @@ let rec to_mixture : type a. a t t -> a t =
   begin match d with
   | Dist_sampler (_draw, _score) ->
       assert false (* XXX TODO XXX *)
+  | Dist_support [ (d, _) ] ->
+      d
   | Dist_support l ->
       Dist_mixture l
+  | Dist_mixture [ (d, _) ] ->
+      to_mixture d
   | Dist_mixture l ->
       Dist_mixture (List.map (fun (d, w) -> (to_mixture d, w)) l)
   | Dist_app _ ->
