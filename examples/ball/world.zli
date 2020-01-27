@@ -1,0 +1,7 @@
+type 'a pres =
+  | Pres of 'a
+  | Abs
+
+val ground : (float * float) list * float -> float
+val cross_y : (float * float) list * float * float * float -> (float * float) pres
+val show : (float * float) list * (float * float) -AD-> unit

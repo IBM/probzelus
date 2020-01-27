@@ -1,0 +1,117 @@
+(*
+ * Copyright 2018-2020 IBM Corporation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *)
+
+open Probzelus
+open Distribution
+(* open Display *)
+open Infer_pf
+
+let tau = 0.02
+
+let basket_center = 15.
+
+
+let node edge b = o where
+  rec o = false -> b && not (pre b)
+
+let node bounce_y (bumpers, x, y, py) = s where
+  rec match World.Abs -> World.cross_y (bumpers, x, y, py) with
+      | World.Abs -> do done
+      | World.Pres b -> do emit s = snd b done
+      end
+
+let x_0 = 0.0
+let y_0 = 15.0
+(* let x_v = 0.72 *)
+let x_v = 0.92
+let g = 9.81
+let loose = 0.99
+
+let node integr(x0, x') = x where
+  rec x = x0 -> tau *. x' +. (pre x)
+
+(* The bouncing ball *)
+let node ball (x_0, y_0) bumpers = (x, y) where
+  rec x = integr (x_0, x_v)
+  and automaton
+      | Move(y_0, y_v_0) ->
+          do y = integr (y_0, y_v)
+          and y_v = integr (y_v_0, -. g)
+          and bounced = bounce_y (bumpers, x, y, y_0 -> pre y)
+          until bounced (by) then Move(by, -. loose *. y_v)
+          else (last y < -. 100.) then Stop
+      | Stop -> do done
+      init Move(y_0, 0.0)
+  and init y = y_0
+  and init y_v = 0.0
+
+
+let bumpers_prior =
+  of_list
+    (ListP.create
+       (12, (of_pair (uniform_float (-5., 14.), uniform_float (0., 10.)))))
+
+let proba bumper_noise (x, y) =
+  (sample(gaussian (x, 0.005)), sample(gaussian (y, 0.005)))
+
+let proba bumpers_noise bumpers_d =
+  let bumpers = sample bumpers_d in
+  ListP.map bumper_noise bumpers
+
+(* let proba bumper_prior (_, d) = *)
+(*   (\* (sample (uniform_float (-5., 14.)), sample (uniform_float (0., 10.))) *\) *)
+(*   (\* sample *\) d *)
+
+(* let proba physics d = bumpers where *)
+(*   rec init bumpers = ListP.ini bumper_prior (10, d) *)
+
+
+let proba f (d, print) = bumpers where
+  rec automaton
+      | Run ->
+          do init bumpers = bumpers_noise d
+          and init u = Graphics.clear_graph ()
+          and (x, y) = ball(x_0, y_0) bumpers
+          and () = present (x > 10.) -> observe (gaussian(15., 500.), y) else ()
+          until (x > 20.) then Run
+  and () = present (print) -> World.show (bumpers, (x, y)) else ()
+  and s = present (edge (y < 0.)) -> x
+  and init cpt = 0
+  and init acc = 0.
+  and present s(v) -> do cpt = last cpt + 1
+                      and acc = last acc +. v
+                      and () = present (print) ->
+                                 (print_int cpt;
+                                  print_string " ";
+                                  print_float (acc /. float cpt);
+                                  print_string " ";
+                                  print_float x;
+                                  print_newline()) else ()
+                      done
+      end
+
+(* Main entry point *)
+let node main () =
+  let rec p = (0 fby p + 1) mod 100 in
+  (* let init d_0 = bumpers_noise *)
+  (*   of_list *)
+  (*     (fst (gen physics (of_pair (uniform_float (-5., 14.), uniform_float (0., 10.))))) *)
+  (* in *)
+  (* let rec d = infer_subresample 3000 f (p = 0, (bumpers_prior -> pre d, false)) in *)
+  (* let rec d = infer 3000 f (bumpers_prior -> pre d, false) in *)
+  let rec d = infer_ess_resample 3000 0.7 f (bumpers_prior -> pre d, false) in
+  let bumpers, _ = gen f (d, true) in
+  Graphics.synchronize ()
