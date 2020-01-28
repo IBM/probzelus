@@ -33,7 +33,7 @@ let node bounce_y (bumpers, x, y, py) = s where
       | World.Pres b -> do emit s = snd b done
       end
 
-let x_0 = 0.0
+let x_0 = -5.0
 let y_0 = 15.0
 (* let x_v = 0.72 *)
 let x_v = 0.92
@@ -51,8 +51,8 @@ let node ball (x_0, y_0) bumpers = (x, y) where
           do y = integr (y_0, y_v)
           and y_v = integr (y_v_0, -. g)
           and bounced = bounce_y (bumpers, x, y, y_0 -> pre y)
-          until bounced (by) then Move(by, -. loose *. y_v)
-          else (last y < -. 100.) then Stop
+          until bounced (by) & (false fby false fby false fby false fby false fby true) then Move(by, -. loose *. y_v)
+          else (last y < -. 10000.) then Stop
       | Stop -> do done
       init Move(y_0, 0.0)
   and init y = y_0
@@ -65,7 +65,7 @@ let bumpers_prior =
        (12, (of_pair (uniform_float (-5., 14.), uniform_float (0., 10.)))))
 
 let proba bumper_noise (x, y) =
-  (sample(gaussian (x, 0.005)), sample(gaussian (y, 0.005)))
+  (sample(gaussian (x, 0.05)), sample(gaussian (y, 0.05)))
 
 let proba bumpers_noise bumpers_d =
   let bumpers = sample bumpers_d in
@@ -85,33 +85,37 @@ let proba f (d, print) = bumpers where
           do init bumpers = bumpers_noise d
           and init u = Graphics.clear_graph ()
           and (x, y) = ball(x_0, y_0) bumpers
-          and () = present (x > 10.) -> observe (gaussian(15., 500.), y) else ()
-          until (x > 20.) then Run
+          (* and () = present (x > -3.) -> observe (gaussian(15., 500.), y) else () *)
+          and () = observe (gaussian(15., 500.), y)
+          (* until (x > 20.) then Run *)
+          until (y < -100.) then Run
   and () = present (print) -> World.show (bumpers, (x, y)) else ()
+
+let node move_bumpers d = bumpers where
+  rec init bumpers = draw d
+  and bumpers = World.move (last bumpers, draw d)
+
+(* Main entry point *)
+let node main () = () where
+  rec p = (0 fby p + 1) mod 100
+  and d = infer_ess_resample 5000 0.7 f (bumpers_prior -> pre d, false)
+  (* and d = infer 5000 f (bumpers_prior -> pre d, false) *)
+  and bumpers = move_bumpers d
+  and x, y = reset ball (x_0, y_0) bumpers every (last y < -100.)
+  and init y = y_0
+  and () =
+    World.show (bumpers, (x, y));
+    Graphics.synchronize ()
   and s = present (edge (y < 0.)) -> x
   and init cpt = 0
   and init acc = 0.
   and present s(v) -> do cpt = last cpt + 1
                       and acc = last acc +. v
-                      and () = present (print) ->
-                                 (print_int cpt;
-                                  print_string " ";
-                                  print_float (acc /. float cpt);
-                                  print_string " ";
-                                  print_float x;
-                                  print_newline()) else ()
+                      and () = print_int cpt;
+                               print_string " ";
+                               print_float (acc /. float cpt);
+                               print_string " ";
+                               print_float x;
+                               print_newline()
                       done
       end
-
-(* Main entry point *)
-let node main () =
-  let rec p = (0 fby p + 1) mod 100 in
-  (* let init d_0 = bumpers_noise *)
-  (*   of_list *)
-  (*     (fst (gen physics (of_pair (uniform_float (-5., 14.), uniform_float (0., 10.))))) *)
-  (* in *)
-  (* let rec d = infer_subresample 3000 f (p = 0, (bumpers_prior -> pre d, false)) in *)
-  (* let rec d = infer 3000 f (bumpers_prior -> pre d, false) in *)
-  let rec d = infer_ess_resample 3000 0.7 f (bumpers_prior -> pre d, false) in
-  let bumpers, _ = gen f (d, true) in
-  Graphics.synchronize ()

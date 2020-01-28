@@ -28,14 +28,22 @@ let cross_y (bumpers, x, y, py) =
   end
 
 
+let move (last_bumpers, bumpers) =
+  let last_bumpers = List.sort compare last_bumpers in
+  let bumpers = List.sort compare bumpers in
+  List.map2
+    (fun (x1, y1) (x2, y2) ->
+       (x1 +. 0.001 *. (x2 -. x1), y1 +. 0.001 *. (y2 -. y1)))
+    last_bumpers bumpers
+
 let () =
-  Graphics.open_graph "";
+  Graphics.open_graph " 600x600";
   Graphics.set_window_title "Bouncing ball";
   Graphics.auto_synchronize false;
   ()
 
 let to_int x =
-  let x = 20. +. float scale *. x in
+  let x = 125. +. float scale *. x in
   int_of_float x
 
 let show (bumpers, (x, y)) =
