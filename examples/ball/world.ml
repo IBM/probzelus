@@ -1,3 +1,6 @@
+let basket_x = 11.
+let basket_y = 10.
+
 let scale = 25
 
 type 'a pres =
@@ -46,12 +49,14 @@ let to_int x =
   let x = 125. +. float scale *. x in
   int_of_float x
 
+let w = 1 * scale
+
 let show (bumpers, (x, y)) =
   Graphics.clear_graph ();
+  Graphics.fill_rect (to_int basket_x) (to_int basket_y - 1) w 5;
   List.iter
     (fun (b_x, b_y) ->
        let x1, y1 = to_int b_x, to_int b_y - 1 in
-       let w = 1 * scale in
        Graphics.fill_rect x1 y1 w 1)
     bumpers;
   Graphics.fill_circle (to_int x) (to_int y) 3;

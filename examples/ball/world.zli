@@ -2,6 +2,9 @@ type 'a pres =
   | Pres of 'a
   | Abs
 
+val basket_x : float
+val basket_y : float
+
 val ground : (float * float) list * float -> float
 val cross_y : (float * float) list * float * float * float -> (float * float) pres
 

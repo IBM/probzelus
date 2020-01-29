@@ -21,8 +21,6 @@ open Infer_pf
 
 let tau = 0.02
 
-let basket_center = 15.
-
 
 let node edge b = o where
   rec o = false -> b && not (pre b)
@@ -42,6 +40,12 @@ let node bounce_y (bumpers, x, y, py) = s where
       | World.Pres b -> do emit s = snd b done
       end
 
+let node win (x, y, py) = s where
+  rec match World.Abs -> World.cross_y ([(World.basket_x, World.basket_y)], x, y, py) with
+      | World.Abs -> do done
+      | World.Pres b -> do emit s = snd b done
+      end
+
 let x_0 = -5.0
 let y_0 = 15.0
 (* let x_v = 0.72 *)
@@ -54,16 +58,21 @@ let node integr(x0, x') = x where
 
 (* The bouncing ball *)
 let node ball (x_0, y_0) bumpers = (x, y) where
-  rec x = integr (x_0, x_v)
-  and automaton
-      | Move(y_0, y_v_0) ->
-          do y = integr (y_0, y_v)
-          and y_v = integr (y_v_0, -. g)
-          and bounced = bounce_y (bumpers, x, y, y_0 -> pre y)
-          until bounced (by) & (wait 5) then Move(by, -. loose *. y_v)
-          else (last y < -. 10000.) then Stop
-      | Stop -> do done
-      init Move(y_0, 0.0)
+  rec automaton
+      | Move ->
+          do x = integr (x_0, x_v)
+          and automaton
+              | Move(y_0, y_v_0) ->
+                  do y = integr (y_0, y_v)
+                  and y_v = integr (y_v_0, -. g)
+                  and bounced = bounce_y (bumpers, x, y, y_0 -> pre y)
+                  until bounced (by) & (wait 5) then Move(by, -. loose *. y_v)
+                  else (last y < -. 100000.) then Stop
+              | Stop -> do done
+              init Move(y_0, 0.0)
+          and stop = win(x, y, y -> pre y)
+          until stop(_) then Win
+      | Win -> do done
   and init y = y_0
   and init y_v = 0.0
 
@@ -86,10 +95,16 @@ let proba f (d, print) = bumpers where
       | Run ->
           do init bumpers = sample_bumpers d
           and (x, y) = ball(x_0, y_0) bumpers
-          and () = observe (gaussian(y, 500.), 15.)
-          (* and () = observe (gaussian(x, 500.), 15.) *)
+          and () = observe (gaussian(y, 500.), World.basket_y)
+          and () = observe (gaussian(x, 500.), World.basket_x)
           (* until (x > 20.) then Run *)
           until (y < -100.) then Run
+          else (false -> x = pre x) continue Wait(bumpers)
+     | Wait(bs) ->
+         local b in
+         do init bumpers = bs
+         and b = wait 100
+         until (b) then Run
   and () = present (print) -> World.show (bumpers, (x, y)) else ()
 
 let node move_bumpers d = bumpers where
@@ -102,21 +117,25 @@ let node main () = () where
   and d = infer_ess_resample 5000 0.7 f (bumpers_prior -> pre d, false)
   (* and d = infer 5000 f (bumpers_prior -> pre d, false) *)
   and bumpers = move_bumpers d
-  and x, y = reset ball (x_0, y_0) bumpers every (last y < -100.)
+  and x, y = reset
+               reset ball (x_0, y_0) bumpers
+               every (last y < -100.)
+             every (false -> last x = pre (last x))
+  and init x = x_0 -. 1.
   and init y = y_0
   and () =
     World.show (bumpers, (x, y));
     Graphics.synchronize ()
-  and s = present (edge (y < 0.)) -> x
-  and init cpt = 0
-  and init acc = 0.
-  and present s(v) -> do cpt = last cpt + 1
-                      and acc = last acc +. v
-                      and () = print_int cpt;
-                               print_string " ";
-                               print_float (acc /. float cpt);
-                               print_string " ";
-                               print_float x;
-                               print_newline()
-                      done
-      end
+  (* and s = present (edge (y < 0.)) -> x *)
+  (* and init cpt = 0 *)
+  (* and init acc = 0. *)
+  (* and present s(v) -> do cpt = last cpt + 1 *)
+  (*                     and acc = last acc +. v *)
+  (*                     and () = print_int cpt; *)
+  (*                              print_string " "; *)
+  (*                              print_float (acc /. float cpt); *)
+  (*                              print_string " "; *)
+  (*                              print_float x; *)
+  (*                              print_newline() *)
+  (*                     done *)
+  (*     end *)
