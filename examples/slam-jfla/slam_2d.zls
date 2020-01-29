@@ -1,0 +1,186 @@
+(*
+ * Copyright 2018-2020 IBM Corporation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *)
+
+open Probzelus
+open Distribution
+open Infer_ds_gc
+
+type direction = Up | Down | Left | Right
+
+let particles = 500
+let sensor_noise = 0.05
+let wheel_noise = 0.005
+let max_x = Mat_misc.max_x
+let max_y = Mat_misc.max_y
+
+let proba move (x_init, y_init, cmd) = x, y where
+  rec init x = x_init
+  and init y = y_init
+  and match cmd with
+      | Up ->
+          do y =  min max_y (if eval wheel_slip then last y else last y + 1) done
+      | Down ->
+          do y = max 0 (if eval wheel_slip then last y else last y - 1) done
+      | Right ->
+          do x = min max_x (if eval wheel_slip then last x else last x + 1) done
+      | Left ->
+          do x = max 0 (if eval wheel_slip then last x else last x - 1) done
+      end
+  and wheel_slip = sample (bernoulli (const wheel_noise))
+
+
+let proba beta_priors i = sample (beta (1., 1.))
+
+let proba slam (obs, cmd) = pair (matrix map, pair (const x, const y)) where
+  rec init map = Mat_misc.ini (max_x + 1) (max_y + 1) beta_priors ()
+  and x, y = move (0, 0, cmd)
+  and o = Mat_misc.get map x y
+  and () = observe (bernoulli o, obs)
+
+let node slam_ctrl_auto (x,y) = dir where
+  rec automaton
+      | Horz(right) ->
+          do dir = if right then Right else Left
+          unless (x = max_x) then Vert(true)
+          else (x = 0) then Vert(false)
+      | Vert(left) ->
+          do dir = vdir
+          unless left then Horz(false)
+          else (not left) then Horz(true)
+      init Horz(true)
+  and automaton
+      | Up ->
+           do vdir = Up
+           unless (y = max_y) then Down
+      | Down ->
+           do vdir = Down
+           unless (y = 0) then Up
+      end
+
+let node slam_ctrl (event, pos_dist) = dir where
+  (* rec x, y = Distribution.draw pos_dist *)
+  rec dx, dy = Distribution.split pos_dist
+  and x, y = int_of_float (0.5 +. Distribution.mean_int dx), int_of_float (0.5 +. Distribution.mean_int dy)
+  and match event with
+      | 1 -> do dir = Right done
+      | -1 -> do dir = Left done
+      | 2 -> do dir = Up done
+      | -2 -> do dir = Down done
+      | _ -> do dir = slam_ctrl_auto (x, y) done
+      end
+
+
+let node slam_obs real_map dir = (obs, x, y) where
+  rec init x = 0
+  and init y = 0
+  and match dir with
+      | Up ->
+          do y =  min max_y (if wheel_slip then last y else last y + 1) done
+      | Down ->
+          do y = max 0 (if wheel_slip then last y else last y - 1) done
+      | Right ->
+          do x = min max_x (if wheel_slip then last x else last x + 1) done
+      | Left ->
+          do x = max 0 (if wheel_slip then last x else last x - 1) done
+      end
+  and wheel_slip = Distribution.draw (Distribution.bernoulli wheel_noise)
+  and sensor_error = Distribution.draw (Distribution.bernoulli sensor_noise)
+  and b = Mat_misc.get real_map x y
+  and obs = if sensor_error then not b else b
+
+let random_init = Random.self_init ()
+
+let real_map =
+    (*Mat_misc.of_list
+    [[false; true; false; false; false];
+     [true; false; false; true; false];
+     [true; false; false; false; false];
+     [true; false; false; true; false];
+     [false; true; false; false; false]]*)
+    (* Mat_misc.of_list *)
+    (* [[false; false; false; false; false]; *)
+    (*  [true ; false; false; false; true ]; *)
+    (*  [true ; true ; true ; true ; true ]; *)
+    (*  [true ; false; false; false; true ]; *)
+    (*  [false; false; false; false; false ]; *)
+    (*  [true ; true ; true ; true ; true ]; *)
+    (*  [true ; false; true ; false; true ]; *)
+    (*  [true ; false; true ; false; true ]; *)
+    (*  [false; true ; false; true ; false]; *)
+    (*  [false; false; false; false; false ]; *)
+    (*  [true ; true ; true ; true ; true ]; *)
+    (*  [false; false; false; true; false ]; *)
+    (*  [false; false; true ; false; false ]; *)
+    (*  [false; false; false; true; false ]; *)
+    (*  [true ; true ; true ; true ; true ]; *)
+    (*  [false; false; false; false; false]] *)
+  Mat_misc.of_list
+  [[false; false; false; false; false; false];
+   [true; false; false; false; false; true];
+   [true; false; false; false; false; true];
+   [true; true; true; true; true; true];
+   [false; false; false; false; false; true];
+   [false; false; false; false; false; true];
+   [false; false; false; false; false; false];
+   [true; true; true; true; true; true];
+   [false; false; false; true; false; true];
+   [false; false; false; true; false; true];
+   [false; false; false; false; false; true];
+   [false; false; false; false; false; false];
+   [true; true; true; true; true; true];
+   [true; false; false; false; false; false];
+   [true; false; false; false; false; false];
+   [false; false; false; false; false; false];
+   [false; false; false; false; false; false];
+   [true; true; true; true; true; true];
+   [false; false; true; false; false; true];
+   [false; false; true; false; false; true];
+   [true; true; true; true; true; true];
+   [false; false; false; false; false; false]]
+  (*Mat_misc.random (max_x + 1) (max_y + 1) 0.6 *)
+
+
+let node main_2d () = () where
+  rec map_dist, pos_dist = Distribution.split (infer particles slam (obs, dir))
+  and automaton
+      (* | Init -> do () = Mat_misc.draw_map real_map then Go *)
+      | Go -> do () = Mat_misc.output_ds real_map real_x real_y obs map_dist pos_dist done
+  and d0 = Distribution.of_pair (Distribution.uniform_int(0, max_x), Distribution.uniform_int(0, max_y))
+  and dir = slam_ctrl (event, d0 -> pre pos_dist)
+  and (obs, real_x, real_y) = slam_obs real_map dir
+  and automaton
+      | Init -> do event = -1 then Manual
+      | Manual ->
+          do event = Mat_misc.input ()
+          until (* (event = 0) then Auto *)
+          (* else  *)(event = 42) then Monitoring
+      | Monitoring ->
+          do event = 0
+          until (pmse <= 6.) then Manual
+      (* | Auto -> *)
+      (*     local cpt in *)
+      (*     do cpt = 1 fby (cpt + 1) *)
+      (*     and event = 0 *)
+      (*     until (cpt = 1) then Manual *)
+      end
+  and t = 1 fby (t + 1)
+  and map_d = Distribution.split_matrix map_dist
+  and d_x, d_y = Distribution.split pos_dist
+  and error = Mat_misc.error (real_map, real_x, real_y) map_d d_x d_y
+  and total_error = error -> (pre total_error) +. error
+  and mse = total_error /. (float t)
+  and pmse = 10. fby mse
+  and () = print_int t; print_string ": "; print_float mse; print_newline()
