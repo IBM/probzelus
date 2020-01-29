@@ -27,6 +27,15 @@ let basket_center = 15.
 let node edge b = o where
   rec o = false -> b && not (pre b)
 
+let node wait n = b where
+  rec automaton
+      | Wait ->
+          local cpt in
+          do cpt = 0 fby (cpt + 1)
+          and b = false
+          until (cpt = n) then True
+      | True -> do b = true done
+
 let node bounce_y (bumpers, x, y, py) = s where
   rec match World.Abs -> World.cross_y (bumpers, x, y, py) with
       | World.Abs -> do done
@@ -51,7 +60,7 @@ let node ball (x_0, y_0) bumpers = (x, y) where
           do y = integr (y_0, y_v)
           and y_v = integr (y_v_0, -. g)
           and bounced = bounce_y (bumpers, x, y, y_0 -> pre y)
-          until bounced (by) & (false fby false fby false fby false fby false fby true) then Move(by, -. loose *. y_v)
+          until bounced (by) & (wait 5) then Move(by, -. loose *. y_v)
           else (last y < -. 10000.) then Stop
       | Stop -> do done
       init Move(y_0, 0.0)
@@ -67,26 +76,18 @@ let bumpers_prior =
 let proba bumper_noise (x, y) =
   (sample(gaussian (x, 0.05)), sample(gaussian (y, 0.05)))
 
-let proba bumpers_noise bumpers_d =
+let proba sample_bumpers bumpers_d =
   let bumpers = sample bumpers_d in
   ListP.map bumper_noise bumpers
-
-(* let proba bumper_prior (_, d) = *)
-(*   (\* (sample (uniform_float (-5., 14.)), sample (uniform_float (0., 10.))) *\) *)
-(*   (\* sample *\) d *)
-
-(* let proba physics d = bumpers where *)
-(*   rec init bumpers = ListP.ini bumper_prior (10, d) *)
 
 
 let proba f (d, print) = bumpers where
   rec automaton
       | Run ->
-          do init bumpers = bumpers_noise d
-          and init u = Graphics.clear_graph ()
+          do init bumpers = sample_bumpers d
           and (x, y) = ball(x_0, y_0) bumpers
-          (* and () = present (x > -3.) -> observe (gaussian(15., 500.), y) else () *)
-          and () = observe (gaussian(15., 500.), y)
+          and () = observe (gaussian(y, 500.), 15.)
+          (* and () = observe (gaussian(x, 500.), 15.) *)
           (* until (x > 20.) then Run *)
           until (y < -100.) then Run
   and () = present (print) -> World.show (bumpers, (x, y)) else ()

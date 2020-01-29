@@ -1,5 +1,5 @@
 INFERLIB=../../inference
-ZELUC=zeluc -copy -I $(INFERLIB)
+ZELUC=zeluc -copy -sampling 0.01 -I $(INFERLIB)
 
 ZLI=$(wildcard *.zli)
 ZCI=$(ZLI:zli=zci)
