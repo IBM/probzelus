@@ -11,3 +11,4 @@ val cross_y : (float * float) list * float * float * float -> (float * float) pr
 val move : (float * float) list * (float * float) list -> (float * float) list
 
 val show : (float * float) list * (float * float) -AD-> unit
+val click : unit -> bool

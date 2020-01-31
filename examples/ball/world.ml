@@ -62,3 +62,14 @@ let show (bumpers, (x, y)) =
   Graphics.fill_circle (to_int x) (to_int y) 3;
   (* Graphics.synchronize (); *)
   ()
+
+
+let cpt = ref 0
+let click () =
+  cpt := (!cpt + 1) mod 100;
+  if !cpt = 0 then
+    let status =
+      Graphics.wait_next_event [ Graphics.Button_down; Graphics.Poll ]
+    in
+    status.Graphics.button
+  else false

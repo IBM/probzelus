@@ -114,9 +114,16 @@ let node move_bumpers d = bumpers where
 (* Main entry point *)
 let node main () = () where
   rec p = (0 fby p + 1) mod 100
-  and d = infer_ess_resample 5000 0.7 f (bumpers_prior -> pre d, false)
   (* and d = infer 5000 f (bumpers_prior -> pre d, false) *)
+  (* and automaton *)
+  (*     | Search -> *)
+  (*         do bumpers = move_bumpers d *)
+  (*         and d = infer_ess_resample 5000 0.7 f (bumpers_prior -> pre d, false) *)
+  (*         until (false -> last x = pre (last x)) then Found *)
+  (*             (\* else (false -> Graphics.button_down()) then Search *\) *)
+  (*     | Found -> do until (World.click()) then Search *)
   and bumpers = move_bumpers d
+  and d = infer_ess_resample 5000 0.7 f (bumpers_prior -> pre d, false)
   and x, y = reset
                reset ball (x_0, y_0) bumpers
                every (last y < -100.)
