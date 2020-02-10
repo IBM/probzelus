@@ -19,10 +19,10 @@ open Distribution
 open Infer_ds
 
 let proba outlier yobs = pair (is_outlier, xt) where
-  rec xt = sample (gaussian ((const 0., 50.) -> (pre xt, 1.)))
+  rec xt = sample (gaussian ((const 0., 2500.) -> (pre xt, 1.)))
   and init outlier_prob = sample (beta (100., 1000.))
   and is_outlier = sample (bernoulli outlier_prob)
-  and () = present (eval is_outlier) -> observe (gaussian (const 0., 100.), yobs)
+  and () = present (eval is_outlier) -> observe (gaussian (const 0., 10000.), yobs)
            else observe (gaussian (xt, 1.), yobs)
 
 let node main particles (tr, observed) =
