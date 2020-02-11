@@ -193,8 +193,15 @@ let rec get_mdistr : type a b.
     begin match n.ds_node_state with
     | Marginalized (m, _) -> m
     | Initialized (p, cdistr) ->
-        let p_mdistr = get_mdistr p in
-        make_marginal p_mdistr cdistr
+        begin match p.ds_node_state with
+        | Realized x ->
+            cdistr_to_mdistr cdistr x
+        | Marginalized (p_mdistr, _) ->
+            make_marginal p_mdistr cdistr
+        | Initialized _ ->
+            let p_mdistr = get_mdistr p in
+            make_marginal p_mdistr cdistr
+        end
     | Realized _ -> assert false
     end
 
