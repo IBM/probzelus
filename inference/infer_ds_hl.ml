@@ -238,7 +238,7 @@ module Make(DS_ll: DS_ll_S) = struct
         "(" ^ string_of_expr e1 ^ " * " ^ string_of_expr e2 ^ ")"
     | Eapp (_e1, _e2) -> "App"
     | Evec_get _ -> "Get"
-    | Eite (_, t, e) -> "(if ... then " ^ string_of_expr t ^ " else " ^ string_of_expr e ^ ")" 
+    | Eite (_, t, e) -> "(if ... then " ^ string_of_expr t ^ " else " ^ string_of_expr e ^ ")"
     | Emat_add (_, _) -> assert false
     | Emat_scalar_mul (_, _) -> assert false
     | Emat_dot (_, _) -> assert false
@@ -573,25 +573,82 @@ module Make(DS_ll: DS_ll_S) = struct
 
   (** Inference *)
 
-  let rec distribution_of_expr : type a. a expr -> a Distribution.t =
+  exception Stop
+
+  let is_safe_marginal =
+    let rec is_safe : type a. int -> a expr -> int =
+      fun acc expr ->
+      begin match expr.value with
+      | Econst _c -> acc
+      | Ervar (RV _x) ->
+          if acc > 0 then raise Stop
+          else acc + 1
+      | Eadd (e1, e2) ->
+          is_safe (is_safe acc e1) e2
+      | Emult (e1, e2) ->
+          is_safe (is_safe acc e1) e2
+      | Eapp (_e1, _e2) ->
+          raise Stop
+      | Epair (e1, e2) ->
+          is_safe (is_safe acc e1) e2
+      | Earray a ->
+          Array.fold_left (fun acc e -> is_safe acc e) acc a
+      | Ematrix m ->
+          Array.fold_left
+            (fun acc a ->
+               Array.fold_left (fun acc e -> is_safe acc e) acc a)
+            acc m
+      | Elist l ->
+          List.fold_left (fun acc e -> is_safe acc e) acc l
+    | Eite (e, e1, e2) ->
+        is_safe (is_safe (is_safe acc e1) e2) e
+    | Emat_add (e1, e2) ->
+        is_safe (is_safe acc e1) e2
+    | Emat_scalar_mul (e1, e2) ->
+        is_safe (is_safe acc e1) e2
+    | Emat_dot (e1, e2) ->
+        is_safe (is_safe acc e1) e2
+    | Evec_get (e, _) ->
+        is_safe acc e
+    end
+    in
+    fun expr ->
+      try ignore (is_safe 0 expr); true
+      with Stop -> false
+
+  let sample_of_expr : type a. a expr -> a =
+    fun expr ->
+    let e = Normalize.copy expr in
+    eval e
+
+  let rec marginal_distribution_of_expr : type a. a expr -> a Distribution.t =
     fun expr ->
     begin match expr.value with
     | Econst c -> Dist_support [c, 1.]
     | Ervar (RV x) -> DS_ll.get_distr x
     | Eadd (e1, e2) ->
-        Dist_add (distribution_of_expr e1, distribution_of_expr e2)
+        Dist_add (marginal_distribution_of_expr e1,
+                  marginal_distribution_of_expr e2)
     | Emult (e1, e2) ->
-        Dist_mult (distribution_of_expr e1, distribution_of_expr e2)
+        Dist_mult (marginal_distribution_of_expr e1,
+                   marginal_distribution_of_expr e2)
     | Eapp (e1, e2) ->
-        Dist_app (distribution_of_expr e1, distribution_of_expr e2)
+        Dist_app (marginal_distribution_of_expr e1,
+                  marginal_distribution_of_expr e2)
     | Epair (e1, e2) ->
-        Dist_pair (distribution_of_expr e1, distribution_of_expr e2)
+        Dist_pair (marginal_distribution_of_expr e1,
+                   marginal_distribution_of_expr e2)
     | Earray a ->
-        Dist_array (Array.map distribution_of_expr a)
+        Dist_array (Array.map marginal_distribution_of_expr a)
     | Ematrix a ->
-        Dist_array (Array.map (fun ai -> Distribution.Dist_array (Array.map distribution_of_expr ai)) a)
+        Dist_array
+          (Array.map
+             (fun ai ->
+                Distribution.Dist_array
+                  (Array.map marginal_distribution_of_expr ai))
+             a)
     | Elist l ->
-        Dist_list (List.map distribution_of_expr l)
+        Dist_list (List.map marginal_distribution_of_expr l)
     | Eite (_, _, _) -> (* XXX TODO XXX *)
         assert false
     | Emat_add (_, _) ->
@@ -604,15 +661,59 @@ module Make(DS_ll: DS_ll_S) = struct
         assert false (* XXX TODO XXX *)
     end
 
+  let distribution_of_expr : type a. a expr -> a Distribution.t =
+    fun expr ->
+    if is_safe_marginal expr then
+      marginal_distribution_of_expr expr
+    else
+      let expr' = Normalize.copy expr in
+      let sample () =
+        let e = Normalize.copy expr' in
+        eval e
+      in
+      let score _ = assert false in
+      Dist_sampler (sample, score)
 
-  let infer n (Cnode { alloc; reset; copy = _; step; }) =
+  type infer_dist_kind =
+    | Infer_sample
+    | Infer_marginal
+    | Infer_graph
+    | Infer_bounded
+
+  type infer_resampling_kind =
+    | Infer_resample
+    | Infer_ess of float
+
+  (** Auxiliary infer function that can select the kind of resampling
+      and the kind of returned distribution. This function works for
+      step function that returns a distribution. The infer thus
+      returns a mixture distribution.
+  *)
+  let infer_aux_mixture resample_kind dist_kind
+      n (Cnode { alloc; reset; copy = _; step; }) =
     let alloc () = ref (alloc ()) in
     let reset state = reset !state in
-    let step state (prob, x) = distribution_of_expr (step !state (prob, x)) in
+    let step =
+      begin match dist_kind with
+      | Infer_marginal ->
+          (fun state (prob, x) ->
+             marginal_distribution_of_expr (step !state (prob, x)))
+      | Infer_graph ->
+          (fun state (prob, x) -> distribution_of_expr (step !state (prob, x)))
+      | Infer_sample -> assert false
+      | Infer_bounded -> assert false
+      end
+    in
     let copy src dst = dst := Normalize.copy !src in
     let Cnode {alloc = infer_alloc; reset = infer_reset;
                copy = infer_copy; step = infer_step;} =
-      Infer_pf.infer n (Cnode { alloc; reset; copy = copy; step; })
+      begin match resample_kind with
+      | Infer_resample ->
+          Infer_pf.infer n (Cnode { alloc; reset; copy = copy; step; })
+      | Infer_ess threshold ->
+          Infer_pf.infer_ess_resample n threshold
+            (Cnode { alloc; reset; copy; step; })
+      end
     in
     let infer_step state i =
       Distribution.to_mixture (infer_step state i)
@@ -620,29 +721,65 @@ module Make(DS_ll: DS_ll_S) = struct
     Cnode {alloc = infer_alloc; reset = infer_reset;
            copy = infer_copy;  step = infer_step; }
 
-
-  let infer_ess_resample n threshold (Cnode { alloc; reset; copy = _; step; }) =
+  (** Auxiliary infer function that can select the kind of resampling
+      and the kind of returned distribution. This function works for
+      step function that returns a value. The infer thus
+      returns a support distribution.
+  *)
+  let infer_aux_support resample_kind dist_kind
+      n (Cnode { alloc; reset; copy = _; step; }) =
     let alloc () = ref (alloc ()) in
     let reset state = reset !state in
-    let step state (prob, x) = distribution_of_expr (step !state (prob, x)) in
+    let step =
+      begin match dist_kind with
+      | Infer_sample ->
+          (fun state (prob, x) -> sample_of_expr (step !state (prob, x)))
+      | Infer_bounded ->
+          (fun state (prob, x) -> eval (step !state (prob, x)))
+      | Infer_marginal -> assert false
+      | Infer_graph -> assert false
+      end
+    in
     let copy src dst = dst := Normalize.copy !src in
-    let Cnode {alloc = infer_alloc; reset = infer_reset;
-               copy = infer_copy; step = infer_step;} =
-      Infer_pf.infer_ess_resample n threshold
-        (Cnode { alloc; reset; copy; step; })
-    in
-    let infer_step state i =
-      Distribution.to_mixture (infer_step state i)
-    in
-    Cnode {alloc = infer_alloc; reset = infer_reset;
-           copy = infer_copy; step = infer_step;}
+    begin match resample_kind with
+    | Infer_resample ->
+        Infer_pf.infer n (Cnode { alloc; reset; copy = copy; step; })
+    | Infer_ess threshold ->
+        Infer_pf.infer_ess_resample n threshold
+          (Cnode { alloc; reset; copy; step; })
+    end
 
-  let infer_bounded n (Cnode { alloc; reset; copy = _; step; }) =
-    let alloc () = ref (alloc ()) in
-    let reset state = reset !state in
-    let step state (prob, x) = eval (step !state (prob, x)) in
-    let copy src dst = dst := Normalize.copy !src in
-    Infer_pf.infer n (Cnode { alloc; reset; copy; step; })
+  let infer_aux resample_kind dist_kind =
+    begin match dist_kind with
+    | Infer_sample | Infer_bounded ->
+        infer_aux_support resample_kind dist_kind
+    | Infer_marginal | Infer_graph ->
+        infer_aux_mixture resample_kind dist_kind
+    end
+
+  let infer_sample n f =
+    infer_aux Infer_resample Infer_sample n f
+
+  let infer_marginal n f =
+    infer_aux Infer_resample Infer_marginal n f
+
+  let infer n f =
+    infer_aux Infer_resample Infer_graph n f
+
+  let infer_bounded n f =
+    infer_aux Infer_resample Infer_bounded n f
+
+  let infer_sample_ess_resample n threshold f =
+    infer_aux (Infer_ess threshold) Infer_sample n f
+
+  let infer_marginal_ess_resample n threshold f =
+    infer_aux (Infer_ess threshold) Infer_marginal n f
+
+  let infer_ess_resample n threshold f =
+    infer_aux (Infer_ess threshold) Infer_graph n f
+
+  let infer_bounded_ess_resample n threshold f =
+    infer_aux (Infer_ess threshold) Infer_bounded n f
 
 
   let gen (Cnode { alloc; reset; copy = _; step; }) =
