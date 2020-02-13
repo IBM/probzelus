@@ -262,3 +262,12 @@ let shape : type a. ((a, Mat.mat) ds_node) -> int =
   | Initialized (_, _) -> assert false
   | Marginalized (_, _) -> assert false
   end
+
+
+let is_realized : type p a. (p, a) ds_node -> bool =
+  fun r ->
+  begin match r.ds_node_state with
+  | Initialized _ -> false
+  | Marginalized _ -> false
+  | Realized _ -> true
+  end

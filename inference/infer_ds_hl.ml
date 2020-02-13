@@ -34,6 +34,7 @@ module type DS_ll_S = sig
     ('a, 'b) ds_node -> ('b, 'c) Ds_distribution.cdistr -> ('b, 'c) ds_node
 
   val shape : ('a, Mat.mat) ds_node -> int
+  val is_realized : ('p, 'a) ds_node -> bool
 end
 
 module Make(DS_ll: DS_ll_S) = struct
@@ -580,8 +581,9 @@ module Make(DS_ll: DS_ll_S) = struct
       fun acc expr ->
       begin match expr.value with
       | Econst _c -> acc
-      | Ervar (RV _x) ->
-          if acc > 0 then raise Stop
+      | Ervar (RV x) ->
+          if DS_ll.is_realized x then acc
+          else if acc > 0 then raise Stop
           else acc + 1
       | Eadd (e1, e2) ->
           is_safe (is_safe acc e1) e2
