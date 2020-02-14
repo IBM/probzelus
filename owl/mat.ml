@@ -17,3 +17,29 @@
 include Owl.Mat
 
 let uniform a b x y = uniform ~a ~b x y
+
+let create_ out = create_ ~out
+
+let uniform_ a b out = uniform_ ~a ~b ~out
+
+let bernoulli_ out = bernoulli_ ~out
+
+let zeros_ out = zeros_ ~out
+
+let ones_ out = ones_ ~out
+
+let one_hot_ out = one_hot_ ~out
+
+let copy_ out = copy_ ~out
+
+let reshape_ out = reshape_ ~out
+
+let transpose_ out = transpose_ ~out
+
+let sum_ out = sum_ ~out
+
+let min_ out = min_ ~out
+
+let max_ out = max_ ~out
+
+let dot_ ~c = dot_ ~c
