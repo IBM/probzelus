@@ -15,26 +15,7 @@
  *)
 
 open Owl
-
-(** Marginalized distribution *)
-type 'a mdistr = 'a Distribution.t
-
-(** Family of marginal distributions (used as kind) *)
-type kdistr =
-  | KGaussian
-  | KMVGaussian
-  | KBeta
-  | KBernoulli
-  | KValue
-  | KOthers
-
-(** Conditionned distribution *)
-type ('m1, 'm2) cdistr =
-  | AffineMeanGaussian: float * float * float -> (float, float) cdistr
-  | AffineMeanGaussianMV :
-      Mat.mat * Mat.mat * Mat.mat -> (Mat.mat, Mat.mat) cdistr
-  | CBernoulli : (float, bool) cdistr
-  | CBernBern : (bool -> float) -> (bool, bool) cdistr
+open Inference_types
 
 (** {2 Distribution manipulations} *)
 
@@ -62,7 +43,7 @@ let make_marginal : type a b.
   | Dist_mv_gaussian (mu0, sigma0), AffineMeanGaussianMV(m, b, sigma) ->
       let mu' = Mat.add (Mat.dot m mu0) b in
 
-      let sigma' = 
+      let sigma' =
         Mat.add (Mat.dot (Mat.dot m sigma0) (Mat.transpose m)) sigma
       in
       Distribution.mv_gaussian (mu', sigma')

@@ -18,38 +18,11 @@
 
 open Owl
 open Zelus_owl
-
-(** Probabilities (must be in the interval [0, 1]). *)
-type proba = float
-
-(** Logarithm of probabilities *)
-type log_proba = float
+open Inference_types
 
 exception Draw_error
 
-(** Type of distributions *)
-type _ t =
-  | Dist_sampler : ((unit -> 'a) * ('a -> log_proba)) -> 'a t
-  | Dist_sampler_float :
-      ((unit -> float) * (float -> log_proba) * (unit -> float * float)) -> float t
-  | Dist_support : ('a * proba) list -> 'a t
-  (* | Dist_mixture of ('a t) t *)
-  | Dist_mixture : ('a t * proba) list -> 'a t
-  | Dist_pair : 'a t * 'b t -> ('a * 'b) t
-  | Dist_list : 'a t list -> 'a list t
-  | Dist_array : 'a t array -> 'a array t
-  | Dist_gaussian : float * float -> float t
-  | Dist_beta : float * float -> float t
-  | Dist_bernoulli : float -> bool t
-  | Dist_uniform_int : int * int -> int t
-  | Dist_uniform_float : float * float -> float t
-  | Dist_exponential : float -> float t
-  | Dist_poisson : float -> int t
-  | Dist_add : float t * float t -> float t
-  | Dist_mult : float t * float t -> float t
-  | Dist_app : ('a -> 'b) t * 'a t -> 'b t
-  | Dist_mv_gaussian : Mat.mat * Mat.mat -> Mat.mat t
-
+type 'a t = 'a distr
 
 (** {2 Utils}*)
 

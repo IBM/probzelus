@@ -14,6 +14,8 @@
  * limitations under the License.
  *)
 
+open Inference_types
+
 (** [copy v] creates a deep copy of the value [v]. *)
 let copy : 'a. 'a -> 'a =
   fun x -> Marshal.from_bytes (Marshal.to_bytes x [Marshal.Closures]) 0
@@ -52,7 +54,7 @@ let log_sum_exp scores =
 let normalize values =
   let norm = float (Array.length values) in
   let return_histogram = histogram_of_array values in
-  Distribution.Dist_support
+  Dist_support
     (List.map (fun (v, n) -> (v, float n /. norm)) return_histogram)
 
 let to_distribution : type a. a array -> float array -> a Distribution.t =
@@ -71,7 +73,7 @@ let to_distribution : type a. a array -> float array -> a Distribution.t =
               ((value, prob):: acc) values probabilities
       end
     else
-      Distribution.Dist_support acc
+      Dist_support acc
   in
   fun values probabilities ->
     let len1 = Array.length values in

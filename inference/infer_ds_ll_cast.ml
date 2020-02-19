@@ -1,79 +1,78 @@
-module Naive = Infer_ds_ll
-open Infer_ds_ll_gc
-open Ds_distribution
+open Inference_types
+open Infer_ds_ll
 
 let rec copy_node : type a b.
-  (int, Obj.t) Hashtbl.t -> (a, b) ds_node -> (a, b) ds_node =
+  (int, Obj.t) Hashtbl.t -> (a, b) ds_graph_node -> (a, b) ds_graph_node =
   fun tbl n  ->
-  begin match Hashtbl.find_opt tbl n.ds_node_id with
+  begin match Hashtbl.find_opt tbl n.ds_graph_node_id with
   | None ->
       let state =
-        begin match n.ds_node_state with
-        | Realized x -> Realized x
-        | Marginalized (mdistr, None) -> Marginalized (mdistr, None)
-        | Marginalized (mdistr, Some (c, cdistr)) ->
-            assert begin match c.ds_node_state with
-              | Initialized _ -> false
-              | Marginalized _ | Realized _ -> true
+        begin match n.ds_graph_node_state with
+        | DSgraph_Realized x -> DSgraph_Realized x
+        | DSgraph_Marginalized (mdistr, None) -> DSgraph_Marginalized (mdistr, None)
+        | DSgraph_Marginalized (mdistr, Some (c, cdistr)) ->
+            assert begin match c.ds_graph_node_state with
+              | DSgraph_Initialized _ -> false
+              | DSgraph_Marginalized _ | DSgraph_Realized _ -> true
             end;
             let c_copy = copy_node tbl c in
-            Marginalized (mdistr, Some (c_copy, cdistr))
-        | Initialized (p, cdistr) ->
-            assert begin match p.ds_node_state with
-              | Marginalized (_, Some (c, _)) ->
-                  c.ds_node_id <> n.ds_node_id
-              | Initialized _ | Marginalized (_, None) | Realized _ ->
+            DSgraph_Marginalized (mdistr, Some (c_copy, cdistr))
+        | DSgraph_Initialized (p, cdistr) ->
+            assert begin match p.ds_graph_node_state with
+              | DSgraph_Marginalized (_, Some (c, _)) ->
+                  c.ds_graph_node_id <> n.ds_graph_node_id
+              | DSgraph_Initialized _ | DSgraph_Marginalized (_, None) | DSgraph_Realized _ ->
                   true
             end;
             let p_copy = copy_node tbl p in
-            Initialized (p_copy, cdistr)
+            DSgraph_Initialized (p_copy, cdistr)
         end
       in
       let n =
-        { ds_node_id = n.ds_node_id;
-          ds_node_state = state }
+        { ds_graph_node_id = n.ds_graph_node_id;
+          ds_graph_node_state = state }
       in
-      Hashtbl.add tbl n.ds_node_id (Obj.repr n);
+      Hashtbl.add tbl n.ds_graph_node_id (Obj.repr n);
       n
-  | Some o -> (Obj.obj o: (a, b) ds_node)
+  | Some o -> (Obj.obj o: (a, b) ds_graph_node)
   end
 
 let rec copy_cast_node : type p a.
-  (int, Obj.t) Hashtbl.t -> (p, a) Naive.ds_node ->  (p, a) ds_node = 
-  fun tbl n -> 
-  begin match Hashtbl.find_opt tbl n.Naive.ds_node_id with
-  | None -> 
+  (int, Obj.t) Hashtbl.t -> (p, a) ds_naive_node ->  (p, a) ds_graph_node =
+  fun tbl n ->
+  begin match Hashtbl.find_opt tbl n.ds_naive_node_id with
+  | None ->
       let state =
-        begin match n.Naive.ds_node_state with
-        | Naive.Realized x -> Realized x
-        | Naive.Marginalized(mdistr, None) -> Marginalized(mdistr, None) 
-        | Naive.Marginalized(mdistr, Some _) ->
-            begin match Naive.marginal_child n with
-            | None -> 
-                Marginalized(mdistr, None)
-            | Some(Child(c)) ->
-                begin match c.ds_node_state with
-                | Naive.Marginalized(_, Some(p, cdistr)) ->
-                    assert (p.ds_node_id = n.ds_node_id);
-                    let c = 
-                      copy_cast_node tbl (Obj.magic c: (a, _) Naive.ds_node) 
+        begin match n.ds_naive_node_state with
+        | DSnaive_Realized x -> DSgraph_Realized x
+        | DSnaive_Marginalized(mdistr, None) -> DSgraph_Marginalized(mdistr, None)
+        | DSnaive_Marginalized(mdistr, Some _) ->
+            begin match marginal_child n with
+            | None ->
+                DSgraph_Marginalized(mdistr, None)
+            | Some(DSnaive_Child(c)) ->
+                begin match c.ds_naive_node_state with
+                | DSnaive_Marginalized(_, Some(p, cdistr)) ->
+                    assert (p.ds_naive_node_id = n.ds_naive_node_id);
+                    let c =
+                      copy_cast_node tbl (Obj.magic c: (a, _) ds_naive_node)
                     in
-                    Marginalized(mdistr, Some(c, cdistr))
-                | Naive.Marginalized(_, None) 
-                | Realized _
-                | Initialized _ -> assert false
+                    DSgraph_Marginalized(mdistr, Some(c, cdistr))
+                | DSnaive_Marginalized(_, None)
+                | DSnaive_Realized _
+                | DSnaive_Initialized _ -> assert false
                 end
             end
-        | Naive.Initialized(p, cdistr) -> 
+        | DSnaive_Initialized(p, cdistr) ->
             let p = copy_cast_node tbl p in
-            Initialized(p, cdistr)
-        end 
+            DSgraph_Initialized(p, cdistr)
+        end
       in
-      let n = 
-        { ds_node_id = n.ds_node_id; 
-          ds_node_state = state } 
+      let n =
+        { ds_graph_node_id = n.ds_naive_node_id;
+          ds_graph_node_state = state }
       in
-      Hashtbl.add tbl n.ds_node_id (Obj.repr n); 
+      Hashtbl.add tbl n.ds_graph_node_id (Obj.repr n);
       n
-  | Some o -> (Obj.obj o: (p, a) ds_node)
+  | Some o -> (Obj.obj o: (p, a) ds_graph_node)
   end

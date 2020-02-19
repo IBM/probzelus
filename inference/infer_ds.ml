@@ -16,6 +16,9 @@
 
 (** Inference with delayed sampling *)
 
-module DS_hl = Infer_ds_hl.Make(Infer_ds_ll)
+module DS_hl = Infer_ds_hl.Make(struct
+    include Infer_ds_ll
+    type ('p, 'a) ds_node = ('p, 'a) Infer_ds_ll.ds_naive_node
+  end)
 
 include DS_hl

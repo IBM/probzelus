@@ -16,6 +16,7 @@
 
 open Ztypes
 open Infer_pf
+open Inference_types
 
 type pstate = Infer_pf.pstate
 
@@ -54,7 +55,7 @@ let infer_decay n decay (Cnode { alloc; reset; copy; step }) =
     in
     if decay <> 1. then
       Array.iteri (fun i score -> scores.(i) <- decay *. score) scores;
-    Distribution.Dist_support
+    Dist_support
       (List.rev_map (fun (b, w) -> (b, w /. norm)) weights)
   in
   let copy src dst =

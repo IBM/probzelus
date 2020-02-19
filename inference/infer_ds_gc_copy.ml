@@ -16,11 +16,11 @@
 
 (** Inference with delayed sampling *)
 open Ztypes
-open Ds_distribution
+open Inference_types
 
 (* type 'a random_var = RV : ('b, 'a) Infer_ds_ll_gc.ds_node -> 'a random_var *)
 type 'a random_var = { rv_id : int; }
-type ('a, 'b) ds_node = ('a, 'b) Infer_ds_ll_gc.ds_node
+type ('a, 'b) ds_node = ('a, 'b) ds_graph_node
 
 (* module Gnodes = struct *)
 (*   module E = Ephemeron.K1 *)
@@ -175,7 +175,7 @@ module Gnodes = struct
         | Some x ->  E.set_key e' x;
         | _ -> ()
         end;
-        let n' = Infer_ds_ll_gc.copy_node tbl n in
+        let n' = Infer_ds_ll_cast.copy_node tbl n in
         (e', n'))
         src.live_nodes
 end
@@ -229,7 +229,7 @@ type pstate =
     ds_graph: Gnodes.t; }
 
 let rv_node : type a p.
-  pstate -> a random_var -> (p, a) Infer_ds_ll_gc.ds_node =
+  pstate -> a random_var -> (p, a) ds_graph_node =
   fun prob x ->
   let g = prob.ds_graph in
   begin match Gnodes.find_opt g x with
@@ -240,7 +240,7 @@ let rv_node : type a p.
   end
 
 let add_random_var: type a p.
-  pstate -> a random_var -> (p, a) Infer_ds_ll_gc.ds_node -> unit =
+  pstate -> a random_var -> (p, a) ds_graph_node -> unit =
   fun prob rv n ->
   let g = prob.ds_graph in
   Gnodes.add g rv n
@@ -462,7 +462,7 @@ let assume_constant : type a.
   pstate -> a mdistr -> a random_var =
   fun prob d ->
   let n = Infer_ds_ll_gc.assume_constant d in
-  let rv = { rv_id = n.ds_node_id } in
+  let rv = { rv_id = n.ds_graph_node_id } in
   add_random_var prob rv n;
   rv
 
@@ -471,7 +471,7 @@ let assume_conditional : type b c.
   fun prob p d ->
   let par = rv_node prob p in
   let n = Infer_ds_ll_gc.assume_conditional par d in
-  let rv = { rv_id = n.ds_node_id } in
+  let rv = { rv_id = n.ds_graph_node_id } in
   add_random_var prob rv n;
   rv
 

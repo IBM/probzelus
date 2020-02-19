@@ -15,6 +15,7 @@
  *)
 
 open Owl
+open Inference_types
 
 module type DS_ll_S = sig
   type pstate = Infer_pf.pstate
@@ -23,15 +24,15 @@ module type DS_ll_S = sig
   val factor' : Infer_pf.pstate * float -> unit
   val factor : (Infer_pf.pstate * float, unit) Ztypes.cnode
   val value : ('a, 'b) ds_node -> 'b
-  val get_distr_kind : ('a, 'b) ds_node -> Ds_distribution.kdistr
+  val get_distr_kind : ('a, 'b) ds_node -> kdistr
   val get_distr : ('a, 'b) ds_node -> 'b Distribution.t
 
   val observe_conditional :
-    pstate -> ('a, 'b) ds_node -> ('b, 'c) Ds_distribution.cdistr -> 'c -> unit
+    pstate -> ('a, 'b) ds_node -> ('b, 'c) cdistr -> 'c -> unit
 
-  val assume_constant : 'a Ds_distribution.mdistr -> ('p, 'a) ds_node
+  val assume_constant : 'a mdistr -> ('p, 'a) ds_node
   val assume_conditional :
-    ('a, 'b) ds_node -> ('b, 'c) Ds_distribution.cdistr -> ('b, 'c) ds_node
+    ('a, 'b) ds_node -> ('b, 'c) cdistr -> ('b, 'c) ds_node
 
   val shape : ('a, Mat.mat) ds_node -> int
   val is_realized : ('p, 'a) ds_node -> bool
@@ -39,15 +40,10 @@ end
 
 module Make(DS_ll: DS_ll_S) = struct
   open Ztypes
-  open Ds_distribution
 
   type pstate = DS_ll.pstate
 
-  let factor' = DS_ll.factor'
-  let factor = DS_ll.factor
-
-  type 'a random_var = RV : ('b, 'a) DS_ll.ds_node -> 'a random_var
-
+  (** Delayed sampling expressions *)
   type _ expr_tree =
     | Econst : 'a -> 'a expr_tree
     | Ervar : 'a random_var -> 'a expr_tree
@@ -63,9 +59,15 @@ module Make(DS_ll: DS_ll_S) = struct
     | Emat_scalar_mul : float expr * Mat.mat expr -> Mat.mat expr_tree
     | Emat_dot : Mat.mat expr * Mat.mat expr -> Mat.mat expr_tree
     | Evec_get : Mat.mat expr * int -> float expr_tree
-  and 'a expr = {
-    mutable value : 'a expr_tree;
-  }
+
+  and 'a expr =
+    { mutable value : 'a expr_tree }
+
+  and 'a random_var =
+    | RV : ('b, 'a) DS_ll.ds_node -> 'a random_var
+
+  let factor' = DS_ll.factor'
+  let factor = DS_ll.factor
 
   let const : 'a. 'a -> 'a expr =
     begin fun v ->
@@ -93,15 +95,15 @@ module Make(DS_ll: DS_ll_S) = struct
 
   let ( *~ ) x y = mult (x, y)
 
-  let app : type t1 t2. (t1 -> t2) expr * t1 expr -> t2 expr =
-    begin fun (e1, e2) ->
-      begin match e1.value, e2.value with
-      | Econst f, Econst x -> { value = Econst (f x); }
-      | _ -> { value = Eapp(e1, e2); }
-      end
-    end
+  (* let app : type t1 t2. (t1 -> t2) expr * t1 expr -> t2 expr = *)
+  (*   begin fun (e1, e2) -> *)
+  (*     begin match e1.value, e2.value with *)
+  (*     | Econst f, Econst x -> { value = Econst (f x); } *)
+  (*     | _ -> { value = Eapp(e1, e2); } *)
+  (*     end *)
+  (*   end *)
 
-  let ( @@~ ) f e = app (f, e)
+  (* let ( @@~ ) f e = app (f, e) *)
 
   let pair (e1, e2) =
     { value = Epair (e1, e2) }
@@ -646,7 +648,7 @@ module Make(DS_ll: DS_ll_S) = struct
         Dist_array
           (Array.map
              (fun ai ->
-                Distribution.Dist_array
+                Dist_array
                   (Array.map marginal_distribution_of_expr ai))
              a)
     | Elist l ->
