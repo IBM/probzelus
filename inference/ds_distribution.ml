@@ -24,13 +24,13 @@ let cdistr_to_mdistr : type a b.
   fun cdistr obs ->
   begin match cdistr with
   | AffineMeanGaussian (m, b, obsvar) ->
-      Distribution.gaussian (m *. obs +. b, obsvar)
+      Dist_gaussian (m *. obs +. b, obsvar)
   | CBernoulli ->
-      Distribution.bernoulli obs
+      Dist_bernoulli obs
   | AffineMeanGaussianMV (m, b, sigma) ->
-      Distribution.mv_gaussian (Mat.add (Mat.dot m obs) b, sigma)
+      Dist_mv_gaussian (Mat.add (Mat.dot m obs) b, sigma)
   | CBernBern (bfn) ->
-      Distribution.bernoulli (bfn obs)
+      Dist_bernoulli (bfn obs)
   end
 
 let make_marginal : type a b.
@@ -38,7 +38,7 @@ let make_marginal : type a b.
   fun mdistr cdistr ->
   begin match mdistr, cdistr with
   | Dist_gaussian (mu, var), AffineMeanGaussian(m, b, obsvar) ->
-      Distribution.gaussian (m *. mu +. b,
+      Dist_gaussian (m *. mu +. b,
                              m ** 2. *. var +. obsvar)
   | Dist_mv_gaussian (mu0, sigma0), AffineMeanGaussianMV(m, b, sigma) ->
       let mu' = Mat.add (Mat.dot m mu0) b in
@@ -46,13 +46,13 @@ let make_marginal : type a b.
       let sigma' =
         Mat.add (Mat.dot (Mat.dot m sigma0) (Mat.transpose m)) sigma
       in
-      Distribution.mv_gaussian (mu', sigma')
+      Dist_mv_gaussian (mu', sigma')
   | Dist_beta (a, b),  CBernoulli ->
-      Distribution.bernoulli (a /. (a +. b))
+      Dist_bernoulli (a /. (a +. b))
   | Dist_bernoulli (p_prior), CBernBern bfn ->
     let p_marg = (p_prior *. (bfn true)) +. 
                  ((1. -. p_prior) *. (bfn false)) in
-    Distribution.bernoulli p_marg
+    Dist_bernoulli p_marg
 
   | _ -> assert false
   end
@@ -91,12 +91,12 @@ let make_conditional : type a b.
         if obs then Dist_beta (a +. 1., b)
         else Dist_beta (a, b +. 1.)
     | Dist_bernoulli (p_prior), CBernBern bfn ->
-        let p_true, p_false = 
+        let p_true, p_false =
             if obs then
                 (p_prior *. (bfn true), (1. -. p_prior) *. (bfn false))
             else
                 (p_prior *. (1. -. (bfn true)), (1. -. p_prior) *. (1. -. (bfn false)))
         in
-        Distribution.bernoulli (p_true /. (p_true +. p_false))
+        Dist_bernoulli (p_true /. (p_true +. p_false))
     | _, _ -> assert false
     end

@@ -54,7 +54,32 @@ type _ distr =
   | Dist_mult : float distr * float distr -> float distr
   | Dist_app : ('a -> 'b) distr * 'a distr -> 'b distr
   | Dist_mv_gaussian : Mat.mat * Mat.mat -> Mat.mat distr
-  (* | Dist_ds : 'a expr -> 'a distr *)
+  (* | Dist_joint : 'a joint_distr -> 'a distr *)
+
+and _ joint_distr_tree =
+  | JDist_const : 'a -> 'a joint_distr_tree
+  | JDist_rvar : 'a random_var -> 'a joint_distr_tree
+  | JDist_add : float joint_distr * float joint_distr -> float joint_distr_tree
+  | JDist_mult : float joint_distr * float joint_distr -> float joint_distr_tree
+  | JDist_app : ('a -> 'b) joint_distr * 'a joint_distr -> 'b joint_distr_tree
+  | JDist_pair : 'a joint_distr * 'b joint_distr -> ('a * 'b) joint_distr_tree
+  | JDist_array : 'a joint_distr array -> 'a array joint_distr_tree
+  | JDist_matrix : 'a joint_distr array array -> 'a array array joint_distr_tree
+  | JDist_list : 'a joint_distr list -> 'a list joint_distr_tree
+  | JDist_ite :
+      bool joint_distr * 'a joint_distr * 'a joint_distr -> 'a joint_distr_tree
+  | JDist_mat_add :
+      Mat.mat joint_distr * Mat.mat joint_distr -> Mat.mat joint_distr_tree
+  | JDist_mat_scalar_mul :
+      float joint_distr * Mat.mat joint_distr -> Mat.mat joint_distr_tree
+  | JDist_mat_dot :
+      Mat.mat joint_distr * Mat.mat joint_distr -> Mat.mat joint_distr_tree
+  | JDist_vec_get :
+      Mat.mat joint_distr * int -> float joint_distr_tree
+
+and 'a joint_distr =
+  { mutable value : 'a joint_distr_tree }
+
 
 (** Marginalized distribution *)
 and 'a mdistr = 'a distr
@@ -86,24 +111,124 @@ and ('p, 'a) ds_graph_state =
 
 
 (** Delayed sampling expressions *)
-and _ expr_tree =
-  | Econst : 'a -> 'a expr_tree
-  | Ervar : 'a random_var -> 'a expr_tree
-  | Eadd : float expr * float expr -> float expr_tree
-  | Emult : float expr * float expr -> float expr_tree
-  | Eapp : ('a -> 'b) expr * 'a expr -> 'b expr_tree
-  | Epair : 'a expr * 'b expr -> ('a * 'b) expr_tree
-  | Earray : 'a expr array -> 'a array expr_tree
-  | Ematrix : 'a expr array array -> 'a array array expr_tree
-  | Elist : 'a expr list -> 'a list expr_tree
-  | Eite : bool expr * 'a expr * 'a expr -> 'a expr_tree
-  | Emat_add : Mat.mat expr * Mat.mat expr -> Mat.mat expr_tree
-  | Emat_scalar_mul : float expr * Mat.mat expr -> Mat.mat expr_tree
-  | Emat_dot : Mat.mat expr * Mat.mat expr -> Mat.mat expr_tree
-  | Evec_get : Mat.mat expr * int -> float expr_tree
-
-and 'a expr =
-  { mutable value : 'a expr_tree }
 
 and 'a random_var =
   | RV : ('b, 'a) ds_graph_node -> 'a random_var
+
+
+module type DS_GRAPH = sig
+
+  val value : ('a, 'b) ds_graph_node -> 'b
+  val get_distr_kind : ('a, 'b) ds_graph_node -> kdistr
+  val get_distr : ('a, 'b) ds_graph_node -> 'b distr
+
+  val assume_constant : 'a mdistr -> ('p, 'a) ds_graph_node
+  val assume_conditional :
+    ('a, 'b) ds_graph_node -> ('b, 'c) cdistr -> ('b, 'c) ds_graph_node
+
+  val force_condition : ('a, 'b) ds_graph_node -> unit
+  val realize : 'b -> ('a, 'b) ds_graph_node -> unit
+  val graft : ('a, 'b) ds_graph_node -> unit
+
+  val shape : ('a, Mat.mat) ds_graph_node -> int
+  val is_realized : ('p, 'a) ds_graph_node -> bool
+
+end
+
+module type DISTRIBUTION = sig
+  module DS_graph: DS_GRAPH
+
+  type 'a t = 'a distr
+
+  val pp_print_any : Format.formatter -> 'a -> unit
+  val pp_print_array :
+    ?pp_sep:(Format.formatter -> unit -> unit) ->
+    (Format.formatter -> 'a -> unit) -> Format.formatter -> 'a array -> unit
+  val pp_print :
+    (Format.formatter -> 'a -> unit) -> Format.formatter -> 'a t -> unit
+  val print_any_t : 'a t -> unit
+  val print_float_t : float t -> unit
+  val print_int_t : int t -> unit
+  val print_bool_t : bool t -> unit
+
+  val gamma : float -> float
+  val log_gamma : float -> float
+  val dirac : 'a -> 'a t
+  val bernoulli_draw : float -> bool
+  val bernoulli_score : float -> bool -> float
+  val bernoulli_mean : 'a -> 'a
+  val bernoulli_variance : float -> float
+  val bernoulli : float -> bool t
+  val gaussian_draw : float -> float -> float
+  val gaussian_score : float -> float -> float -> float
+  val gaussian_mean : 'a -> 'b -> 'a
+  val gaussian_variance : 'a -> 'b -> 'b
+  val gaussian : float * float -> float t
+  val mv_gaussian_draw :
+    Owl.Arr.arr ->
+    (float, Bigarray.float64_elt) Owl.Linalg.Generic.t ->
+    (float, Bigarray.float64_elt) Owl_dense_matrix_generic.t
+  val mv_gaussian_score :
+    (float, Bigarray.float64_elt) Owl_dense_matrix_generic.t ->
+    Owl.Linalg.D.mat -> Owl.Arr.arr -> float
+  val mv_gaussian : Owl.Mat.mat * Owl.Mat.mat -> Owl.Mat.mat t
+  val beta_draw : float -> float -> float
+  val beta_score : float -> float -> float -> float
+  val beta_mean : float -> float -> float
+  val beta_variance : float -> float -> float
+  val beta : float * float -> float t
+  val sph_gaussian : float list * float list -> float list t
+  val uniform_int_draw : int -> int -> int
+  val uniform_int_score : int -> int -> int -> float
+  val uniform_int_mean : int -> int -> float
+  val uniform_int_variance : int -> int -> float
+  val uniform_int : int * int -> int t
+  val uniform_float_draw : float -> float -> float
+  val uniform_float_score : float -> float -> float -> float
+  val uniform_float_mean : float -> float -> float
+  val uniform_float_variance : float -> float -> float
+  val uniform_float : float * float -> float t
+  val uniform_list : 'a list -> 'a t
+  val weighted_list : (float * 'a) list -> 'a t
+  val shuffle : 'a list -> 'a list t
+  val exponential_draw : float -> float
+  val exponential_score : float -> float -> float
+  val exponential_mean : float -> float
+  val exponential_variance : float -> float
+  val exponential : float -> float t
+  val poisson_draw : float -> int
+  val poisson_score : float -> int -> float
+  val poisson_mean : 'a -> 'a
+  val poisson_variance : 'a -> 'a
+  val poisson : float -> int t
+  val alias_method_unsafe : 'a array -> float array -> 'a t
+  val alias_method_list : ('a * float) list -> 'a t
+  val alias_method : 'a array -> float array -> 'a t
+  val add : float t * float t -> float t
+  val mult : float t * float t -> float t
+  val app : ('a -> 'b) t * 'a t -> 'b t
+  val to_dist_support : 'a t -> 'a t
+  val draw : 'a t -> 'a
+  val score : 'a t * 'a -> log_proba
+  val draw_and_score : 'a t -> 'a * log_proba
+  val of_sampler : (unit -> 'a) * ('a -> log_proba) -> 'a t
+  val of_list : 'a t list -> 'a list t
+  val of_array : 'a t array -> 'a array t
+  val of_pair : 'a t * 'b t -> ('a * 'b) t
+  val split : ('a * 'b) t -> 'a t * 'b t
+  val split_array : 'a array t -> 'a t array
+  val split_matrix : 'a array array t -> 'a t array array
+  val split_list : 'a list t -> 'a t list
+  val to_mixture : 'a t t -> 'a t
+  val to_signal : ('a * bool) t -> 'a t * bool
+  val stats_float : float t -> float * float
+  val mean_float : float t -> float
+  val stats_float_list : float list t -> (float * float) list
+  val mean_float_list : float list t -> float list
+  val mean : ('a -> float) -> 'a t -> float
+  val mean_list : ('a -> float) -> 'a list t -> float list
+  val mean_int : int t -> float
+  val mean_bool : bool t -> float
+  val mean_signal_present : ('a * bool) t -> float
+  val mean_matrix : Owl.Mat.mat t -> Owl.Mat.mat
+end

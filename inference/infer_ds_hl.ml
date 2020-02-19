@@ -95,15 +95,15 @@ module Make(DS_ll: DS_ll_S) = struct
 
   let ( *~ ) x y = mult (x, y)
 
-  (* let app : type t1 t2. (t1 -> t2) expr * t1 expr -> t2 expr = *)
-  (*   begin fun (e1, e2) -> *)
-  (*     begin match e1.value, e2.value with *)
-  (*     | Econst f, Econst x -> { value = Econst (f x); } *)
-  (*     | _ -> { value = Eapp(e1, e2); } *)
-  (*     end *)
-  (*   end *)
+  let app : type t1 t2. (t1 -> t2) expr * t1 expr -> t2 expr =
+    begin fun (e1, e2) ->
+      begin match e1.value, e2.value with
+      | Econst f, Econst x -> { value = Econst (f x); }
+      | _ -> { value = Eapp(e1, e2); }
+      end
+    end
 
-  (* let ( @@~ ) f e = app (f, e) *)
+  let ( @@~ ) f e = app (f, e)
 
   let pair (e1, e2) =
     { value = Epair (e1, e2) }

@@ -175,7 +175,7 @@ module Gnodes = struct
         | Some x ->  E.set_key e' x;
         | _ -> ()
         end;
-        let n' = Infer_ds_ll_cast.copy_node tbl n in
+        let n' = Joint_distribution.copy_node tbl n in
         (e', n'))
         src.live_nodes
 end

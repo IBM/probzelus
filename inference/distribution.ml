@@ -22,6 +22,10 @@ open Inference_types
 
 exception Draw_error
 
+module rec Distribution_rec: DISTRIBUTION = struct
+
+module DS_graph = Ds_graph.Make(Distribution_rec)
+
 type 'a t = 'a distr
 
 (** {2 Utils}*)
@@ -107,6 +111,9 @@ let rec pp_print :
       Format.fprintf ppf "mv_gaussian (%a, %a)"
         pp_print_any mu
         pp_print_any sigma
+  (* | Dist_joint _ -> *)
+  (*     (\* XXX TODO XXX *\) *)
+  (*     Format.fprintf ppf "joint distribution" *)
   end
 
 let print_any_t : type a. a t -> unit =
@@ -180,6 +187,12 @@ let log_gamma x =
   log (gamma x)
 
 (** {2 Distributions} *)
+
+(** [dirac x] is a dirac distribution.
+    @see<https://en.wikipedia.org/wiki/Dirac_delta_function>
+*)
+let dirac x =
+  Dist_support [ x, 1. ]
 
 (** [bernoulli theta] is a bernoulli distribution of parameter theta.
     @see<https://en.wikipedia.org/wiki/Bernoulli_distribution>
@@ -556,7 +569,8 @@ let add : float t * float t -> float t =
   | (Dist_exponential _, _) | (_, Dist_exponential _)
   | (Dist_add (_, _), _) | (_, Dist_add (_, _))
   | (Dist_mult (_, _), _) | (_, Dist_mult (_, _))
-  | (Dist_app (_, _), _) | (_, Dist_app (_, _)) ->
+  | (Dist_app (_, _), _) | (_, Dist_app (_, _))
+  (* | (Dist_joint _, _) | (_, Dist_joint _) *) ->
       (* XXX TODO XXX *)
       Dist_add (dist1, dist2)
   | (Dist_mv_gaussian (_, _), Dist_mv_gaussian (_, _)) ->
@@ -579,7 +593,8 @@ let mult : float t * float t -> float t =
   | (Dist_exponential _, _) | (_, Dist_exponential _)
   | (Dist_add (_, _), _) | (_, Dist_add (_, _))
   | (Dist_mult (_, _), _) | (_, Dist_mult (_, _))
-  | (Dist_app (_, _), _) | (_, Dist_app (_, _)) ->
+  | (Dist_app (_, _), _) | (_, Dist_app (_, _))
+  (* | (Dist_joint _, _) | (_, Dist_joint _) *) ->
       Dist_mult (dist1, dist2)
   | (Dist_mv_gaussian (_, _), Dist_mv_gaussian (_, _)) ->
       assert false (* XXX TODO XXX *)
@@ -631,8 +646,8 @@ let rec to_dist_support : type a. a t -> a t =
           Dist_support (flatten_suport ( *. ) s1 s2)
       | _, _ -> assert false
       end
-  | Dist_app (_, _) ->
-      assert false (* XXX TODO XXX *)
+  | Dist_app (_, _) -> assert false (* XXX TODO XXX *)
+  (* | Dist_joint _ -> assert false (\* XXX TODO XXX *\) *)
   end
 
 (** [draw dist] draws a value form the distribution [dist] *)
@@ -818,6 +833,12 @@ let draw_and_score : type a. a t -> a * log_proba =
 
 (** {2 Operations on distributions} *)
 
+(** [of_sampler (draw, score)] builds a distribution from its sampling
+    and score functions.
+*)
+let of_sampler (draw, score) =
+  Dist_sampler (draw, score)
+
 (** [of_list dists] builds a distribution of list from a
     list of distributions.
 *)
@@ -829,6 +850,12 @@ let of_list dists =
           (fun acc dist x -> acc +. score(dist, x))
           1.0
           dists xs))
+
+(** [of_array dists] builds a distribution of array from a
+    array of distributions.
+*)
+let of_array dists =
+  Dist_array dists
 
 (** [of_pair (dist1, dist2)] builds a distribution from a pair
     of distributions.
@@ -1358,3 +1385,7 @@ let rec mean_matrix (d: Mat.mat t)=
   | Dist_mult _ -> assert false
   | Dist_app _ -> assert false
   end
+
+end
+
+include Distribution_rec
