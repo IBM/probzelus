@@ -36,6 +36,9 @@ module type DS_ll_S = sig
 
   val shape : ('a, Mat.mat) ds_node -> int
   val is_realized : ('p, 'a) ds_node -> bool
+
+  val copy_node :
+    (int, Obj.t) Hashtbl.t -> ('a, 'b) ds_node -> ('a, 'b) ds_graph_node
 end
 
 module Make(DS_ll: DS_ll_S) = struct
@@ -665,18 +668,60 @@ module Make(DS_ll: DS_ll_S) = struct
         assert false (* XXX TODO XXX *)
     end
 
+  let rec joint_distribution_of_expr : type a.
+    (int, Obj.t) Hashtbl.t -> a expr -> a joint_distr =
+    fun tbl expr ->
+    begin match expr.value with
+    | Econst c -> JDist_const c
+    | Ervar (RV x) ->
+        JDist_rvar (RV (DS_ll.copy_node tbl x))
+    | Eadd (e1, e2) ->
+        JDist_add (joint_distribution_of_expr tbl e1,
+                   joint_distribution_of_expr tbl e2)
+    | Emult (e1, e2) ->
+        JDist_mult (joint_distribution_of_expr tbl e1,
+                    joint_distribution_of_expr tbl e2)
+    | Eapp (e1, e2) ->
+        JDist_app (joint_distribution_of_expr tbl e1,
+                   joint_distribution_of_expr tbl e2)
+    | Epair (e1, e2) ->
+        JDist_pair (joint_distribution_of_expr tbl e1,
+                    joint_distribution_of_expr tbl e2)
+    | Earray a ->
+        JDist_array (Array.map (joint_distribution_of_expr tbl) a)
+    | Ematrix a ->
+        JDist_array
+          (Array.map
+             (fun ai ->
+                JDist_array
+                  (Array.map (joint_distribution_of_expr tbl) ai))
+             a)
+    | Elist l ->
+        JDist_list (List.map (joint_distribution_of_expr tbl) l)
+    | Eite (e, e1, e2) ->
+        JDist_ite (joint_distribution_of_expr tbl e,
+                   joint_distribution_of_expr tbl e1,
+                   joint_distribution_of_expr tbl e2)
+    | Emat_add (e1, e2) ->
+        JDist_mat_add (joint_distribution_of_expr tbl e1,
+                       joint_distribution_of_expr tbl e2)
+    | Emat_scalar_mul (e1, e2) ->
+        JDist_mat_scalar_mul (joint_distribution_of_expr tbl e1,
+                              joint_distribution_of_expr tbl e2)
+    | Emat_dot (e1, e2) ->
+        JDist_mat_dot (joint_distribution_of_expr tbl e1,
+                       joint_distribution_of_expr tbl e2)
+    | Evec_get (e, n) ->
+        JDist_vec_get (joint_distribution_of_expr tbl e, n)
+    end
+
   let distribution_of_expr : type a. a expr -> a Distribution.t =
     fun expr ->
     if is_safe_marginal expr then
       marginal_distribution_of_expr expr
     else
-      let expr' = Probzelus_utils.copy expr in
-      let sample () =
-        let e = Probzelus_utils.copy expr' in
-        eval e
-      in
-      let score _ = assert false in
-      Dist_sampler (sample, score)
+      let tbl = Hashtbl.create 7 in
+      Dist_joint (joint_distribution_of_expr tbl expr)
 
   type infer_dist_kind =
     | Infer_sample

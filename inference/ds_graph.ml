@@ -206,5 +206,43 @@ module Make(Distribution: DISTRIBUTION) = struct
     | DSgraph_Realized _ -> true
     end
 
+  let rec copy_node : type a b.
+    (int, Obj.t) Hashtbl.t -> (a, b) ds_graph_node -> (a, b) ds_graph_node =
+    fun tbl n  ->
+    begin match Hashtbl.find_opt tbl n.ds_graph_node_id with
+    | None ->
+        let state =
+          begin match n.ds_graph_node_state with
+          | DSgraph_Realized x -> DSgraph_Realized x
+          | DSgraph_Marginalized (mdistr, None) ->
+              DSgraph_Marginalized (mdistr, None)
+          | DSgraph_Marginalized (mdistr, Some (c, cdistr)) ->
+              assert begin match c.ds_graph_node_state with
+                | DSgraph_Initialized _ -> false
+                | DSgraph_Marginalized _ | DSgraph_Realized _ -> true
+              end;
+              let c_copy = copy_node tbl c in
+              DSgraph_Marginalized (mdistr, Some (c_copy, cdistr))
+          | DSgraph_Initialized (p, cdistr) ->
+              assert begin match p.ds_graph_node_state with
+                | DSgraph_Marginalized (_, Some (c, _)) ->
+                    c.ds_graph_node_id <> n.ds_graph_node_id
+                | DSgraph_Initialized _
+                | DSgraph_Marginalized (_, None)
+                | DSgraph_Realized _ ->
+                    true
+              end;
+              let p_copy = copy_node tbl p in
+              DSgraph_Initialized (p_copy, cdistr)
+          end
+        in
+        let n =
+          { ds_graph_node_id = n.ds_graph_node_id;
+            ds_graph_node_state = state }
+        in
+        Hashtbl.add tbl n.ds_graph_node_id (Obj.repr n);
+        n
+    | Some o -> (Obj.obj o: (a, b) ds_graph_node)
+    end
 
 end

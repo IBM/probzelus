@@ -128,6 +128,8 @@ module type DS_GRAPH = sig
 
   val shape : ('a, Mat.mat) ds_graph_node -> int
   val is_realized : ('p, 'a) ds_graph_node -> bool
+  val copy_node :
+    (int, Obj.t) Hashtbl.t -> ('a, 'b) ds_graph_node -> ('a, 'b) ds_graph_node
 
 end
 

@@ -249,3 +249,44 @@ let is_realized : type p a. (p, a) ds_naive_node -> bool =
   | DSnaive_Marginalized _ -> false
   | DSnaive_Realized _ -> true
   end
+
+let rec copy_node : type p a.
+  (int, Obj.t) Hashtbl.t -> (p, a) ds_naive_node ->  (p, a) ds_graph_node =
+  fun tbl n ->
+  begin match Hashtbl.find_opt tbl n.ds_naive_node_id with
+  | None ->
+      let state =
+        begin match n.ds_naive_node_state with
+        | DSnaive_Realized x -> DSgraph_Realized x
+        | DSnaive_Marginalized(mdistr, None) ->
+            DSgraph_Marginalized(mdistr, None)
+        | DSnaive_Marginalized(mdistr, Some _) ->
+            begin match marginal_child n with
+            | None ->
+                DSgraph_Marginalized(mdistr, None)
+            | Some(DSnaive_Child(c)) ->
+                begin match c.ds_naive_node_state with
+                | DSnaive_Marginalized(_, Some(p, cdistr)) ->
+                    assert (p.ds_naive_node_id = n.ds_naive_node_id);
+                    let c =
+                      copy_node tbl (Obj.magic c: (a, _) ds_naive_node)
+                    in
+                    DSgraph_Marginalized(mdistr, Some(c, cdistr))
+                | DSnaive_Marginalized(_, None)
+                | DSnaive_Realized _
+                | DSnaive_Initialized _ -> assert false
+                end
+            end
+        | DSnaive_Initialized(p, cdistr) ->
+            let p = copy_node tbl p in
+            DSgraph_Initialized(p, cdistr)
+        end
+      in
+      let n =
+        { ds_graph_node_id = n.ds_naive_node_id;
+          ds_graph_node_state = state }
+      in
+      Hashtbl.add tbl n.ds_graph_node_id (Obj.repr n);
+      n
+  | Some o -> (Obj.obj o: (p, a) ds_graph_node)
+  end
