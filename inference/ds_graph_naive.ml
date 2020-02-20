@@ -224,6 +224,7 @@ let get_distr_kind : type a b.
   | DSnaive_Marginalized (Dist_add _, _) -> KOthers
   | DSnaive_Marginalized (Dist_mult _, _) -> KOthers
   | DSnaive_Marginalized (Dist_app _, _) -> KOthers
+  | DSnaive_Marginalized (Dist_joint _, _) -> KOthers (* XXX TODO? XXX *)
   | DSnaive_Realized _ -> assert false
   end
 

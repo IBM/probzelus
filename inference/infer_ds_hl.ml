@@ -622,7 +622,7 @@ module Make(DS_ll: DS_ll_S) = struct
 
   let sample_of_expr : type a. a expr -> a =
     fun expr ->
-    let e = Normalize.copy expr in
+    let e = Probzelus_utils.copy expr in
     eval e
 
   let rec marginal_distribution_of_expr : type a. a expr -> a Distribution.t =
@@ -670,9 +670,9 @@ module Make(DS_ll: DS_ll_S) = struct
     if is_safe_marginal expr then
       marginal_distribution_of_expr expr
     else
-      let expr' = Normalize.copy expr in
+      let expr' = Probzelus_utils.copy expr in
       let sample () =
-        let e = Normalize.copy expr' in
+        let e = Probzelus_utils.copy expr' in
         eval e
       in
       let score _ = assert false in
@@ -708,7 +708,7 @@ module Make(DS_ll: DS_ll_S) = struct
       | Infer_bounded -> assert false
       end
     in
-    let copy src dst = dst := Normalize.copy !src in
+    let copy src dst = dst := Probzelus_utils.copy !src in
     let Cnode {alloc = infer_alloc; reset = infer_reset;
                copy = infer_copy; step = infer_step;} =
       begin match resample_kind with
@@ -744,7 +744,7 @@ module Make(DS_ll: DS_ll_S) = struct
       | Infer_graph -> assert false
       end
     in
-    let copy src dst = dst := Normalize.copy !src in
+    let copy src dst = dst := Probzelus_utils.copy !src in
     begin match resample_kind with
     | Infer_resample ->
         Infer_pf.infer n (Cnode { alloc; reset; copy = copy; step; })
@@ -790,7 +790,7 @@ module Make(DS_ll: DS_ll_S) = struct
     let alloc () = ref (alloc ()) in
     let reset state = reset !state in
     let step state (prob, x) = eval (step !state (prob, x)) in
-    let copy src dst = dst := Normalize.copy !src in
+    let copy src dst = dst := Probzelus_utils.copy !src in
     let Cnode {alloc = gen_alloc; reset = gen_reset;
                copy = gen_copy; step = gen_step;} =
       Infer_pf.gen (Cnode { alloc; reset; copy = copy; step; })

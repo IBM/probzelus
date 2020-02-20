@@ -212,7 +212,7 @@ let memoize_step step (s, table) x =
     Hashtbl.find table (s, x)
   with
   | Not_found ->
-      let sc = Normalize.copy s in
+      let sc = Probzelus_utils.copy s in
       let o = step s x in
       Hashtbl.add table (sc, x) o;
       o
@@ -227,7 +227,7 @@ let plan_step n k model_step model_copy =
   let rec expected_utility (state, score) (ttl, input) =
     if ttl < 1 then score
     else
-      let states = Array.init n (fun _ -> Normalize.copy state) in
+      let states = Array.init n (fun _ -> Probzelus_utils.copy state) in
       let scores = Array.make n 0.0 in
       let score' =
         Array.iteri
@@ -284,7 +284,7 @@ let plan n k (Cnode model : (pstate * 't1, 't2) Ztypes.cnode) =
   let copy src dst = model.copy !src !dst in
   let step_body = plan_step n k model.step model.copy in
   let step plan_state input =
-    let states = Array.init n (fun _ -> Normalize.copy !plan_state) in
+    let states = Array.init n (fun _ -> Probzelus_utils.copy !plan_state) in
     let scores = Array.make n 0.0 in
     let states_values =
       step_body { infer_states = states; infer_scores = scores; } input

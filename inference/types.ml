@@ -54,32 +54,28 @@ type _ distr =
   | Dist_mult : float distr * float distr -> float distr
   | Dist_app : ('a -> 'b) distr * 'a distr -> 'b distr
   | Dist_mv_gaussian : Mat.mat * Mat.mat -> Mat.mat distr
-  (* | Dist_joint : 'a joint_distr -> 'a distr *)
+  | Dist_joint : 'a joint_distr -> 'a distr
 
-and _ joint_distr_tree =
-  | JDist_const : 'a -> 'a joint_distr_tree
-  | JDist_rvar : 'a random_var -> 'a joint_distr_tree
-  | JDist_add : float joint_distr * float joint_distr -> float joint_distr_tree
-  | JDist_mult : float joint_distr * float joint_distr -> float joint_distr_tree
-  | JDist_app : ('a -> 'b) joint_distr * 'a joint_distr -> 'b joint_distr_tree
-  | JDist_pair : 'a joint_distr * 'b joint_distr -> ('a * 'b) joint_distr_tree
-  | JDist_array : 'a joint_distr array -> 'a array joint_distr_tree
-  | JDist_matrix : 'a joint_distr array array -> 'a array array joint_distr_tree
-  | JDist_list : 'a joint_distr list -> 'a list joint_distr_tree
+and _ joint_distr =
+  | JDist_const : 'a -> 'a joint_distr
+  | JDist_rvar : 'a random_var -> 'a joint_distr
+  | JDist_add : float joint_distr * float joint_distr -> float joint_distr
+  | JDist_mult : float joint_distr * float joint_distr -> float joint_distr
+  | JDist_app : ('a -> 'b) joint_distr * 'a joint_distr -> 'b joint_distr
+  | JDist_pair : 'a joint_distr * 'b joint_distr -> ('a * 'b) joint_distr
+  | JDist_array : 'a joint_distr array -> 'a array joint_distr
+  | JDist_matrix : 'a joint_distr array array -> 'a array array joint_distr
+  | JDist_list : 'a joint_distr list -> 'a list joint_distr
   | JDist_ite :
-      bool joint_distr * 'a joint_distr * 'a joint_distr -> 'a joint_distr_tree
+      bool joint_distr * 'a joint_distr * 'a joint_distr -> 'a joint_distr
   | JDist_mat_add :
-      Mat.mat joint_distr * Mat.mat joint_distr -> Mat.mat joint_distr_tree
+      Mat.mat joint_distr * Mat.mat joint_distr -> Mat.mat joint_distr
   | JDist_mat_scalar_mul :
-      float joint_distr * Mat.mat joint_distr -> Mat.mat joint_distr_tree
+      float joint_distr * Mat.mat joint_distr -> Mat.mat joint_distr
   | JDist_mat_dot :
-      Mat.mat joint_distr * Mat.mat joint_distr -> Mat.mat joint_distr_tree
+      Mat.mat joint_distr * Mat.mat joint_distr -> Mat.mat joint_distr
   | JDist_vec_get :
-      Mat.mat joint_distr * int -> float joint_distr_tree
-
-and 'a joint_distr =
-  { mutable value : 'a joint_distr_tree }
-
+      Mat.mat joint_distr * int -> float joint_distr
 
 (** Marginalized distribution *)
 and 'a mdistr = 'a distr

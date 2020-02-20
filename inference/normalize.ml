@@ -16,10 +16,6 @@
 
 open Types
 
-(** [copy v] creates a deep copy of the value [v]. *)
-let copy : 'a. 'a -> 'a =
-  fun x -> Marshal.from_bytes (Marshal.to_bytes x [Marshal.Closures]) 0
-
 (** [histogram_of_array l] create a histogram from an array of values. *)
 let histogram_of_array l =
   let tbl = Hashtbl.create 7 in

@@ -111,9 +111,9 @@ module rec Distribution_rec: DISTRIBUTION = struct
         Format.fprintf ppf "mv_gaussian (%a, %a)"
           pp_print_any mu
           pp_print_any sigma
-          (* | Dist_joint _ -> *)
-          (*     (\* XXX TODO XXX *\) *)
-          (*     Format.fprintf ppf "joint distribution" *)
+    | Dist_joint _ ->
+        (* XXX TODO XXX *)
+        Format.fprintf ppf "joint distribution"
     end
 
   let print_any_t : type a. a t -> unit =
@@ -570,7 +570,7 @@ module rec Distribution_rec: DISTRIBUTION = struct
     | (Dist_add (_, _), _) | (_, Dist_add (_, _))
     | (Dist_mult (_, _), _) | (_, Dist_mult (_, _))
     | (Dist_app (_, _), _) | (_, Dist_app (_, _))
-      (* | (Dist_joint _, _) | (_, Dist_joint _) *) ->
+    | (Dist_joint _, _) | (_, Dist_joint _) ->
         (* XXX TODO XXX *)
         Dist_add (dist1, dist2)
     | (Dist_mv_gaussian (_, _), Dist_mv_gaussian (_, _)) ->
@@ -594,7 +594,7 @@ module rec Distribution_rec: DISTRIBUTION = struct
     | (Dist_add (_, _), _) | (_, Dist_add (_, _))
     | (Dist_mult (_, _), _) | (_, Dist_mult (_, _))
     | (Dist_app (_, _), _) | (_, Dist_app (_, _))
-      (* | (Dist_joint _, _) | (_, Dist_joint _) *) ->
+    | (Dist_joint _, _) | (_, Dist_joint _) ->
         Dist_mult (dist1, dist2)
     | (Dist_mv_gaussian (_, _), Dist_mv_gaussian (_, _)) ->
         assert false (* XXX TODO XXX *)
@@ -647,51 +647,88 @@ module rec Distribution_rec: DISTRIBUTION = struct
         | _, _ -> assert false
         end
     | Dist_app (_, _) -> assert false (* XXX TODO XXX *)
-    (* | Dist_joint _ -> assert false (\* XXX TODO XXX *\) *)
+    | Dist_joint _ -> assert false (* XXX TODO XXX *)
     end
 
   (** [draw dist] draws a value form the distribution [dist] *)
-  let rec draw : type a. a t -> a =
-    fun dist ->
-    begin match dist with
-    | Dist_sampler (sampler, _) -> sampler ()
-    | Dist_sampler_float (sampler, _, _) -> sampler ()
-    | Dist_support sup ->
-        let sample = Random.float 1.0 in
-        (* TODO data structure for more efficient sampling *)
-        let rec draw sum r =
-          begin match r with
-          | [] -> raise Draw_error
-          | (v, p) :: r ->
-              let sum = sum +. p in
-              if sample <= sum then v else draw sum r
-          end
-        in
-        draw 0. sup
-    | Dist_mixture l ->
-        let d' = draw (Dist_support l) in
-        draw d'
-    | Dist_gaussian (mu, sigma2) -> gaussian_draw mu sigma2
-    | Dist_mv_gaussian (mu, sigma) -> mv_gaussian_draw mu sigma
-    | Dist_beta (a, b) -> beta_draw a b
-    | Dist_bernoulli p -> bernoulli_draw p
-    | Dist_uniform_int (a, b) -> uniform_int_draw a b
-    | Dist_uniform_float (a, b) -> uniform_float_draw a b
-    | Dist_exponential lambda -> exponential_draw lambda
-    | Dist_poisson lambda -> poisson_draw lambda
-    | Dist_pair (d1, d2) ->
-        (draw d1, draw d2)
-    | Dist_list a ->
-        List.map (fun ed -> draw ed) a
-    | Dist_array a ->
-        Array.map (fun ed -> draw ed) a
-    | Dist_add (d1, d2) ->
-        draw d1 +. draw d2
-    | Dist_mult (d1, d2) ->
-        draw d1 *. draw d2
-    | Dist_app (d1, d2) ->
-        (draw d1) (draw d2)
-    end
+  let draw =
+    let rec draw : type a. a t -> a =
+      fun dist ->
+        begin match dist with
+        | Dist_sampler (sampler, _) -> sampler ()
+        | Dist_sampler_float (sampler, _, _) -> sampler ()
+        | Dist_support sup ->
+            let sample = Random.float 1.0 in
+            (* TODO data structure for more efficient sampling *)
+            let rec draw sum r =
+              begin match r with
+              | [] -> raise Draw_error
+              | (v, p) :: r ->
+                  let sum = sum +. p in
+                  if sample <= sum then v else draw sum r
+              end
+            in
+            draw 0. sup
+        | Dist_mixture l ->
+            let d' = draw (Dist_support l) in
+            draw d'
+        | Dist_gaussian (mu, sigma2) -> gaussian_draw mu sigma2
+        | Dist_mv_gaussian (mu, sigma) -> mv_gaussian_draw mu sigma
+        | Dist_beta (a, b) -> beta_draw a b
+        | Dist_bernoulli p -> bernoulli_draw p
+        | Dist_uniform_int (a, b) -> uniform_int_draw a b
+        | Dist_uniform_float (a, b) -> uniform_float_draw a b
+        | Dist_exponential lambda -> exponential_draw lambda
+        | Dist_poisson lambda -> poisson_draw lambda
+        | Dist_pair (d1, d2) ->
+            (draw d1, draw d2)
+        | Dist_list a ->
+            List.map (fun ed -> draw ed) a
+        | Dist_array a ->
+            Array.map (fun ed -> draw ed) a
+        | Dist_add (d1, d2) ->
+            draw d1 +. draw d2
+        | Dist_mult (d1, d2) ->
+            draw d1 *. draw d2
+        | Dist_app (d1, d2) ->
+            (draw d1) (draw d2)
+        | Dist_joint j -> draw_joint (Probzelus_utils.copy j)
+        end
+    and draw_joint : type a. a joint_distr -> a =
+      fun dist ->
+        begin match dist with
+        | JDist_const x -> x
+        | JDist_rvar (RV x) -> DS_graph.value x
+        | JDist_add (d1, d2) -> draw_joint d1 +. draw_joint d2
+        | JDist_mult (d1, d2) -> draw_joint d1 *. draw_joint d2
+        | JDist_app (d1, d2) ->
+            (draw_joint d1) (draw_joint d2)
+        | JDist_pair (d1, d2) ->
+            (draw_joint d1, draw_joint d2)
+        | JDist_list a ->
+            List.map (fun ed -> draw_joint ed) a
+        | JDist_array a ->
+            Array.map (fun ed -> draw_joint ed) a
+        | JDist_ite (i,t,e) ->
+            if draw_joint i then
+              draw_joint t
+            else
+              draw_joint e
+        | JDist_matrix m ->
+            Array.map
+              (fun a -> Array.map draw_joint a)
+              m
+        | JDist_mat_add (e1, e2) ->
+            Mat.add (draw_joint e1) (draw_joint e2)
+        | JDist_mat_scalar_mul (e1, e2) ->
+            Mat.scalar_mul (draw_joint e1) (draw_joint e2)
+        | JDist_mat_dot (e1, e2) ->
+            Mat.dot (draw_joint e1) (draw_joint e2)
+        | JDist_vec_get (m, i) ->
+            Mat.get (draw_joint m) i 0
+        end
+    in
+    draw
 
   (** [score(dist, x)] returns the log probability of the value [x] in the
       distribution [dist].
@@ -754,7 +791,7 @@ module rec Distribution_rec: DISTRIBUTION = struct
     | Dist_mult (d, Dist_support [c, 1.]) -> score (d, x /. c)
     | Dist_mult (_, _) -> score (to_dist_support dist, x)
     | Dist_app (_, _) -> assert false (* do not know how to inverse d1 *)
-
+    | Dist_joint _ -> assert false (* XXX TODO XXX *)
     end
 
   (** [draw dist] draws a value form the distribution [dist] and returns
@@ -826,6 +863,9 @@ module rec Distribution_rec: DISTRIBUTION = struct
         let x = draw dist in
         (x, score (dist, x))
     | Dist_app _ ->
+        let x = draw dist in
+        (x, score (dist, x))
+    | Dist_joint _ ->
         let x = draw dist in
         (x, score (dist, x))
     end
@@ -912,6 +952,36 @@ module rec Distribution_rec: DISTRIBUTION = struct
         Dist_sampler ((fun () -> fst ((draw d1) (draw d2))), (fun _ -> assert false)),
         Dist_sampler ((fun () -> snd ((draw d1) (draw d2))), (fun _ -> assert false))
     | Dist_mv_gaussian (_, _) -> assert false
+    | Dist_joint j -> split_joint j
+    end
+  and split_joint : type a b. (a * b) joint_distr -> a t * b t =
+    fun dist ->
+    begin match dist with
+    | JDist_const (a, b) ->
+        Dist_support [ a, 1. ], Dist_support [ b, 1. ]
+    | JDist_rvar (RV x) -> split (DS_graph.get_distr x)
+    | JDist_app (d1, d2) ->
+        let d1 = Dist_joint d1 in
+        let d2 = Dist_joint d2 in
+        Dist_sampler ((fun () -> fst ((draw d1) (draw d2))),
+                      (fun _ -> assert false)),
+        Dist_sampler ((fun () -> snd ((draw d1) (draw d2))),
+                      (fun _ -> assert false))
+    | JDist_pair (d1, d2) -> Dist_joint d1, Dist_joint d2
+    | JDist_ite (d, d1, d2) ->
+        let d11, d12 = split_joint d1 in
+        let d21, d22 = split_joint d2 in
+        (Dist_joint
+           (JDist_ite (d,
+                       JDist_rvar (RV (DS_graph.assume_constant d11)),
+                       JDist_rvar (RV (DS_graph.assume_constant d21)))),
+         Dist_joint
+           (JDist_ite (d,
+                       JDist_rvar (RV (DS_graph.assume_constant d12)),
+                       JDist_rvar (RV (DS_graph.assume_constant d22)))))
+    | JDist_mat_add _
+    | JDist_mat_scalar_mul _
+    | JDist_mat_dot _ -> assert false
     end
 
   (** [split_array dist] turns a distribution of arrays into an array of
@@ -958,6 +1028,30 @@ module rec Distribution_rec: DISTRIBUTION = struct
              let score _ = assert false (* XXX TODO XXX *) in
              Dist_sampler (draw, score))
     | Dist_mv_gaussian (_, _) -> assert false
+    | Dist_joint j -> split_joint_array j
+    end
+  and split_joint_array : type a. a array joint_distr -> a t array =
+    fun dist ->
+    begin match dist with
+    | JDist_const a ->
+        Array.map (fun x -> Dist_support [ x, 1. ]) a
+    | JDist_rvar (RV x) ->
+        split_array (DS_graph.get_distr x)
+    | JDist_app (_, _) -> assert false (* XXX TODO XXX *)
+    | JDist_array a -> Array.map (fun x -> Dist_joint x) a
+    | JDist_ite (d, d1, d2) ->
+        let a1 = split_joint_array d1 in
+        let a2 = split_joint_array d2 in
+        Array.map2
+          (fun j1 j2 ->
+             let d1 = JDist_rvar (RV (DS_graph.assume_constant j1)) in
+             let d2 = JDist_rvar (RV (DS_graph.assume_constant j2)) in
+             Dist_joint (JDist_ite (d, d1, d2)))
+          a1 a2
+    | JDist_matrix _
+    | JDist_mat_add _
+    | JDist_mat_scalar_mul _
+    | JDist_mat_dot _ -> assert false
     end
 
   let rec split_matrix : type a. a array array t -> a t array array =
@@ -987,11 +1081,18 @@ module rec Distribution_rec: DISTRIBUTION = struct
     | Dist_mixture [] -> Array.make_matrix 0 0 (Dist_mixture [])
     | Dist_mixture ((d0, p0) :: l) ->
         let m0 = split_matrix d0 in
-        let accs = Array.map (fun ai -> (Array.map (fun d -> [(d,p0)]) ai)) m0 in
+        let accs =
+          Array.map (fun ai -> (Array.map (fun d -> [(d,p0)]) ai)) m0
+        in
         List.iter
           (fun (di, pi) ->
              let mi = split_matrix di in
-             Array.iteri (fun i ai -> Array.iteri (fun j d -> accs.(i).(j) <- (d, pi) :: accs.(i).(j)) ai) mi)
+             Array.iteri
+               (fun i ai ->
+                  Array.iteri
+                    (fun j d -> accs.(i).(j) <- (d, pi) :: accs.(i).(j))
+                    ai)
+               mi)
           l;
         Array.map (fun ai -> Array.map (fun acc -> Dist_mixture acc) ai) accs
     | _ -> assert false
@@ -1043,8 +1144,30 @@ module rec Distribution_rec: DISTRIBUTION = struct
       | Dist_app (_, _) ->
           assert false (* XXX TODO XXX *)
       | Dist_mv_gaussian (_, _) -> assert false
+      | Dist_joint j -> split_joint_list j
       end
-
+  and split_joint_list : type a. a list joint_distr -> a t list =
+    fun dist ->
+    begin match dist with
+    | JDist_const l ->
+        List.map (fun x -> Dist_support [x, 1.]) l
+    | JDist_rvar (RV x) ->
+        split_list (DS_graph.get_distr x)
+    | JDist_app (_, _) -> assert false (* XXX TODO XXX *)
+    | JDist_list l -> List.map (fun x -> Dist_joint x) l
+    | JDist_ite (d, d1, d2) ->
+        let l1 = split_joint_list d1 in
+        let l2 = split_joint_list d2 in
+        List.map2
+          (fun j1 j2 ->
+             let d1 = JDist_rvar (RV (DS_graph.assume_constant j1)) in
+             let d2 = JDist_rvar (RV (DS_graph.assume_constant j2)) in
+             Dist_joint (JDist_ite (d, d1, d2)))
+          l1 l2
+    | JDist_mat_add _
+    | JDist_mat_scalar_mul _
+    | JDist_mat_dot _ -> assert false
+    end
 
   (** [to_mixture d] turns a distribution of distributions into a
       mixture distribution.
@@ -1066,6 +1189,23 @@ module rec Distribution_rec: DISTRIBUTION = struct
     | Dist_app _ ->
         assert false (* XXX TODO XXX *)
     | Dist_mv_gaussian (_, _) -> assert false
+    | Dist_joint j -> to_mixture_joint j
+    end
+  and to_mixture_joint : type a. a t joint_distr -> a t =
+    fun dist ->
+    begin match dist with
+    | JDist_const d -> d
+    | JDist_rvar (RV x) -> to_mixture (DS_graph.get_distr x)
+    | JDist_ite (d, d1, d2) ->
+        let d1 = to_mixture_joint d1 in
+        let d2 = to_mixture_joint d2 in
+        let j1 = JDist_rvar (RV (DS_graph.assume_constant d1)) in
+        let j2 = JDist_rvar (RV (DS_graph.assume_constant d2)) in
+        Dist_joint (JDist_ite (d, j1, j2))
+    | JDist_app (_, _) -> assert false (* XXX TODO XXX *)
+    | JDist_mat_add _
+    | JDist_mat_scalar_mul _
+    | JDist_mat_dot _ -> assert false
     end
 
   (** [to_signal d] turns a distribution of signals into a signal that
@@ -1115,8 +1255,23 @@ module rec Distribution_rec: DISTRIBUTION = struct
     | Dist_pair _ -> assert false
     | Dist_app _ -> assert false
     | Dist_mv_gaussian (_, _) -> assert false
+    | Dist_joint j -> to_signal_joint j
     end
-
+  and to_signal_joint : type a. (a * bool) joint_distr -> a t * bool =
+    fun d ->
+    begin match d with
+    | JDist_const (x, b) -> (Dist_support [x, 1.], b)
+    | JDist_rvar (RV x) -> to_signal (DS_graph.get_distr x)
+    | JDist_app (_, _) -> assert false (* XXX TODO XXX *)
+    | JDist_ite (_, _, _) ->
+        let sample () = draw (Dist_joint d) in
+        let score _x = assert false (* score (Dist_joint d) x *) in
+        to_signal (Dist_sampler (sample, score))
+    | JDist_pair _
+    | JDist_mat_add _
+    | JDist_mat_scalar_mul _
+    | JDist_mat_dot _ -> assert false
+    end
 
   (** [stats_float d] computes the mean and variance of a [float
       Distribution.t].
@@ -1185,6 +1340,27 @@ module rec Distribution_rec: DISTRIBUTION = struct
     | Dist_app (_, _) as d ->
         stats_float (Dist_sampler ((fun () -> draw d), (fun _ -> assert false)))
     | Dist_mv_gaussian (_, _) -> assert false
+    | Dist_joint j -> stats_float_joint j
+    end
+  and stats_float_joint : float joint_distr -> float * float =
+    fun dist ->
+    begin match dist with
+    | JDist_const x -> x, Float.epsilon
+    | JDist_rvar (RV x) -> stats_float (DS_graph.get_distr x)
+    | JDist_add (d1, d2) ->
+        let m1, var1 = stats_float_joint d1 in
+        let m2, var2 = stats_float_joint d2 in
+        m1 +. m2, var1 +. var2
+    | JDist_mult (d1, d2) ->
+        let m1, var1 = stats_float_joint d1 in
+        let m2, var2 = stats_float_joint d2 in
+        m1 *. m2, var1 *. var2 +. var1 *. m2 ** 2. +. m2 *. m1 ** 2.
+    | JDist_app _ -> assert false (* XXX TODO XXX *)
+    | JDist_ite _ -> assert false (* XXX TODO XXX *)
+    | JDist_vec_get _ -> assert false (* XXX TODO XXX *)
+    | JDist_mat_add _
+    | JDist_mat_scalar_mul _
+    | JDist_mat_dot _ -> assert false
     end
 
   (** [mean_float d] computes the mean of a [float Distribution.t]. *)
@@ -1216,8 +1392,28 @@ module rec Distribution_rec: DISTRIBUTION = struct
     | Dist_app (_, _) ->
         mean_float (Dist_sampler ((fun () -> draw d), (fun _ -> assert false)))
     | Dist_mv_gaussian (_, _) -> assert false
+    | Dist_joint j -> mean_float_joint j
     end
-
+  and mean_float_joint : float joint_distr -> float =
+    fun dist ->
+    begin match dist with
+    | JDist_const x -> x
+    | JDist_rvar (RV x) -> mean_float (DS_graph.get_distr x)
+    | JDist_add (d1, d2) ->
+        let m1 = mean_float_joint d1 in
+        let m2 = mean_float_joint d2 in
+        m1 +. m2
+    | JDist_mult (d1, d2) ->
+        let m1 = mean_float_joint d1 in
+        let m2 = mean_float_joint d2 in
+        m1 *. m2
+    | JDist_app _ -> assert false (* XXX TODO XXX *)
+    | JDist_ite _ -> assert false (* XXX TODO XXX *)
+    | JDist_vec_get _ -> assert false (* XXX TODO XXX *)
+    | JDist_mat_add _
+    | JDist_mat_scalar_mul _
+    | JDist_mat_dot _ -> assert false
+    end
 
   (** [stats_float_list d] computes the mean and variance of a
       [float list Distribution.t].
@@ -1226,7 +1422,8 @@ module rec Distribution_rec: DISTRIBUTION = struct
     let ls = split_list d in
     List.map (fun l -> stats_float l) ls
 
-  (** [mean_float_list d] computes the means of a [float list Distribution.t]. *)
+  (** [mean_float_list d] computes the means of a [float list Distribution.t].
+  *)
   let mean_float_list d =
     let ls = split_list d in
     List.map (fun l -> mean_float l) ls
@@ -1278,7 +1475,33 @@ module rec Distribution_rec: DISTRIBUTION = struct
           m1 *. m2
       | Dist_app (_, _) as d ->
           mean meanfn (Dist_sampler ((fun () -> draw d), (fun _ -> assert false)))
+      | Dist_joint j -> mean_joint meanfn j
     end
+  and mean_joint : type a. (a -> float) -> a joint_distr -> float =
+    fun meanfn dist ->
+    begin match dist with
+    | JDist_const x -> meanfn x
+    | JDist_rvar (RV x) -> mean meanfn (DS_graph.get_distr x)
+    | JDist_add (d1, d2) ->
+        let m1 = mean_joint meanfn d1 in
+        let m2 = mean_joint meanfn d2 in
+        m1 +. m2
+    | JDist_mult (d1, d2) ->
+        let m1 = mean_joint meanfn d1 in
+        let m2 = mean_joint meanfn d2 in
+        m1 *. m2
+    | JDist_pair (_, _) -> assert false (* XXX TODO XXX *)
+    | JDist_list _ -> assert false (* XXX TODO XXX *)
+    | JDist_array _ -> assert false (* XXX TODO XXX *)
+    | JDist_matrix _ -> assert false (* XXX TODO XXX *)
+    | JDist_app _ -> assert false (* XXX TODO XXX *)
+    | JDist_ite _ -> assert false (* XXX TODO XXX *)
+    | JDist_vec_get _ -> assert false (* XXX TODO XXX *)
+    | JDist_mat_add _ -> assert false (* XXX TODO XXX *)
+    | JDist_mat_scalar_mul _ -> assert false (* XXX TODO XXX *)
+    | JDist_mat_dot _ -> assert false (* XXX TODO XXX *)
+    end
+
 
   let mean_list (type a) : (a -> float) -> a list t -> float list =
     begin fun meanfn d ->
@@ -1306,6 +1529,17 @@ module rec Distribution_rec: DISTRIBUTION = struct
     | Dist_poisson a ->
         poisson_mean a
     | Dist_mv_gaussian (_, _) -> assert false
+    | Dist_joint j -> mean_int_joint j
+    end
+  and mean_int_joint (d: int joint_distr) =
+    begin match d with
+    | JDist_const x -> float x
+    | JDist_rvar (RV x) -> mean_int (DS_graph.get_distr x)
+    | JDist_app _ -> assert false (* XXX TODO XXX *)
+    | JDist_ite _ -> assert false (* XXX TODO XXX *)
+    | JDist_mat_add _
+    | JDist_mat_scalar_mul _
+    | JDist_mat_dot _ -> assert false
     end
 
   (** [mean_bool d] computes the mean of a [bool Distribution.t]. *)
@@ -1325,6 +1559,17 @@ module rec Distribution_rec: DISTRIBUTION = struct
     | Dist_app (_, _) ->
         mean_bool (Dist_sampler ((fun () -> draw d), (fun _ -> assert false)))
     | Dist_mv_gaussian (_, _) -> assert false
+    | Dist_joint j -> mean_bool_joint j
+    end
+  and mean_bool_joint (d: bool joint_distr) =
+    begin match d with
+    | JDist_const x -> if x then 1. else 0.
+    | JDist_rvar (RV x) -> mean_bool (DS_graph.get_distr x)
+    | JDist_app _ -> assert false (* XXX TODO XXX *)
+    | JDist_ite _ -> assert false (* XXX TODO XXX *)
+    | JDist_mat_add _
+    | JDist_mat_scalar_mul _
+    | JDist_mat_dot _ -> assert false
     end
 
   (** [mean_signal_present d] computes the mean of the presence of ['a
@@ -1347,10 +1592,23 @@ module rec Distribution_rec: DISTRIBUTION = struct
         mean_signal_present
           (Dist_sampler ((fun () -> draw d), (fun _ -> assert false)))
     | Dist_mv_gaussian (_, _) -> assert false
+    | Dist_joint j -> mean_signal_present_joint j
+    end
+  and mean_signal_present_joint : type a. (a * bool) joint_distr -> float =
+    fun d ->
+    begin match d with
+    | JDist_const (_, true) -> 1.
+    | JDist_const (_, false) -> 0.
+    | JDist_rvar (RV x) -> mean_signal_present (DS_graph.get_distr x)
+    | JDist_app _ -> assert false (* XXX TODO XXX *)
+    | JDist_ite _ -> assert false (* XXX TODO XXX *)
+    | JDist_pair _
+    | JDist_mat_add _
+    | JDist_mat_scalar_mul _
+    | JDist_mat_dot _ -> assert false
     end
 
-
-  let rec mean_matrix (d: Mat.mat t)=
+  let rec mean_matrix (d: Mat.mat t) : Owl.Mat.mat =
     begin match d with
     | Dist_sampler (draw, _) ->
         let n = 100000 in
@@ -1384,8 +1642,25 @@ module rec Distribution_rec: DISTRIBUTION = struct
     | Dist_add _ -> assert false
     | Dist_mult _ -> assert false
     | Dist_app _ -> assert false
+    | Dist_joint j -> mean_matrix_joint j
     end
-
+  and mean_matrix_joint (d: Mat.mat joint_distr) =
+    begin match d with
+    | JDist_const x -> x
+    | JDist_rvar (RV x) -> mean_matrix (DS_graph.get_distr x)
+    | JDist_app _ -> assert false (* XXX TODO XXX *)
+    | JDist_ite _ -> assert false (* XXX TODO XXX *)
+    | JDist_vec_get _ -> assert false (* XXX TODO XXX *)
+    | JDist_matrix _ -> assert false (* XXX TODO XXX *)
+    | JDist_mat_add _ -> assert false (* XXX TODO XXX *)
+    | JDist_mat_scalar_mul _ -> assert false (* XXX TODO XXX *)
+    | JDist_mat_dot _ -> assert false (* XXX TODO XXX *)
+    | JDist_add _ -> assert false
+    | JDist_mult _ -> assert false
+    | JDist_pair _ -> assert false
+    | JDist_array _ -> assert false
+    | JDist_list _ -> assert false
+    end
 end
 
 include Distribution_rec
