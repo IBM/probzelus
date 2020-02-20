@@ -15,7 +15,7 @@
  *)
 
 open Owl
-open Inference_types
+open Types
 
 (** {2 Distribution manipulations} *)
 

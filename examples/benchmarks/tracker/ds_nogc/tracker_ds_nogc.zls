@@ -16,7 +16,7 @@
 
 open Probzelus
 open Distribution
-open Infer_ds
+open Infer_ds_naive
 open Zelus_owl
 open Trackerlib
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  *)
 
-open Inference_types
+open Types
 
 (** [copy v] creates a deep copy of the value [v]. *)
 let copy : 'a. 'a -> 'a =

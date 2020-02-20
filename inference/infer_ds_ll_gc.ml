@@ -14,7 +14,7 @@
  * limitations under the License.
  *)
 
-open Inference_types
+open Types
 
 (** Inference with streaming delayed sampling *)
 

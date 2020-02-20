@@ -16,7 +16,7 @@
 
 open Probzelus
 open Distribution
-open Infer_ds
+open Infer_ds_naive
 
 
 let proba gaussian_model o = pair (mu, sigma2) where

@@ -15,7 +15,7 @@
  *)
 
 open Probzelus
-open Infer_ds
+open Infer_ds_naive
 
 let proba f () = x0 where
   rec init x0 = sample(gaussian (const 0., 1.))

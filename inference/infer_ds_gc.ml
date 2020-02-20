@@ -18,7 +18,7 @@
 
 module DS_hl = Infer_ds_hl.Make(struct
     include Infer_ds_ll_gc
-    type ('p, 'a) ds_node = ('p, 'a) Inference_types.ds_graph_node
+    type ('p, 'a) ds_node = ('p, 'a) Types.ds_graph_node
   end)
 
 include DS_hl

@@ -15,7 +15,7 @@
  *)
 
 open Owl
-open Inference_types
+open Types
 
 module type DS_ll_S = sig
   type pstate = Infer_pf.pstate

@@ -18,7 +18,7 @@
 
 open Owl
 open Zelus_owl
-open Inference_types
+open Types
 
 exception Draw_error
 

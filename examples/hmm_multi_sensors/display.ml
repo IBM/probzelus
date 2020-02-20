@@ -16,6 +16,7 @@
 
 open Probzelus
 open Distribution
+open Types
 
 let () =
   Graphics.open_graph " 400x400";

@@ -15,8 +15,8 @@
  *)
 
 open Owl
-open Ds_distribution
-open Inference_types
+open Ds_graph_utils
+open Types
 
 (** Naive delayed sampling *)
 

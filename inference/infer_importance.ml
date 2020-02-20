@@ -16,7 +16,7 @@
 
 open Ztypes
 open Infer_pf
-open Inference_types
+open Types
 
 type pstate = Infer_pf.pstate
 

@@ -17,6 +17,7 @@
 open Probzelus
 open Infer_pf
 open Distribution
+open Types
 
 let make_node f =
   let alloc () = () in

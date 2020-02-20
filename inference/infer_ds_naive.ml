@@ -14,23 +14,11 @@
  * limitations under the License.
  *)
 
-open Probzelus
-open Distribution
-open Infer_ds_naive
+(** Inference with delayed sampling *)
 
-let proba coin yobs = xt where
-  rec init xt = sample (beta (1., 1.))
-  and () = observe (bernoulli xt, yobs)
+module DS_hl = Infer_ds_hl.Make(struct
+    include Infer_ds_ll_naive
+    type ('p, 'a) ds_node = ('p, 'a) ds_naive_node
+  end)
 
-
-let node main particles (tr, observed) =
-  let rec t = 1. fby (t +. 1.) in
-
-  let x_d = infer particles coin observed in
-
-  let est_mean, _ = stats_float x_d in
-  let error = (est_mean -. tr) ** 2. in
-  let rec total_error = error -> (pre total_error) +. error in
-  let mse = total_error /. t in
-
-  est_mean, mse
+include DS_hl

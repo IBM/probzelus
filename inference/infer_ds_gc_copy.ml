@@ -16,7 +16,7 @@
 
 (** Inference with delayed sampling *)
 open Ztypes
-open Inference_types
+open Types
 
 (* type 'a random_var = RV : ('b, 'a) Infer_ds_ll_gc.ds_node -> 'a random_var *)
 type 'a random_var = { rv_id : int; }

@@ -14,8 +14,8 @@
  * limitations under the License.
  *)
 
-open Inference_types
-open Infer_ds_ll
+open Types
+open Infer_ds_ll_naive
 
 let rec copy_node : type a b.
   (int, Obj.t) Hashtbl.t -> (a, b) ds_graph_node -> (a, b) ds_graph_node =

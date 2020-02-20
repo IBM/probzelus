@@ -15,7 +15,7 @@
  *)
 
 open Probzelus
-open Infer_ds
+open Infer_ds_naive
 (* open Infer_ds_gc *)
 
 let proba verybad () = x where
