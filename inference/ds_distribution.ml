@@ -39,7 +39,7 @@ let make_marginal : type a b.
   begin match mdistr, cdistr with
   | Dist_gaussian (mu, var), AffineMeanGaussian(m, b, obsvar) ->
       Dist_gaussian (m *. mu +. b,
-                             m ** 2. *. var +. obsvar)
+                     m ** 2. *. var +. obsvar)
   | Dist_mv_gaussian (mu0, sigma0), AffineMeanGaussianMV(m, b, sigma) ->
       let mu' = Mat.add (Mat.dot m mu0) b in
 
@@ -50,10 +50,9 @@ let make_marginal : type a b.
   | Dist_beta (a, b),  CBernoulli ->
       Dist_bernoulli (a /. (a +. b))
   | Dist_bernoulli (p_prior), CBernBern bfn ->
-    let p_marg = (p_prior *. (bfn true)) +. 
-                 ((1. -. p_prior) *. (bfn false)) in
-    Dist_bernoulli p_marg
-
+      let p_marg = (p_prior *. (bfn true)) +.
+                   ((1. -. p_prior) *. (bfn false)) in
+      Dist_bernoulli p_marg
   | _ -> assert false
   end
 
@@ -92,10 +91,10 @@ let make_conditional : type a b.
         else Dist_beta (a, b +. 1.)
     | Dist_bernoulli (p_prior), CBernBern bfn ->
         let p_true, p_false =
-            if obs then
-                (p_prior *. (bfn true), (1. -. p_prior) *. (bfn false))
-            else
-                (p_prior *. (1. -. (bfn true)), (1. -. p_prior) *. (1. -. (bfn false)))
+          if obs then
+            (p_prior *. (bfn true), (1. -. p_prior) *. (bfn false))
+          else
+            (p_prior *. (1. -. (bfn true)), (1. -. p_prior) *. (1. -. (bfn false)))
         in
         Dist_bernoulli (p_true /. (p_true +. p_false))
     | _, _ -> assert false

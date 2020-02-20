@@ -211,7 +211,7 @@ let get_distr_kind : type a b.
   | DSnaive_Marginalized (Dist_bernoulli _, _) -> KBernoulli
   | DSnaive_Marginalized (Dist_beta _, _) -> KBeta
   | DSnaive_Marginalized (( Dist_sampler _
-                  | Dist_support _), _) -> KOthers
+                          | Dist_support _), _) -> KOthers
   | DSnaive_Marginalized (Dist_sampler_float _, _) -> KOthers
   | DSnaive_Marginalized (Dist_mixture _, _) -> KOthers
   | DSnaive_Marginalized (Dist_pair _, _) -> KOthers

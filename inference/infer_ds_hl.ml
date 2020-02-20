@@ -532,10 +532,10 @@ module Make(DS_ll: DS_ll_S) = struct
                   let v_f = eval e_f in
                   Some {value = Ervar (RV (DS_ll.assume_conditional par (CBernBern (fun b ->
                       if b then
-                          v_t
+                        v_t
                       else
-                          v_f
-                  ))))}
+                        v_f
+                    ))))}
               | _ -> None
               end
           | _ -> None
@@ -561,10 +561,10 @@ module Make(DS_ll: DS_ll_S) = struct
                   let v_f = eval e_f in
                   Some (DS_ll.observe_conditional prob par (CBernBern (fun b ->
                       if b then
-                          v_t
+                        v_t
                       else
-                          v_f
-                  )) obs)
+                        v_f
+                    )) obs)
               | _ -> None
               end
           | _ -> None
@@ -581,40 +581,40 @@ module Make(DS_ll: DS_ll_S) = struct
   let is_safe_marginal =
     let rec is_safe : type a. int -> a expr -> int =
       fun acc expr ->
-      begin match expr.value with
-      | Econst _c -> acc
-      | Ervar (RV x) ->
-          if DS_ll.is_realized x then acc
-          else if acc > 0 then raise Stop
-          else acc + 1
-      | Eadd (e1, e2) ->
-          is_safe (is_safe acc e1) e2
-      | Emult (e1, e2) ->
-          is_safe (is_safe acc e1) e2
-      | Eapp (_e1, _e2) ->
-          raise Stop
-      | Epair (e1, e2) ->
-          is_safe (is_safe acc e1) e2
-      | Earray a ->
-          Array.fold_left (fun acc e -> is_safe acc e) acc a
-      | Ematrix m ->
-          Array.fold_left
-            (fun acc a ->
-               Array.fold_left (fun acc e -> is_safe acc e) acc a)
-            acc m
-      | Elist l ->
-          List.fold_left (fun acc e -> is_safe acc e) acc l
-    | Eite (e, e1, e2) ->
-        is_safe (is_safe (is_safe acc e1) e2) e
-    | Emat_add (e1, e2) ->
-        is_safe (is_safe acc e1) e2
-    | Emat_scalar_mul (e1, e2) ->
-        is_safe (is_safe acc e1) e2
-    | Emat_dot (e1, e2) ->
-        is_safe (is_safe acc e1) e2
-    | Evec_get (e, _) ->
-        is_safe acc e
-    end
+        begin match expr.value with
+        | Econst _c -> acc
+        | Ervar (RV x) ->
+            if DS_ll.is_realized x then acc
+            else if acc > 0 then raise Stop
+            else acc + 1
+        | Eadd (e1, e2) ->
+            is_safe (is_safe acc e1) e2
+        | Emult (e1, e2) ->
+            is_safe (is_safe acc e1) e2
+        | Eapp (_e1, _e2) ->
+            raise Stop
+        | Epair (e1, e2) ->
+            is_safe (is_safe acc e1) e2
+        | Earray a ->
+            Array.fold_left (fun acc e -> is_safe acc e) acc a
+        | Ematrix m ->
+            Array.fold_left
+              (fun acc a ->
+                 Array.fold_left (fun acc e -> is_safe acc e) acc a)
+              acc m
+        | Elist l ->
+            List.fold_left (fun acc e -> is_safe acc e) acc l
+        | Eite (e, e1, e2) ->
+            is_safe (is_safe (is_safe acc e1) e2) e
+        | Emat_add (e1, e2) ->
+            is_safe (is_safe acc e1) e2
+        | Emat_scalar_mul (e1, e2) ->
+            is_safe (is_safe acc e1) e2
+        | Emat_dot (e1, e2) ->
+            is_safe (is_safe acc e1) e2
+        | Evec_get (e, _) ->
+            is_safe acc e
+        end
     in
     fun expr ->
       try ignore (is_safe 0 expr); true
