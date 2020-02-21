@@ -791,7 +791,14 @@ module rec Distribution_rec: DISTRIBUTION = struct
     | Dist_mult (d, Dist_support [c, 1.]) -> score (d, x /. c)
     | Dist_mult (_, _) -> score (to_dist_support dist, x)
     | Dist_app (_, _) -> assert false (* do not know how to inverse d1 *)
-    | Dist_joint _ -> assert false (* XXX TODO XXX *)
+    | Dist_joint j -> score_joint (j, x)
+    end
+  and score_joint : type a. a joint_distr * a -> log_proba =
+    fun (dist, x) ->
+    begin match dist with
+    | JDist_const c -> if x = c then 0. else neg_infinity
+    | JDist_rvar (RV y) -> score (DS_graph.get_distr y, x)
+    | _ -> assert false (* XXX TODO XXX *)
     end
 
   (** [draw dist] draws a value form the distribution [dist] and returns
@@ -1095,7 +1102,29 @@ module rec Distribution_rec: DISTRIBUTION = struct
                mi)
           l;
         Array.map (fun ai -> Array.map (fun acc -> Dist_mixture acc) ai) accs
-    | _ -> assert false
+    | Dist_sampler _ -> assert false (* XXX TODO XXX *)
+    | Dist_app _ -> assert false (* XXX TODO XXX *)
+    | Dist_mv_gaussian _ -> assert false
+    | Dist_joint j -> split_joint_matrix j
+    end
+  and split_joint_matrix :
+    type a. a array array joint_distr -> a t array array =
+    fun dist ->
+    begin match dist with
+    | JDist_const m ->
+        Array.map
+          (fun a -> Array.map (fun x -> Dist_support [ x, 1. ]) a)
+          m
+    | JDist_rvar (RV x) ->
+        split_matrix (DS_graph.get_distr x)
+    | JDist_app (_, _) -> assert false (* XXX TODO XXX *)
+    | JDist_array m ->
+        Array.map split_joint_array m
+    | JDist_ite _ -> assert false (* XXX TODO XXX *)
+    | JDist_matrix _
+    | JDist_mat_add _
+    | JDist_mat_scalar_mul _
+    | JDist_mat_dot _ -> assert false
     end
 
   (** [split_list dist] turns a distribution of lists into a list of

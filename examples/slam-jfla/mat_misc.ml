@@ -49,9 +49,9 @@ let ini nx ny (Cnode f)  =
   let reset state = f.reset state in
   let copy src dst = f.copy src dst in
   let step state (proba, arg) =
-    Array.init nx 
-      (fun i -> 
-         Array.init ny 
+    Array.init nx
+      (fun i ->
+         Array.init ny
            (fun j -> f.step state (proba, (i, j))))
   in
   Cnode { alloc; reset; copy; step; }
@@ -115,11 +115,13 @@ let draw_bot x y obs =
   else Graphics.set_color (Graphics.black);
   Graphics.fill_circle (x * width + width / 2) (y * height + height / 2) 13
 
-
 let draw_position_dist d =
+  let d_x, d_y = Distribution.split d in
   for x = 0 to max_x do
     for y = 0 to max_y do
-      let p = exp (Distribution.score (d, (x, y))) in
+      let p =
+        exp (Distribution.score (d_x, x)) *. exp (Distribution.score (d_y, y))
+      in
       if p > 0. then begin
         Graphics.set_color (Graphics.red);
         Graphics.fill_circle
@@ -130,9 +132,9 @@ let draw_position_dist d =
   done
 
 let draw_map_dist map_dist =
-  let mw = 
+  let mw =
     Array.map
-      (fun ai ->    
+      (fun ai ->
          Array.map
            (fun d ->
               let d_true, d_false = Distribution.split d in
@@ -141,9 +143,9 @@ let draw_map_dist map_dist =
            ai)
       (Distribution.split_matrix map_dist)
   in
-  Array.iteri 
+  Array.iteri
     (fun i ai ->
-       Array.iteri 
+       Array.iteri
          (fun j w ->
             let gray = int_of_float (w *. 255.) in
             Graphics.set_color (Graphics.rgb gray gray gray);
@@ -152,16 +154,16 @@ let draw_map_dist map_dist =
     mw
 
 let draw_map_dist_ds map_dist =
-  let mw = Array.map 
-      (fun ai -> 
-         Array.map 
-           (fun d -> Distribution.mean_float d) 
+  let mw = Array.map
+      (fun ai ->
+         Array.map
+           (fun d -> Distribution.mean_float d)
            ai)
       (Distribution.split_matrix map_dist)
   in
-  Array.iteri 
+  Array.iteri
     (fun i ai ->
-       Array.iteri 
+       Array.iteri
          (fun j w ->
             let gray = int_of_float (w *. 255.) in
             Graphics.set_color (Graphics.rgb gray gray gray);
@@ -170,9 +172,9 @@ let draw_map_dist_ds map_dist =
     mw
 
 let draw_map m =
-  Array.iteri 
+  Array.iteri
     (fun i ai ->
-       Array.iteri 
+       Array.iteri
          (fun j b ->
             if b then Graphics.set_color (Graphics.white)
             else Graphics.set_color (Graphics.black);
@@ -182,8 +184,8 @@ let draw_map m =
   clear ()
 
 let random nx ny theta =
-  Array.init nx 
-    (fun _ -> Array.init ny 
+  Array.init nx
+    (fun _ -> Array.init ny
         (fun _ -> Distribution.draw (Distribution.bernoulli theta)))
 
 let () =
@@ -227,11 +229,11 @@ let color_diff expected actual =
 let error (map, x, y) map_d d_x d_y =
   let len_x = Array.length map in
   let len_y = Array.length map.(0) in
-  let e = 
+  let e =
     ref ((float x -. Distribution.mean_int d_x) ** 2. +. (float y -. Distribution.mean_int d_y) ** 2.)
   in
   for i = 0 to len_x - 1 do
-    for j = 0 to len_y -1 do 
+    for j = 0 to len_y -1 do
       e := !e +. (float_of_bool map.(i).(j) -. mean_float map_d.(i).(j)) ** 2.
     done
   done;
