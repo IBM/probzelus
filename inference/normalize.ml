@@ -61,7 +61,7 @@ let to_distribution : type a. a array -> float array -> a Distribution.t =
       begin match acc with
       | [] -> to_distribution (i + 1) len  [value, prob] values probabilities
       | (v,p) :: acc' ->
-          if value = v then
+          if value == v then
             to_distribution (i + 1) len
               ((value, p +. prob)::acc') values probabilities
           else
