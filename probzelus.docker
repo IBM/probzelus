@@ -1,6 +1,6 @@
 ############################################################
 # Dockerfile to build ProbZelus docker image
-# Based on the debian image from OWL 
+# Based on the debian image from OWL
 # Build with `docker build -t probzelus -f probzelus.docker .`
 # Run with `docker run -ti --rm -e DISPLAY=host.docker.internal:0 probzelus bash`
 ############################################################
@@ -29,7 +29,7 @@ RUN echo "#require \"owl-top\";; open Owl;;" >> /home/opam/.ocamlinit \
     && bash -c 'echo -e "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH" >> /home/opam/.profile' \
     && opam config env >> /home/opam/.profile \
     && bash -c "source /home/opam/.profile"
-    
+
 # Create main directory
 RUN mkdir -p /home/opam/probzelus
 
@@ -39,7 +39,7 @@ COPY --chown=opam . /home/opam/probzelus
 
 ###################### INSTALL ZELUS #######################
 WORKDIR /home/opam/probzelus/zelus-2.0/zelus-2.0-debian
- 
+
 RUN opam config exec ./configure
 RUN opam config exec make
 RUN sudo make install
