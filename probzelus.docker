@@ -10,12 +10,12 @@ USER opam
 
 ##################### PREREQUISITES ########################
 
-RUN sudo apt-get -y update
-RUN sudo apt-get -y install m4 wget unzip aspcud libshp-dev libplplot-dev gfortran
-RUN sudo apt-get -y install pkg-config git camlp4-extra
-RUN sudo apt-get -y install libopenblas-dev liblapacke-dev
-RUN cd /home/opam/opam-repository && git pull --quiet origin master
-RUN opam update -q
+RUN sudo apt-get -y update \
+ && sudo apt-get -y install m4 wget unzip aspcud libshp-dev \
+                 libplplot-dev gfortran pkg-config git camlp4-extra \
+                 libopenblas-dev liblapacke-dev
+RUN cd /home/opam/opam-repository && git pull --quiet origin master \
+ && opam update -q
 
 ####################   INSTALL OWL  #######################
 
@@ -26,9 +26,9 @@ RUN eval $(opam env)
 ############## SET UP DEFAULT CONTAINER VARS ##############
 
 RUN echo "#require \"owl-top\";; open Owl;;" >> /home/opam/.ocamlinit \
-    && bash -c 'echo -e "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH" >> /home/opam/.profile' \
-    && opam config env >> /home/opam/.profile \
-    && bash -c "source /home/opam/.profile"
+ && bash -c 'echo -e "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH" >> /home/opam/.profile' \
+ && opam config env >> /home/opam/.profile \
+ && bash -c "source /home/opam/.profile"
 
 # Create main directory
 RUN mkdir -p /home/opam/probzelus
