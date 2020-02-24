@@ -296,7 +296,7 @@ module Make(M: sig
       if p > max then []
       else
         p ::
-        if p >= exp then seq (p + (exp / 2)) (exp / 2) (10 * exp) max
+        if p >= exp then seq (p + exp) exp (10 * exp) max
         else seq (p + incr) incr exp max
     in
     fun min_particles max_particles ->
