@@ -7,13 +7,20 @@ all:
 	$(MAKE) -C slam
 	$(MAKE) -C tracker
 
-bench:
+bench: bench-coin bench-gaussian bench-kalman bench-outlier bench-slam bench-tracker
+bench-coin:
 	$(MAKE) -C coin bench
+bench-gaussian:
 	$(MAKE) -C gaussian bench
+bench-kalman:
 	$(MAKE) -C kalman bench
+bench-outlier:
 	$(MAKE) -C outlier bench
+bench-slam:
 	$(MAKE) -C slam bench
+bench-tracker:
 	$(MAKE) -C tracker bench
+
 
 bench_find_mse:
 	$(MAKE) -C coin bench_find_mse
@@ -75,3 +82,6 @@ realclean cleanall:
 	$(MAKE) -C outlier cleanall
 	$(MAKE) -C slam cleanall
 	$(MAKE) -C tracker cleanall
+
+.PHONY: bench bench-coin bench-gaussian bench-kalman bench-outlier bench-slam bench-tracker
+
