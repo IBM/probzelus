@@ -58,5 +58,5 @@ let proba model inp = lst t_expr where
   and present (not (n_clutter < 0)) -> do () = (ListP.iter2 obsfn (obs_shuffled, inp)) done
 
 let node main particles (true_tr, obs) = tr_obs_distr where
-  rec tr_obs_distr = infer particles model obs 
+  rec tr_obs_distr = infer_marginal particles model obs 
   (* and () = print_string ((string_of_vec2_list tr) ^ " : " ^ (string_of_vec2_list obs) ^ "\n") *)

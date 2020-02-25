@@ -19,7 +19,7 @@ open Probzelus
 open Util
 open Distribution
 open Zelus_owl
-open Infer_ds
+open Infer_ds_naive
 
 let proba death_fn _ =
   eval (sample (bernoulli (const p_dead)))
