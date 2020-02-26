@@ -1,9 +1,25 @@
+(*
+ * Copyright 2018-2020 IBM Corporation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *)
+
 open Probzelus
 
-let node main particles ((tr, _), (x, xm_dist)) = mse where
+let node mse (true_map, (true_x, d)) = mse where
   rec t = 1. fby (t +. 1.)
-  and d_map, x_d = Distribution.split xm_dist
+  and d_map, x_d = Distribution.split d
   and map_d = Distribution.split_array d_map
-  and error = Array_misc.error (tr, x) map_d x_d
+  and error = Array_misc.error (true_map, true_x) map_d x_d
   and total_error = error -> (pre total_error) +. error
   and mse = total_error /. t

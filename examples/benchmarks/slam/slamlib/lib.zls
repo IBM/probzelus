@@ -30,7 +30,7 @@ let node slam_obs (real_map, cmd) = (obs, x) where
   and obs = if sensor_error then not b else b
 
 
-let slam_obs_time = Array_misc.time slam_obs 
+let slam_obs_time = Array_misc.time slam_obs
 
 let node controller (x_dist) = cmd where
   rec xest = Distribution.draw x_dist

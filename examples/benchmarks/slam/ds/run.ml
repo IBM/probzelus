@@ -29,7 +29,7 @@ module M = struct
     a, ()
 
   let main = Slam_ds.main
-  let metrics = Metrics.main
+
   let string_of_output (x, xm_distr) =
     let m_d, x_d = Probzelus.Distribution.split xm_distr in
     let m_list = Array.to_list (Probzelus.Distribution.split_array m_d) in
@@ -38,7 +38,7 @@ module M = struct
     ) m_list)) ^ "], " ^ string_of_float (Probzelus.Distribution.mean_int x_d)
 end
 
-module H = Harness_metrics.Make(M)
+module H = Harness.Make(M)
 
 let () =
   H.run ()
