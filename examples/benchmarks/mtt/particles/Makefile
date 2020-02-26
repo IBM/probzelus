@@ -1,6 +1,6 @@
 include ../../Makefile.common-config
 OWLLIB=../../../../owl
-ZELUC=zeluc -copy -I $(INFERLIB) -I $(OWLLIB) -I ../mttlib/
+ZELUC += -I $(OWLLIB) -I ../mttlib/
 
 
 NAME=mtt_particles

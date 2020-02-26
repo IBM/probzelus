@@ -27,16 +27,16 @@ module M = struct
       Mat.of_arrays [| [| a |];
                        [| b |] |]
     in
-    let process_vec_list _ = 
+    let process_vec_list _ =
       let rec process_list_helper fst =
         try
           Scanf.scanf "]" (fun _ -> ()) 0;
           []
         with Scanf.Scan_failure _ ->
           let this_elem = if fst then
-              Scanf.scanf "(%f, %f)" (fun x y -> mk_vec x y) 
-            else 
-              Scanf.scanf ",(%f, %f)" (fun x y -> mk_vec x y) 
+              Scanf.scanf "(%f, %f)" (fun x y -> mk_vec x y)
+            else
+              Scanf.scanf ",(%f, %f)" (fun x y -> mk_vec x y)
           in
           this_elem :: (process_list_helper false)
       in
@@ -44,7 +44,7 @@ module M = struct
       process_list_helper true
     in
 
-    let process_tr_list _ = 
+    let process_tr_list _ =
       let rec process_list_helper fst =
         try
           Scanf.scanf "]" (fun _ -> ()) 0;
@@ -52,7 +52,7 @@ module M = struct
         with Scanf.Scan_failure _ ->
           let this_elem = if fst then
               Scanf.scanf "(%i, %f, %f)" (fun i x y -> (i, mk_vec x y))
-            else 
+            else
               Scanf.scanf ",(%i, %f, %f)" (fun i x y -> (i, mk_vec x y))
           in
           this_elem :: (process_list_helper false)
@@ -70,7 +70,7 @@ module M = struct
     (truth, obs)
 
   let main = Mtt_ds_bounded.main
-  let metrics = Mttlib.Metrics.main
+
   let string_of_output = Mttlib.Util.string_of_output
   let valid out =
     try
@@ -80,7 +80,7 @@ module M = struct
       false
 end
 
-module H = Harness_metrics.Make(M)
+module H = Harness.Make(M)
 
 let () =
   H.run ()

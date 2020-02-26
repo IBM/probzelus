@@ -54,9 +54,16 @@ let proba model inp = t where
   and n_clutter = (List.length inp) - (List.length obs)
   (* and () = print_string (string_of_int (List.length t) ^ "\n")*)
   and () = observe(poisson lambda_clutter, n_clutter)
-  and clutter = ListP.ini clutter_init_fn n_clutter 
+  and clutter = ListP.ini clutter_init_fn n_clutter
   and obs_shuffled = sample (shuffle (List.append obs clutter))
-  and present (not (n_clutter < 0)) -> do () = (ListP.iter2 obsfn (obs_shuffled, inp)) done
-let node main particles (true_tr, obs) = tr_distr where
+  and present (not (n_clutter < 0)) ->
+      do () = (ListP.iter2 obsfn (obs_shuffled, inp)) done
+
+let node main_no_metric particles obs = tr_distr where
   rec tr_distr = infer particles model obs
   (* and () = print_string ((string_of_vec2_list tr) ^ " : " ^ (string_of_vec2_list obs) ^ "\n") *)
+
+let node main particles (true_tr, obs) = (tr_distr, e) where
+  rec tr_distr = main_no_metric particles obs
+  and e = Metrics.mota (true_tr, tr_distr)
+

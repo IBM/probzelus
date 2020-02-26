@@ -22,7 +22,7 @@ let list_init = List.init
 
 let cur_track_num = ref 0
 
-let new_track_num _ = 
+let new_track_num _ =
   let ret = !cur_track_num in
   cur_track_num := !cur_track_num + 1;
   ret
@@ -34,31 +34,31 @@ let p_dead = exp (-. tdiff *. death_rate)
 
 let lambda_new = birth_rate *. tdiff
 
-let mu_new = 
+let mu_new =
   Mat.of_arrays [| [| 0.; |];
                    [| 0.; |];
                    [| 0.; |];
                    [| 0.; |]; |]
 
-let sigma_new = 
+let sigma_new =
   Mat.of_arrays [| [| 1.0; 0.0; 0.0; 0.0; |];
                    [| 0.0; 1.0; 0.0; 0.0; |];
                    [| 0.0; 0.0; 0.001; 0.0; |];
                    [| 0.0; 0.0; 0.0; 0.001; |]; |]
 
-let a_u = 
+let a_u =
   Mat.of_arrays [| [| 1.0; 0.0; tdiff; 0.0 |];
                    [| 0.0; 1.0; 0.0; tdiff |];
-                   [| 0.0; 0.0; 1.0; 0.0   |];          
+                   [| 0.0; 0.0; 1.0; 0.0   |];
                    [| 0.0; 0.0; 0.0; 1.0   |]; |]
 
-let b_u = 
+let b_u =
   Mat.of_arrays [| [| 0.; |];
-                   [| 0.; |]; 
-                   [| 0.; |]; 
+                   [| 0.; |];
+                   [| 0.; |];
                    [| 0.; |]; |]
 
-let sigma_update = 
+let sigma_update =
   Mat.of_arrays [| [| 0.01; 0.0; 0.0; 0.0 |];
                    [| 0.0; 0.01; 0.0; 0.0 |];
                    [| 0.0; 0.0;  0.1; 0.0 |];
@@ -66,7 +66,7 @@ let sigma_update =
 
 let lambda_clutter = 1.
 
-let mu_clutter = 
+let mu_clutter =
   Mat.of_arrays [| [| 0.; |];
                    [| 0.; |]; |]
 
@@ -78,11 +78,11 @@ let sigma_obs =
   Mat.of_arrays [| [| 1.0; 0.0 |];
                    [| 0.0; 1.0 |]; |]
 
-let sigma_clutter = 
+let sigma_clutter =
   Mat.of_arrays [| [| 10.0; 0.0 |];
                    [| 0.0; 10.0 |]; |]
 
-let shuffle x = 
+let shuffle x =
   let arr = Array.of_list x in
   for n = Array.length arr - 1 downto 1 do
     let k = Random.int (n + 1) in
@@ -98,18 +98,18 @@ let ( +@ ) = Mat.add
 let string_of_tr vec_lst =
   "[" ^
   String.concat "," (List.map (fun (num, vec) ->
-      "(" ^ string_of_int num ^ ", " ^ string_of_float (Mat.get vec 0 0) ^ ", " ^ 
+      "(" ^ string_of_int num ^ ", " ^ string_of_float (Mat.get vec 0 0) ^ ", " ^
       string_of_float (Mat.get vec 1 0) ^ ")"
     ) vec_lst)
-  ^ "]" 
+  ^ "]"
 
 let string_of_vec2_list vec_lst =
   "[" ^
   String.concat "," (List.map (fun vec ->
-      "(" ^ string_of_float (Mat.get vec 0 0) ^ ", " ^ 
+      "(" ^ string_of_float (Mat.get vec 0 0) ^ ", " ^
       string_of_float (Mat.get vec 1 0) ^ ")"
     ) vec_lst)
-  ^ "]" 
+  ^ "]"
 
 let string_of_int_list lst =
   "[" ^
@@ -118,8 +118,8 @@ let string_of_int_list lst =
     ) lst) ^
   "]\n"
 
-let string_of_vec2 vec = 
-  "(" ^ string_of_float (Mat.get vec 0 0) ^ ", " ^ 
+let string_of_vec2 vec =
+  "(" ^ string_of_float (Mat.get vec 0 0) ^ ", " ^
   string_of_float (Mat.get vec 1 0) ^ ")"
 
 let dist (v1 : Mat.mat) (v2 : Mat.mat) : float =
@@ -140,6 +140,27 @@ exception Match_error
 
 let empty_matching : tr_map = TrMap.empty
 
+let print_debug cost rows cols get_mask row_cover col_cover =
+  print_string "cost:\n";
+  Mat.print cost;
+  print_string "mask:\n";
+  for i = 0 to rows - 1 do
+    for j = 0 to cols - 1 do
+      print_string (string_of_int (get_mask i j) ^ ", ")
+    done;
+    print_string "\n"
+  done;
+  print_string "row_cover:\n";
+  for i = 0 to rows - 1 do
+    print_string (string_of_bool (Array.get row_cover i) ^ ", ")
+  done;
+  print_string "\ncol_cover:\n";
+  for j = 0 to cols - 1 do
+    print_string (string_of_bool (Array.get col_cover j) ^ ", ")
+  done;
+  print_string "\n"
+
+
 (* cost : Cost matrix with cols >= rows *)
 (* from http://csclab.murraystate.edu/~bob.pilgrim/445/munkres.html *)
 let optimal_assignment (cost : Mat.mat) : (int * int) list =
@@ -154,32 +175,11 @@ let optimal_assignment (cost : Mat.mat) : (int * int) list =
   let row_cover : bool array = Array.init (rows) (fun _ -> false) in
   let col_cover : bool array = Array.init (cols) (fun _ -> false) in
 
-  let print_debug _ =
-    print_string "cost:\n";
-    Mat.print cost;
-    print_string "mask:\n";
-    for i = 0 to rows - 1 do
-      for j = 0 to cols - 1 do
-        print_string (string_of_int (get_mask i j) ^ ", ")
-      done;
-      print_string "\n"
-    done;
-    print_string "row_cover:\n";
-    for i = 0 to rows - 1 do
-      print_string (string_of_bool (Array.get row_cover i) ^ ", ")
-    done;
-    print_string "\ncol_cover:\n";
-    for j = 0 to cols - 1 do
-      print_string (string_of_bool (Array.get col_cover j) ^ ", ")
-    done;
-    print_string "\n"
-  in
-
   let find_noncovered_zero _ =
     let ret = ref None in
     for i = 0 to rows - 1 do
       for j = 0 to cols - 1 do
-        if Mat.get cost i j = 0. && 
+        if Mat.get cost i j = 0. &&
            Array.get row_cover i = false &&
            Array.get col_cover j = false then
           ret := Some (i,j)
@@ -225,7 +225,7 @@ let optimal_assignment (cost : Mat.mat) : (int * int) list =
     | (i, j) :: ret ->
         begin if get_mask i j = 1 then
             set_mask i j 0
-          else 
+          else
             set_mask i j 1
         end;
         augment_path ret
@@ -287,8 +287,8 @@ let optimal_assignment (cost : Mat.mat) : (int * int) list =
       print_debug ();*)
     for i = 0 to rows - 1 do
       for j = 0 to cols - 1 do
-        if Mat.get cost i j = 0. && 
-           not (Array.get row_cover i) && 
+        if Mat.get cost i j = 0. &&
+           not (Array.get row_cover i) &&
            not (Array.get col_cover j) then (
           set_mask i j 1;
           Array.set row_cover i true;
@@ -394,10 +394,10 @@ let optimal_assignment (cost : Mat.mat) : (int * int) list =
       done
     done;
     step_4 ()
-  and step_7 _ = 
+  and step_7 _ =
     (*print_string "step_7\n";
       print_debug ();*)
-    () 
+    ()
   in
 
   step_1 ();
@@ -417,9 +417,9 @@ let  bignum = 1000000000.
 
 
 (* returns (distance, matches, false_positives, misses, mismatches, objects, and new map)*)
-let matching_helper   (prev_matching : tr_map) 
+let matching_helper   (prev_matching : tr_map)
     (truth : (int * Mat.mat) list)
-    (hyp : (int * Mat.mat) list) : 
+    (hyp : (int * Mat.mat) list) :
   ((float * int * int * int * int * int) * tr_map) =
 
   let sum_dist = ref 0. in
@@ -505,15 +505,15 @@ let matching_helper   (prev_matching : tr_map)
 
   let final_match = TrMap.merge (fun i jo jo' ->
       match jo, jo' with
-      | (None, None) -> 
+      | (None, None) ->
           (*print_string ("Neither has i:" ^ (string_of_int i) ^ "\n");*)
           None
-      | (Some j, None) -> 
-          (*print_string ("Init matching has i: " ^ string_of_int i ^ 
+      | (Some j, None) ->
+          (*print_string ("Init matching has i: " ^ string_of_int i ^
                         " j: " ^ string_of_int j ^ "\n");*)
           None
-      | (None, Some j') -> 
-          (*print_string ("Best matching has i: " ^ string_of_int i ^ 
+      | (None, Some j') ->
+          (*print_string ("Best matching has i: " ^ string_of_int i ^
                         " j': " ^ string_of_int j' ^ "\n");*)
           let vec = List.assoc i truth in
           let other_vec = List.assoc j' hyp in
@@ -521,7 +521,7 @@ let matching_helper   (prev_matching : tr_map)
           num_matches := !num_matches + 1;
           Some j'
       | (Some j, Some j') ->
-          (*(print_string ("Conflict! i: " ^ string_of_int i ^ 
+          (*(print_string ("Conflict! i: " ^ string_of_int i ^
                         ", j: " ^ string_of_int j ^
                         ", j': " ^ string_of_int j' ^ "\n"));*)
           let vec = List.assoc i truth in
@@ -546,17 +546,17 @@ let matching_helper   (prev_matching : tr_map)
   print_string ("mismatches: " ^ string_of_int !mismatches ^ "\n");
   *)
 
-  ((!sum_dist, 
-    !num_matches, 
-    !false_positives, 
-    !misses, 
-    !mismatches, 
+  ((!sum_dist,
+    !num_matches,
+    !false_positives,
+    !misses,
+    !mismatches,
     Array.length truth_a),
    final_match)
 
-let matching (prev_matching : tr_map) 
+let matching (prev_matching : tr_map)
     (truth : (int * Mat.mat) list)
-    (hyp : (int * Mat.mat) list) : 
+    (hyp : (int * Mat.mat) list) :
   ((float * int * int * int * int * int) * tr_map) =
   if List.length truth = 0 then begin
     if List.length hyp = 0 then
@@ -571,6 +571,7 @@ let matching (prev_matching : tr_map)
   end
 
 open Probzelus
+open Types
 
 let string_of_output : ((int * Mat.mat) list) Distribution.t -> string =
   fun out ->
@@ -580,7 +581,7 @@ let string_of_output : ((int * Mat.mat) list) Distribution.t -> string =
       fun m -> string_of_vec2 (Distribution.mean_matrix m) in
     let string_of_pair_distr : (int * Mat.mat) Distribution.t -> string =
       fun p -> match p with
-      | Distribution.Dist_pair (d1, d2) -> 
+      | Dist_pair (d1, d2) ->
         "(" ^ string_of_int_distr d1 ^ ", " ^ string_of_mat_distr d2 ^ ")"
       | _ -> assert false
     in
@@ -607,7 +608,16 @@ let string_of_output : ((int * Mat.mat) list) Distribution.t -> string =
       in
       "[" ^ String.concat ";" inner ^ "]"
     | Dist_list _ -> string_of_list_distr out
-    | _ -> 
+    | _ ->
       assert false
     end
 
+open Probzelus
+open Types
+
+let mv_gaussian_curried sigma =
+  let sig_inv = Linalg.D.inv sigma in
+  let sig_det = Linalg.D.det sigma in
+  let sig_svd = Linalg.Generic.svd sigma in
+  fun mu ->
+    Dist_mv_gaussian (mu, sigma, Some sig_inv, Some sig_det, Some sig_svd)
