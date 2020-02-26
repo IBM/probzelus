@@ -22,11 +22,10 @@ module M = struct
   type output = float Distribution.t
   let read_input () = Scanf.scanf ("%f, %f\n") (fun t o -> (t, o))
   let main = Outlier_ds.main
-  let metrics = Outlierlib.Metrics.main
   let string_of_output o = string_of_float (Distribution.mean_float o)
 end
 
-module H = Harness_metrics.Make(M)
+module H = Harness.Make(M)
 
 let () =
   H.run ()

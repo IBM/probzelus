@@ -16,7 +16,8 @@
 
 open Probzelus
 open Distribution
-open Infer_ds
+open Infer_ds_naive
+open Outlierlib
 
 let proba outlier yobs = pair (is_outlier, xt) where
   rec xt = sample (gaussian ((const 0., 2500.) -> (pre xt, 1.)))
@@ -25,6 +26,10 @@ let proba outlier yobs = pair (is_outlier, xt) where
   and () = present (eval is_outlier) -> observe (gaussian (const 0., 10000.), yobs)
            else observe (gaussian (xt, 1.), yobs)
 
-let node main particles (tr, observed) =
-  let _, x_d = split (infer particles outlier observed) in
+let node main_no_metric particles observed =
+  let _, x_d = split (infer_marginal particles outlier observed) in
   x_d
+
+let node main particles (true_x, observed) = (d, mse) where
+  rec d = main_no_metric particles observed
+  and mse = Metrics.mse (true_x, d)

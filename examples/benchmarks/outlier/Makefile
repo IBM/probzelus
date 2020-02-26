@@ -48,6 +48,7 @@ bench_mem_ideal:
 .PHONY: publish bench build
 
 build: main.ml
+	$(MAKE) -C outlierlib
 	dune build main.exe
 
 %.zci: %.zli
@@ -60,6 +61,7 @@ $(NAME).ml main.ml: $(NAME).zls
 clean:
 	-rm -f *.zc*
 	-rm -f $(NAME).ml main.ml
+	$(MAKE) -C outlierlib clean
 	$(MAKE) -C particles clean
 	$(MAKE) -C ds clean
 	$(MAKE) -C ds_nogc clean
@@ -68,6 +70,7 @@ clean:
 cleanall: clean
 	-rm -f *~
 	dune clean
+	$(MAKE) -C outlierlib cleanall
 	$(MAKE) -C particles cleanall
 	$(MAKE) -C ds cleanall
 	$(MAKE) -C ds_nogc cleanall
