@@ -17,6 +17,7 @@
 open Probzelus
 open Distribution
 open Infer_ds_naive
+open Gaussianlib
 
 
 let proba gaussian_model o = pair (mu, sigma2) where
@@ -25,7 +26,10 @@ let proba gaussian_model o = pair (mu, sigma2) where
   and sigma2 = mult (sigma, sigma)
   and () = observe (gaussian (mu, eval sigma2), o)
 
-
-let node main particles (tr, observed) =
+let node main_no_metric particles observed =
   infer_marginal particles gaussian_model observed
+
+let node main particles (true_musig, observed) = (d, mse) where
+  rec d = main_no_metric particles observed
+  and mse = Metrics.mse (true_musig, d)
 
