@@ -17,11 +17,15 @@
 open Probzelus
 open Distribution
 open Infer_ds_gc
+open Kalmanlib
 
-let proba delay_kalman yobs = xt where
+let proba kalman1d yobs = xt where
   rec xt = sample (gaussian ((const 0., 50.) -> (pre xt, 1.)))
   and () = observe (gaussian (xt, 1.), yobs)
 
+let node main_no_metric particles observed =
+  infer_bounded particles kalman1d observed
 
-let node main particles (_, observed) =
-  infer_bounded particles delay_kalman observed
+let node main particles (true_x, observed) = (d, mse) where
+  rec d = main_no_metric particles observed
+  and mse = Metrics.mse (true_x, d)

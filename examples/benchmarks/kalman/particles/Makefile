@@ -9,6 +9,8 @@ INCR=2
 NUMRUNS=10
 CSV_FILES=perf.csv perf-step.csv mem.csv mem-ideal.csv accuracy.csv
 
+ZELUC += -I ../kalmanlib
+
 all: build
 
 publish:
