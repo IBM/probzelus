@@ -18,12 +18,14 @@ open Benchlib
 
 module M = struct
   type input = float * bool
-  type output = float
+  type output = float Probzelus.Distribution.t
   let read_input () = Scanf.scanf ("%f, %B\n") (fun t o -> (t, o))
   let main = Coin_ds_bounded.main
+  let metrics = Coinlib.Metrics.main
+  let string_of_output out = string_of_float (Probzelus.Distribution.mean_float out)
 end
 
-module H = Harness.Make(M)
+module H = Harness_metrics.Make(M)
 
 let () =
   H.run ()

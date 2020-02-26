@@ -71,6 +71,13 @@ module M = struct
 
   let main = Mtt_ds_nogc.main
   let metrics = Mttlib.Metrics.main
+  let string_of_output = Mttlib.Util.string_of_output
+  let valid out =
+    try
+      let _ = Probzelus.Distribution.draw out in
+      true
+    with Probzelus.Distribution.Draw_error ->
+      false
 end
 
 module H = Harness_metrics.Make(M)

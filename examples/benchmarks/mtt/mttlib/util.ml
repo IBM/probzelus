@@ -570,3 +570,44 @@ let matching (prev_matching : tr_map)
       matching_helper prev_matching truth hyp
   end
 
+open Probzelus
+
+let string_of_output : ((int * Mat.mat) list) Distribution.t -> string =
+  fun out ->
+    let string_of_int_distr : int Distribution.t -> string =
+      fun i -> string_of_float (Distribution.mean_int i) in
+    let string_of_mat_distr : Mat.mat Distribution.t -> string =
+      fun m -> string_of_vec2 (Distribution.mean_matrix m) in
+    let string_of_pair_distr : (int * Mat.mat) Distribution.t -> string =
+      fun p -> match p with
+      | Distribution.Dist_pair (d1, d2) -> 
+        "(" ^ string_of_int_distr d1 ^ ", " ^ string_of_mat_distr d2 ^ ")"
+      | _ -> assert false
+    in
+    let string_of_list_distr : (int * Mat.mat) list Distribution.t -> string =
+      fun lst ->
+        match lst with
+        | Dist_list inner ->
+          let inner_s = List.map (fun i ->
+            string_of_pair_distr i
+          ) inner in
+          "[" ^ String.concat ";" inner_s ^ "]"
+        | _ -> assert false
+    in
+    begin match out with
+    | Dist_mixture mix ->
+      let inner = List.map (fun (v, w) ->
+        "(" ^ string_of_list_distr v ^ ", " ^ string_of_float w ^ ")"
+      ) mix in
+      "[" ^ String.concat ";" inner ^ "]"
+    | Dist_support sup ->
+      let inner = List.map (fun (v,w) ->
+        "(" ^ string_of_tr v ^ ", " ^ string_of_float w ^ ")"
+      ) sup
+      in
+      "[" ^ String.concat ";" inner ^ "]"
+    | Dist_list _ -> string_of_list_distr out
+    | _ -> 
+      assert false
+    end
+

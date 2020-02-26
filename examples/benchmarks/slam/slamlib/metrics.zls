@@ -1,0 +1,9 @@
+open Probzelus
+
+let node main particles ((tr, _), (x, xm_dist)) = mse where
+  rec t = 1. fby (t +. 1.)
+  and d_map, x_d = Distribution.split xm_dist
+  and map_d = Distribution.split_array d_map
+  and error = Array_misc.error (tr, x) map_d x_d
+  and total_error = error -> (pre total_error) +. error
+  and mse = total_error /. t

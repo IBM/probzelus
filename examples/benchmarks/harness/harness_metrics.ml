@@ -23,6 +23,8 @@ module Make(M: sig
     val read_input : unit -> input
     val main : int -> (input, output) Ztypes.cnode
     val metrics : int -> ((input * output), float) Ztypes.cnode
+    val string_of_output : output -> string
+    val valid : output -> bool
   end) = struct
 
   module Config = struct
@@ -30,6 +32,7 @@ module Make(M: sig
     let accuracy = ref None
     let perf = ref None
     let perf_step = ref None
+    let perf_noagg = ref None
     let mem = ref None
     let mem_ideal = ref None
     let min_particles = ref 1
@@ -43,6 +46,9 @@ module Make(M: sig
     let select_particle = ref None
     let num_runs = ref 10
     let seed = ref None
+    let seed_long = ref None
+    let output_only = ref None
+    let output_acc = ref None
     let upper_quantile = 0.9
     let lower_quantile = 0.1
     let middle_quantile = 0.5
@@ -57,6 +63,8 @@ module Make(M: sig
          "file Accuracy testing" );
         ("-perf", String (fun file -> perf := Some file),
          "file Performance testing");
+        ("-perf-noagg", String (fun file -> perf_noagg := Some file),
+         "file Perfomance testing without step aggregation");
         ("-perf-step", String (fun file -> perf_step := Some file),
          "file Performance testing on a per step basis");
         ("-mem-step", String (fun file -> mem := Some file),
@@ -81,15 +89,26 @@ module Make(M: sig
          "n Increment in the particles interval");
         ("-seed", Int (fun i -> seed := Some i),
          "n Set seed of random number generator");
+        ("-seed-long", String (fun i -> seed_long := Some i),
+         "n Set seed of random number generator");
+        ("-output-only", String (fun s -> output_only := Some s),
+         "n Show just the output of the main procedure");
+        ("-output-acc", String (fun s -> output_acc := Some s),
+         "n Show the output and the accuracy statistics")
       ]
 
     let () =
       Arg.parse args (fun _ -> ()) "particles test harness"
 
     let () =
-      begin match !seed with
-      | None -> Random.self_init()
-      | Some i -> Random.init i
+      begin match (!seed, !seed_long) with
+      | None, None -> Random.self_init()
+      | Some i, None -> Random.init i
+      | _, Some s ->
+        let ints = List.map (fun si -> int_of_string si)
+          (String.split_on_char ',' s)
+        in
+        Random.full_init (Array.of_list ints)
       end
 
     let () =
@@ -105,9 +124,10 @@ module Make(M: sig
 
     let () =
       if !accuracy = None && !perf = None &&
-         !mem = None && !mem_ideal = None && !perf_step = None then begin
+         !mem = None && !mem_ideal = None && !perf_step = None && 
+         !perf_noagg = None && !output_only = None && !output_acc = None then begin
         Arg.usage args
-          "No tests performed: -acc, -perf, -perf-step, -mem-step, or -mem-ideal-step required";
+          "No tests performed: -acc, -perf, -perf-step, -mem-step, -mem-ideal-step, -perf-noagg, -output-only, or -output-acc required";
         exit 1
       end
   end
@@ -188,9 +208,8 @@ module Make(M: sig
       (fun idx i ->
          let has_sample = ref false in
          while not !has_sample do
-           let time_pre = Unix.gettimeofday () in
            let out = step i in
-           let time = Unix.gettimeofday () -. time_pre in
+           let time = nan in
            try
              let mse = step_metrics (i, out) in
              times.(idx) <- times.(idx) +. time *. 1000.;
@@ -203,6 +222,86 @@ module Make(M: sig
          done)
       inp;
     (!final_mse, times, mems)
+
+  let run_noagg_perf inp =
+    let step = get_step () in
+    let time_initial = Mtime_clock.counter () in
+    let time_final = ref None in
+    List.iter
+      (fun i ->
+        let has_sample = ref false in
+        while not !has_sample do
+          let out = step i in
+          if M.valid out then
+            has_sample := true
+          else ()
+        done;
+        time_final := Some (Mtime_clock.count time_initial)
+      ) inp;
+    let ret =
+      match !time_final with
+      | None -> assert false
+      | Some t -> Mtime.Span.to_ms t
+    in
+    ret
+
+  let run_output_only inp =
+    let step = get_step () in
+    let len = List.length inp in
+    let outs = Array.make len "" in
+    List.iteri (fun idx i ->
+      let has_sample = ref false in
+      while not !has_sample do
+        let out = step i in
+        if M.valid out then begin
+          outs.(idx) <- outs.(idx) ^ M.string_of_output out;
+          has_sample := true
+        end else
+          outs.(idx) <- outs.(idx) ^ "x\n"
+      done
+    ) inp;
+    outs
+
+  let run_output_acc inp =
+    let step = get_step () in
+    let step_metrics = get_step_metrics () in
+    let len = List.length inp in
+    let outs = Array.make len "" in
+    let final_mse = ref 0. in
+    List.iteri (fun idx i ->
+      let has_sample = ref false in
+      while not !has_sample do
+        try
+          let out = step i in
+          let err = step_metrics (i, out) in
+          final_mse := err;
+          outs.(idx) <- outs.(idx) ^ M.string_of_output out;
+          has_sample := true;
+        with Distribution.Draw_error ->
+          outs.(idx) <- outs.(idx) ^ "x\n"
+      done
+    ) inp;
+    (outs, !final_mse)
+
+  let do_runs_output_only num_runs inp =
+    let outs_runs = Array.make num_runs [||] in
+    for idx = 0 to num_runs - 1 do
+      let outs = run_output_only inp in
+      Format.printf ".@?";
+      outs_runs.(idx) <- outs;
+    done;
+    array_flatten outs_runs
+
+  let do_runs_output_acc num_runs inp =
+    let outs_runs = Array.make num_runs [||] in
+    let mse_runs = Array.make num_runs 0.0 in
+    for idx = 0 to num_runs - 1 do
+      let outs, final_mse = run_output_acc inp in
+      Format.printf ".@?";
+      outs_runs.(idx) <- outs;
+      mse_runs.(idx) <- final_mse
+    done;
+    (array_flatten outs_runs, stats mse_runs)
 
   let do_runs num_runs inp =
     let mse_runs = Array.make num_runs 0.0 in
@@ -217,6 +316,16 @@ module Make(M: sig
     done;
     Format.printf "@.";
     mse_runs, times_runs, mems_runs
+
+  let do_runs_noagg_perf num_runs inp =
+    let times_runs = Array.make num_runs 0. in
+    for idx = 0 to num_runs - 1 do
+      let time = run_noagg_perf inp in
+      Format.printf ".@?";
+      times_runs.(idx) <- time
+    done;
+    Format.printf "@.";
+    times_runs
 
   type search_kind = Exp | Linear
 
@@ -262,6 +371,22 @@ module Make(M: sig
       particles_list;
     mse_runs_particles, times_runs_particles, mems_runs_particles
 
+  let do_runs_noagg_perf_particles particles_list num_runs inp =
+    let len = List.length particles_list in
+    let times_runs_particles = Array.make len (0, [||]) in
+    List.iteri
+      (fun idx particles ->
+        Format.printf "%d: start %d runs (+%d warmups) for %d particles@?"
+          idx num_runs !Config.warmup particles;
+        Config.parts := particles;
+        do_warmup !Config.warmup inp;
+        let times_runs = do_runs_noagg_perf num_runs inp in
+        times_runs_particles.(idx) <- (particles, times_runs);
+        let _, time_mean, _ = stats (Array.copy times_runs) in
+        Format.printf "Median time: %f@." time_mean)
+      particles_list;
+    times_runs_particles
+
   let output_stats_per_particles file value_label stats  =
     output_stats !Config.pgf_format file "number of particles" value_label stats
 
@@ -283,6 +408,13 @@ module Make(M: sig
         mse_runs_particles
     in
     output_stats_per_particles file "mse" stats
+
+  let output_perf_noagg file times_runs_particles =
+    let stats =
+      Array.map (fun (particles, runs) -> (particles, stats runs))
+      times_runs_particles
+    in
+    output_stats_per_particles file "time in ms" stats
 
   let output_perf_step file times_runs_particles =
     let stats = stats_per_step times_runs_particles in
@@ -327,18 +459,73 @@ module Make(M: sig
 
       end
     in
-    let mse_runs_particles, times_runs_particles, mems_runs_particles =
-      do_runs_particles particles_list !Config.num_runs inp
-    in
-    option_iter
-      (fun file -> output_accuracy file mse_runs_particles) !Config.accuracy;
-    option_iter
-      (fun file -> output_perf file times_runs_particles) !Config.perf;
-    option_iter
-      (fun file -> output_perf_step file times_runs_particles) !Config.perf_step;
-    option_iter
-      (fun file -> output_mem file mems_runs_particles) !Config.mem;
-    option_iter
-      (fun file -> output_mem file mems_runs_particles) !Config.mem_ideal
 
+    match (!Config.perf_noagg, !Config.output_only, !Config.output_acc) with
+    | (None, None, None) ->
+      let mse_runs_particles, times_runs_particles, mems_runs_particles =
+        do_runs_particles particles_list !Config.num_runs inp
+      in
+      option_iter
+        (fun file -> output_accuracy file mse_runs_particles) !Config.accuracy;
+      option_iter
+        (fun file -> output_perf file times_runs_particles) !Config.perf;
+      option_iter
+        (fun file -> output_perf_step file times_runs_particles) !Config.perf_step;
+      option_iter
+        (fun file -> output_mem file mems_runs_particles) !Config.mem;
+      option_iter
+        (fun file -> output_mem file mems_runs_particles) !Config.mem_ideal
+    | (_, Some fn, None) ->
+      begin match !Config.select_particle with
+      | Some p -> 
+        Format.printf "start %d runs (+%d warmups) for %d particles@?"
+          num_runs !Config.warmup p;
+        Config.parts := p;
+        do_warmup !Config.warmup inp;
+      | None -> Arg.usage Config.args
+        "option -output-only must be used with -particles";
+        exit 1
+      end;
+      let outs = do_runs_output_only !Config.num_runs inp in
+      let out_str = String.concat "\n" (Array.to_list outs) in
+      let ch = open_out fn in
+      let fmt = Format.formatter_of_out_channel ch in
+      Format.fprintf fmt "%s\n" out_str;
+      close_out ch
+    | (_, None, Some fn) ->
+      begin match !Config.select_particle with
+      | Some p -> 
+        Format.printf "start %d runs (+%d warmups) for %d particles@?"
+          num_runs !Config.warmup p;
+        Config.parts := p;
+        do_warmup !Config.warmup inp;
+      | None -> Arg.usage Config.args
+        "option -output-acc must be used with -particles";
+        exit 1
+      end;
+      let outs, (acc_low, acc_mid, acc_high) = 
+        do_runs_output_acc !Config.num_runs inp in
+      let out_str = String.concat "\n" (Array.to_list outs) in
+      let ch = open_out fn in
+      let fmt = Format.formatter_of_out_channel ch in
+      Format.fprintf fmt "%s\n%f, %f, %f\n" out_str acc_low acc_mid acc_high;
+      close_out ch
+    | (Some file, None, None) ->
+      begin match 
+        (!Config.accuracy, 
+         !Config.perf, 
+         !Config.perf_step, 
+         !Config.mem, 
+         !Config.mem_ideal) with
+      | (None, None, None, None, None) -> ()
+      | _ -> 
+        Arg.usage Config.args "option -perf-noagg cannot be used with -perf, -accuracy, -perf-step, -mem, or -mem-ideal";
+        exit 1
+      end;
+      let times_runs_particles = do_runs_noagg_perf_particles particles_list !Config.num_runs inp in
+      output_perf_noagg file times_runs_particles
+    | _ -> 
+      Arg.usage Config.args 
+        "options -output-only, -output-acc, and -perf-noagg are mutually exclusive";
+      exit 1
 end

@@ -4,4 +4,4 @@
 
 (executables
  (names run)
- (libraries probzelus benchlib))
+ (libraries probzelus benchlib gaussianlib))

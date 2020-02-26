@@ -1,0 +1,9 @@
+open Zelus_owl
+open Lib
+
+let node main particles ((), (xt, cmd)) = avg_err where
+  rec t = 0 fby t + 1
+  and err_t = Mat.get (Mat.add (Mat.dot (Mat.transpose xt) (Mat.dot q xt))
+                               (Mat.dot (Mat.transpose cmd) (Mat.dot r cmd))) 0 0
+  and err = 0. -> (pre err) +. (err_t)
+  and avg_err = err /. (float_of_int t)

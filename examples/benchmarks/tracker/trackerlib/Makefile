@@ -10,11 +10,14 @@ all: $(ZCI) byte opt
 
 .phony: byte opt
 
-byte:
+byte: metrics.ml
 	dune build trackerlib.cma
 
 opt:
 	dune build trackerlib.cmxa
+
+metrics.ml : metrics.zls
+	$(ZELUC) -noreduce $<
 
 %.zci: %.zli
 	$(ZELUC) $<

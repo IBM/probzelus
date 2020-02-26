@@ -1,0 +1,3 @@
+(library
+  (name outlierlib)
+  (libraries probzelus))

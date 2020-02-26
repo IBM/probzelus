@@ -1,0 +1,9 @@
+open Probzelus
+open Distribution
+
+let node main particles ((true_x, _), x_distr) = mse where
+  rec t = 1. fby (t +. 1.) 
+  and res = mean_float x_distr
+  and error = (res  -. true_x) ** 2.
+  and total_error = error -> (pre total_error) +. error
+  and mse = total_error /. t

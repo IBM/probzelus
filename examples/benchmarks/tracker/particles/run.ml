@@ -15,23 +15,30 @@
  *)
 
 open Benchlib
+open Zelus_owl
 
 module M = struct
   type input = unit
-  type output = unit
+  type output = Mat.mat * Mat.mat
   let iters = ref 0
   let read_input () =
     begin
-      if !iters >= 1600 then
+      if !iters >= 500 then
         raise End_of_file
       else
         iters := !iters + 1
     end;
     ()
   let main = Tracker_particles.main
+  let metrics = Trackerlib.Metrics.main
+  let string_of_output (xt, cmd) = 
+    let string_of_vec v =
+      Printf.sprintf "(%f, %f, %f)" (Mat.get v 0 0) (Mat.get v 1 0) (Mat.get v 2 0)
+    in
+    Printf.sprintf "%s, %s" (string_of_vec xt) (string_of_vec cmd)
 end
 
-module H = Harness.Make(M)
+module H = Harness_metrics.Make(M)
 
 let () =
   H.run ()

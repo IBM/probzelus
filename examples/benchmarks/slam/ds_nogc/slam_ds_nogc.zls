@@ -16,7 +16,7 @@
 
 open Probzelus
 open Slamlib
-open Infer_ds_naive
+open Infer_ds
 open Lib
 
 let sensor_noise = Array_misc.sensor_noise
@@ -29,24 +29,32 @@ let proba move (x_init, cmd) = x where
     max 0 (min max_pos (if eval wheel_slip then last x else last x + cmd))
   and wheel_slip = sample (bernoulli (const wheel_noise))
 
-let proba beta_priors i = sample (beta (1., 1.))
+let proba bernoulli_priors i = sample (bernoulli (const 0.5))
 
 let proba slam (obs, cmd) = pair (array map, const x) where
-  rec init map = (Array_misc.ini (max_pos + 1) beta_priors) ()
+  rec init map = Array_misc.ini (max_pos + 1) bernoulli_priors ()
   and x = move (0, cmd)
   and o = Array_misc.get map x
-  and () = observe (bernoulli o, obs)
+  and () = observe (bernoulli (ite o (const (1. -. sensor_noise)) (const sensor_noise)), obs)
 
-let node main particles (tr, obs) = (), mse where
-  rec t = 1. fby (t +. 1.)
-  and cmd = 1 -> pre (controller x_d)
-  and d = infer_marginal particles slam (obs, cmd)
+let node main particles (tr, _) = (x, d) where
+  rec cmd = 1 -> pre (controller x_d)
+  and d = infer particles slam (obs, cmd)
   and (obs, x) = slam_obs (tr, cmd)
-  and d_map, x_d = Distribution.split d
-  and map_d = Distribution.split_array d_map
-  and error = Array_misc.error (tr, x) map_d x_d
-  and total_error = error -> (pre total_error) +. error
-  and mse = total_error /. t
+  and _, x_d = Distribution.split d
+
+let node main_time_env_inner particles (tr, _) = ((x, d), time_inner) where
+  rec cmd = 1 -> pre (controller x_d)
+  and d = infer particles slam (obs, cmd)
+  and ((obs, x), time_inner) = slam_obs_time (tr, cmd)
+  and _, x_d = Distribution.split d
+
+let node main_time_all particles (tr, a) = (o, (t_main, t_env)) where
+  rec ((o, t_env), t_main) = (Array_misc.time (main_time_env_inner particles)) (tr, a)
+
+let node main_time_noenv particles (tr, a) = (o, t_env) where
+  rec (o, t_env) = (Array_misc.time (main particles)) (tr, a)
+
 
 (*
 let node main particles (tr, observed) =

@@ -19,7 +19,7 @@ open Slamlib
 
 module M = struct
   type input = bool array * unit
-  type output = unit
+  type output = int * (bool array * int) Probzelus.Distribution.t
 
   let read_input () =
     let a = Array.make (Array_misc.max_pos + 1) false in
@@ -29,9 +29,17 @@ module M = struct
     (a, ())
 
   let main = Slam_particles.main
+
+  let metrics = Metrics.main
+  let string_of_output (x, xm_distr) =
+    let m_d, x_d = Probzelus.Distribution.split xm_distr in
+    let m_list = Array.to_list (Probzelus.Distribution.split_array m_d) in
+    string_of_int x ^ ", [" ^ (String.concat ", " (List.map (fun i ->
+      string_of_float (Probzelus.Distribution.mean_bool i)
+    ) m_list)) ^ "], " ^ string_of_float (Probzelus.Distribution.mean_int x_d)
 end
 
-module H = Harness.Make(M)
+module H = Harness_metrics.Make(M)
 
 let () =
   H.run ()

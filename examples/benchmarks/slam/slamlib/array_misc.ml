@@ -17,6 +17,7 @@
 open Ztypes
 open Probzelus
 
+
 let sensor_noise = 0.1
 let wheel_noise = 0.1
 
@@ -82,7 +83,7 @@ let error (map, x) map_d d_x =
   let len = Array.length map in
   let e = ref ((float x -. Distribution.mean_int d_x) ** 2.) in
   for i = 0 to len - 1 do
-    e := !e +. (float_of_bool map.(i) -. mean_float map_d.(i)) ** 2.
+    e := !e +. (float_of_bool map.(i) -. mean_bool map_d.(i)) ** 2.
   done;
   !e
 
@@ -96,3 +97,20 @@ let print_map map =
 let print_map_d d_map =
   let m = Array.map (fun d -> mean_float d > 0.5) d_map in
   print_map m
+
+
+let time n = 
+  let Cnode { alloc = n_alloc; reset = n_reset; step = n_step; copy = n_copy } = n in
+
+  Cnode {
+    alloc = (n_alloc);
+    reset = n_reset;
+    step = (fun x a ->
+      let prev_time = Mtime_clock.now () in
+      let ret = n_step x a in
+      let new_time = Mtime_clock.now () in
+      let elapsed_ms = Mtime.Span.to_ms (Mtime.span prev_time new_time) in
+      (ret, elapsed_ms)
+    );
+    copy = n_copy
+  }

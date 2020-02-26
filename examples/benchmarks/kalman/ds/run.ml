@@ -18,12 +18,14 @@ open Benchlib
 
 module M = struct
   type input = float * float
-  type output = float
+  type output = float Probzelus.Distribution.t
   let read_input () = Scanf.scanf ("%f, %f\n") (fun t o -> (t, o))
   let main = Kalman_ds.main
+  let metrics = Kalmanlib.Metrics.main
+  let string_of_output out = string_of_float (Probzelus.Distribution.mean_float out)
 end
 
-module H = Harness.Make(M)
+module H = Harness_metrics.Make(M)
 
 let () =
   H.run ()

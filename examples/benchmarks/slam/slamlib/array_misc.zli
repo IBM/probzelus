@@ -42,8 +42,10 @@ val output : bool t -> int ->
 
 val output_ds : bool t -> int ->
     bool -> float t Distribution.t -> int Distribution.t -AD-> unit
-val error : bool array * int -> float Distribution.t array -> int Distribution.t -> float
+val error : bool array * int -> bool Distribution.t array -> int Distribution.t -> float
 
 val print_bool : bool -AD-> unit
 val print_map : bool array -AD-> unit
 val print_map_d : float Distribution.t array -AD-> unit
+
+val time : ('a -D-> 'b) -S-> ('a -D-> ('b * float))

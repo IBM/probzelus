@@ -1,0 +1,12 @@
+open Probzelus
+open Distribution
+
+let node main particles ((tr, _), musig_distr) = mse where
+  rec true_mu, true_sigma = tr
+  and mu_d, sigma_d = split musig_distr
+  and mu = mean_float mu_d
+  and sigma = mean_float sigma_d
+  and t = 1. fby (t +. 1.)
+  and error = (mu -. true_mu) ** 2. +. (sigma -. true_sigma) ** 2.
+  and total_error = error -> (pre total_error) +. error
+  and mse = total_error /. t

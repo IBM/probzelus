@@ -1,0 +1,3 @@
+(library
+  (name gaussianlib)
+  (libraries probzelus))

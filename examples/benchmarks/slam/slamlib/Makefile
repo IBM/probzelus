@@ -1,5 +1,5 @@
 INFERLIB=../../../../inference
-ZELUC=zeluc -copy -I $(INFERLIB)
+ZELUC=zeluc -noreduce -copy -I $(INFERLIB)
 
 
 ZLI=$(wildcard *.zli)
@@ -9,14 +9,16 @@ all: $(ZCI) byte opt
 
 .phony: byte opt
 
-byte: lib.ml
+byte: lib.ml metrics.ml
 	dune build slamlib.cma
 
-opt: lib.ml
+opt: lib.ml metrics.ml
 	dune build slamlib.cmxa
 
-
 lib.zci lib.ml: lib.zls
+	$(ZELUC) $<
+
+metrics.zci metrics.ml : metrics.zls
 	$(ZELUC) $<
 
 %.zci: %.zli
@@ -24,6 +26,6 @@ lib.zci lib.ml: lib.zls
 
 clean:
 	dune clean
-	-rm -f *.zci lib.ml
+	-rm -f *.zci lib.ml metrics.ml
 cleanall: clean
 	rm -f *~

@@ -26,15 +26,6 @@ let proba gaussian_model o = pair (mu, sigma2) where
   and () = observe (gaussian (mu, eval sigma2), o)
 
 
-let node main particles (tr, observed) =
-  let rec t = 1. fby (t +. 1.) in
+let node main particles (_, observed) =
+  infer particles gaussian_model observed
 
-  let mu_d, sigma2_d = split (infer particles gaussian_model observed) in
-  let mu = mean_float mu_d in
-  let sigma2 = mean_float sigma2_d in
-  let (mu_tr, sigma2_tr) = tr in
-  let error = (mu -. mu_tr) ** 2. +. (sigma2 -. sigma2_tr) ** 2. in
-  let rec total_error = error -> (pre total_error) +. error in
-  let mse = total_error /. t in
-
-  (mu, sigma2), mse

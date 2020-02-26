@@ -18,12 +18,16 @@ open Benchlib
 
 module M = struct
   type input = (float * float) * float
-  type output = float * float
+  type output = (float * float) Probzelus.Distribution.t
   let read_input () = Scanf.scanf ("%f, %f, %f\n") (fun mu sigma y -> ((mu, sigma), y))
   let main = Gaussian_ds_bounded.main
+  let metrics = Gaussianlib.Metrics.main
+  let string_of_output out =
+    let mu_d, sigma_d = Probzelus.Distribution.split out in
+    Format.sprintf "%f, %f\n" (Probzelus.Distribution.mean_float mu_d) (Probzelus.Distribution.mean_float sigma_d)
 end
 
-module H = Harness.Make(M)
+module H = Harness_metrics.Make(M)
 
 let () =
   H.run ()

@@ -20,6 +20,7 @@ let sensor_noise = Array_misc.sensor_noise
 let wheel_noise = Array_misc.wheel_noise
 let max_pos = Array_misc.max_pos
 
+
 let node slam_obs (real_map, cmd) = (obs, x) where
   rec init x = 0
   and x = max 0 (min max_pos (if wheel_slip then last x else last x + cmd))
@@ -27,6 +28,9 @@ let node slam_obs (real_map, cmd) = (obs, x) where
   and sensor_error = Distribution.draw (Distribution.bernoulli sensor_noise)
   and b = Array_misc.get real_map x
   and obs = if sensor_error then not b else b
+
+
+let slam_obs_time = Array_misc.time slam_obs 
 
 let node controller (x_dist) = cmd where
   rec xest = Distribution.draw x_dist

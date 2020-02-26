@@ -34,6 +34,17 @@ let array_flatten arr =
   done;
   res
 
+let array_unzip arr =
+  let l = Array.length arr in
+  let ret1 = Array.make l 0. in
+  let ret2 = Array.make l 0. in
+  for i = 0 to l - 1 do
+    let (v1, v2) = arr.(i) in
+    ret1.(i) <- v1;
+    ret2.(i) <- v2
+  done;
+  (ret1, ret2)
+
 let array_transpose arr =
   let l1 = Array.length arr in
   let l2 = Array.length arr.(0) in

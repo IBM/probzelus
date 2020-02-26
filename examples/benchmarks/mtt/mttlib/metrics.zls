@@ -23,9 +23,9 @@ open Infer_pf
 let position (tr_num, tr) =
   (tr_num, proj_pos *@ tr)
 
-let proba metrics (true_tr, tr_dist) = err where
+let node metrics (true_tr, tr_dist) = err where
   rec init tr_match = empty_matching
-  and est_tr = sample tr_dist
+  and est_tr = Distribution.draw tr_dist
   and est_tr_pos = List.map position est_tr
   and (metrics,tr_match) = matching (last tr_match) true_tr est_tr_pos
   and (d, c, fp, m, mme, g) = metrics
@@ -45,5 +45,4 @@ let proba metrics (true_tr, tr_dist) = err where
   and err = if one_minus_mota >= 1. then infinity else (1. /. (1. -. one_minus_mota)) -. 1.
 
 let node main particles ((true_tr, _), tr_distr) = err where
-  rec err_distr = infer particles metrics (true_tr, tr_distr)
-  and err = mean_float err_distr
+  rec err = metrics (true_tr, tr_distr)

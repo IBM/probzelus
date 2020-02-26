@@ -19,3 +19,15 @@ open Mat
 
 val of_lists : float list list -> mat
 val of_list : float list -> int -> int -> mat
+
+val diagm : float list -> mat
+val vec : float list -> mat
+
+val a : mat
+val a_approx : mat
+val b : mat
+val q : mat
+val r : mat
+val n : mat
+
+val time : ('a -D-> 'b) -S-> ('a -D-> ('b * float))
