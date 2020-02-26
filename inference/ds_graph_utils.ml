@@ -28,7 +28,7 @@ let cdistr_to_mdistr : type a b.
   | CBernoulli ->
       Dist_bernoulli obs
   | AffineMeanGaussianMV (m, b, sigma) ->
-      Dist_mv_gaussian (Mat.add (Mat.dot m obs) b, sigma)
+      Dist_mv_gaussian (Mat.add (Mat.dot m obs) b, sigma, None, None, None)
   | CBernBern (bfn) ->
       Dist_bernoulli (bfn obs)
   end
@@ -40,13 +40,14 @@ let make_marginal : type a b.
   | Dist_gaussian (mu, var), AffineMeanGaussian(m, b, obsvar) ->
       Dist_gaussian (m *. mu +. b,
                      m ** 2. *. var +. obsvar)
-  | Dist_mv_gaussian (mu0, sigma0), AffineMeanGaussianMV(m, b, sigma) ->
+  | Dist_mv_gaussian (mu0, sigma0, _, _, _),
+    AffineMeanGaussianMV(m, b, sigma) ->
       let mu' = Mat.add (Mat.dot m mu0) b in
 
       let sigma' =
         Mat.add (Mat.dot (Mat.dot m sigma0) (Mat.transpose m)) sigma
       in
-      Dist_mv_gaussian (mu', sigma')
+      Dist_mv_gaussian (mu', sigma', None, None, None)
   | Dist_beta (a, b),  CBernoulli ->
       Dist_bernoulli (a /. (a +. b))
   | Dist_bernoulli (p_prior), CBernBern bfn ->
@@ -74,17 +75,22 @@ let make_conditional : type a b.
             ((obs -. b) /. m) (obsvar /. m ** 2.)
         in
         Dist_gaussian (mu', var')
-    | Dist_mv_gaussian(mu0, sigma0), AffineMeanGaussianMV(m, b, sigma) ->
+    | Dist_mv_gaussian(mu0, sigma0, _, _, _),
+      AffineMeanGaussianMV(m, b, sigma) ->
         let obs' = Mat.sub obs b in
         let innov = Mat.sub obs' (Mat.dot m mu0) in
-        let innov_sigma = Mat.add (Mat.dot m (Mat.dot sigma0 (Mat.transpose m))) sigma in
-        let gain = Mat.dot sigma0 (Mat.dot (Mat.transpose m) (Linalg.D.inv innov_sigma)) in
+        let innov_sigma =
+          Mat.add (Mat.dot m (Mat.dot sigma0 (Mat.transpose m))) sigma
+        in
+        let gain =
+          Mat.dot sigma0 (Mat.dot (Mat.transpose m) (Linalg.D.inv innov_sigma))
+        in
         let mu' = Mat.add mu0 (Mat.dot gain innov) in
         let sigma' =
           let kh = Mat.dot gain m in
           Mat.dot (Mat.sub (Mat.eye (Mat.row_num kh)) kh) sigma0
         in
-        Dist_mv_gaussian (mu', sigma')
+        Dist_mv_gaussian (mu', sigma', None, None, None)
 
     | Dist_beta (a, b),  CBernoulli ->
         if obs then Dist_beta (a +. 1., b)

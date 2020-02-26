@@ -106,7 +106,7 @@ module rec Distribution_rec: DISTRIBUTION = struct
     | Dist_app (f, x) ->
         Format.fprintf ppf "(%a) (%a)"
           (pp_print pp_print_any) f (pp_print pp_print_any) x
-    | Dist_mv_gaussian (mu, sigma) ->
+    | Dist_mv_gaussian (mu, sigma, _, _, _) ->
         (* XXX TODO XXX *)
         Format.fprintf ppf "mv_gaussian (%a, %a)"
           pp_print_any mu
@@ -247,25 +247,42 @@ module rec Distribution_rec: DISTRIBUTION = struct
       @see<https://en.wikipedia.org/wiki/Multivariate_normal_distribution>
   *)
 
-  let mv_gaussian_draw mu sigma =
-    let u, s, _ = Linalg.Generic.svd sigma in
+  let mv_gaussian_draw' mu _sigma sig_svd =
+    let u, s, _ = sig_svd in
     let a = Mat.(u *@ (sqrt (diagm s))) in
     let n = (Arr.shape mu).(0) in
-    let xs = Arr.init [| n; 1 |] (fun _ ->
-        gaussian_draw 0. 1.
-      ) in
+    let xs =
+      Arr.init [| n; 1 |] (fun _ -> gaussian_draw 0. 1.)
+    in
     Mat.(mu + a *@ xs)
 
-  let mv_gaussian_score mu sigma x =
-    let two_pi = 2.0 *. 3.14159265358979323846 in
+  let mv_gaussian_draw mu sigma =
+    let sig_svd = Linalg.Generic.svd sigma in
+    mv_gaussian_draw' mu sigma sig_svd
+
+  let mv_gaussian_score' mu _sigma sig_inv sig_det x =
     let d = float (Arr.shape x).(0) in
     let x_m = Mat.(x - mu) in
-    -. 0.5 *. log (two_pi ** d *. Linalg.D.det sigma)
-    -. 0.5 *. Mat.(get (transpose (Linalg.D.linsolve sigma x_m) *@ x_m) 0 0)
+    -. 0.5 *. log ((two_pi ** d) *. sig_det)
+    -. 0.5 *. Mat.(get (transpose x_m *@ sig_inv *@ x_m) 0 0)
+ (* -. 0.5 *. log (two_pi ** d *. Linalg.D.det sigma) *)
+ (* -. 0.5 *. Mat.(get (transpose (Linalg.D.linsolve sigma x_m) *@ x_m) 0 0) *)
+
+
+  let mv_gaussian_score mu sigma x =
+    let sig_inv = Linalg.D.inv sigma in
+    let sig_det = Linalg.D.det sigma in
+    mv_gaussian_score' mu sigma sig_inv sig_det x
 
   let mv_gaussian (mu, sigma) =
-    Dist_mv_gaussian (mu, sigma)
+    Dist_mv_gaussian (mu, sigma, None, None, None)
 
+  let mv_gaussian_curried sigma =
+    let sig_inv = Linalg.D.inv sigma in
+    let sig_det = Linalg.D.det sigma in
+    let sig_svd = Linalg.Generic.svd sigma in
+    fun mu ->
+      Dist_mv_gaussian (mu, sigma, Some sig_inv, Some sig_det, Some sig_svd)
 
 
   (** [beta(a, b)] is a beta distribution of parameters [a] and [b].
@@ -573,7 +590,7 @@ module rec Distribution_rec: DISTRIBUTION = struct
     | (Dist_joint _, _) | (_, Dist_joint _) ->
         (* XXX TODO XXX *)
         Dist_add (dist1, dist2)
-    | (Dist_mv_gaussian (_, _), Dist_mv_gaussian (_, _)) ->
+    | (Dist_mv_gaussian (_, _, _, _, _), Dist_mv_gaussian (_, _, _, _, _)) ->
         assert false
     end
 
@@ -596,7 +613,7 @@ module rec Distribution_rec: DISTRIBUTION = struct
     | (Dist_app (_, _), _) | (_, Dist_app (_, _))
     | (Dist_joint _, _) | (_, Dist_joint _) ->
         Dist_mult (dist1, dist2)
-    | (Dist_mv_gaussian (_, _), Dist_mv_gaussian (_, _)) ->
+    | (Dist_mv_gaussian (_, _, _, _, _), Dist_mv_gaussian (_, _, _, _, _)) ->
         assert false (* XXX TODO XXX *)
     end
 
@@ -619,7 +636,7 @@ module rec Distribution_rec: DISTRIBUTION = struct
     | Dist_list _ -> assert false (* XXX TODO XXX *)
     | Dist_array _ -> assert false (* XXX TODO XXX *)
     | Dist_gaussian (_, _) -> assert false
-    | Dist_mv_gaussian (_, _) -> assert false
+    | Dist_mv_gaussian (_, _, _, _, _) -> assert false
     | Dist_beta (_, _) -> assert false
     | Dist_bernoulli p ->
         Dist_support [ (true, p); (false, 1. -. p); ]
@@ -673,7 +690,10 @@ module rec Distribution_rec: DISTRIBUTION = struct
             let d' = draw (Dist_support l) in
             draw d'
         | Dist_gaussian (mu, sigma2) -> gaussian_draw mu sigma2
-        | Dist_mv_gaussian (mu, sigma) -> mv_gaussian_draw mu sigma
+        | Dist_mv_gaussian (mu, sigma, _, _, Some sig_svd) ->
+            mv_gaussian_draw' mu sigma sig_svd
+        | Dist_mv_gaussian (mu, sigma, _, _, None) ->
+            mv_gaussian_draw mu sigma
         | Dist_beta (a, b) -> beta_draw a b
         | Dist_bernoulli p -> bernoulli_draw p
         | Dist_uniform_int (a, b) -> uniform_int_draw a b
@@ -753,7 +773,10 @@ module rec Distribution_rec: DISTRIBUTION = struct
         in
         log p
     | Dist_gaussian (mu, sigma2) -> gaussian_score mu sigma2 x
-    | Dist_mv_gaussian (mu, sigma) -> mv_gaussian_score mu sigma x
+    | Dist_mv_gaussian (mu, sigma, Some sig_inv, Some sig_det, _) ->
+        mv_gaussian_score' mu sigma sig_inv sig_det x
+    | Dist_mv_gaussian (mu, sigma, _, _, _) ->
+        mv_gaussian_score mu sigma x
     | Dist_beta (a, b) -> beta_score a b x
     | Dist_bernoulli p -> bernoulli_score p x
     | Dist_uniform_int (a, b) -> uniform_int_score a b x
@@ -958,7 +981,7 @@ module rec Distribution_rec: DISTRIBUTION = struct
     | Dist_app (d1, d2) ->
         Dist_sampler ((fun () -> fst ((draw d1) (draw d2))), (fun _ -> assert false)),
         Dist_sampler ((fun () -> snd ((draw d1) (draw d2))), (fun _ -> assert false))
-    | Dist_mv_gaussian (_, _) -> assert false
+    | Dist_mv_gaussian (_, _, _, _, _) -> assert false
     | Dist_joint j -> split_joint j
     end
   and split_joint : type a b. (a * b) joint_distr -> a t * b t =
@@ -1034,7 +1057,7 @@ module rec Distribution_rec: DISTRIBUTION = struct
              let draw () = (draw dist).(i) in
              let score _ = assert false (* XXX TODO XXX *) in
              Dist_sampler (draw, score))
-    | Dist_mv_gaussian (_, _) -> assert false
+    | Dist_mv_gaussian (_, _, _, _, _) -> assert false
     | Dist_joint j -> split_joint_array j
     end
   and split_joint_array : type a. a array joint_distr -> a t array =
@@ -1172,7 +1195,7 @@ module rec Distribution_rec: DISTRIBUTION = struct
       | Dist_list l -> l
       | Dist_app (_, _) ->
           assert false (* XXX TODO XXX *)
-      | Dist_mv_gaussian (_, _) -> assert false
+      | Dist_mv_gaussian (_, _, _, _, _) -> assert false
       | Dist_joint j -> split_joint_list j
       end
   and split_joint_list : type a. a list joint_distr -> a t list =
@@ -1217,7 +1240,7 @@ module rec Distribution_rec: DISTRIBUTION = struct
         Dist_mixture (List.map (fun (d, w) -> (to_mixture d, w)) l)
     | Dist_app _ ->
         assert false (* XXX TODO XXX *)
-    | Dist_mv_gaussian (_, _) -> assert false
+    | Dist_mv_gaussian (_, _, _, _, _) -> assert false
     | Dist_joint j -> to_mixture_joint j
     end
   and to_mixture_joint : type a. a t joint_distr -> a t =
@@ -1283,7 +1306,7 @@ module rec Distribution_rec: DISTRIBUTION = struct
         (Dist_mixture (List.map (fun (v, w) -> (v, w /. norm)) l), pres)
     | Dist_pair _ -> assert false
     | Dist_app _ -> assert false
-    | Dist_mv_gaussian (_, _) -> assert false
+    | Dist_mv_gaussian (_, _, _, _, _) -> assert false
     | Dist_joint j -> to_signal_joint j
     end
   and to_signal_joint : type a. (a * bool) joint_distr -> a t * bool =
@@ -1368,7 +1391,7 @@ module rec Distribution_rec: DISTRIBUTION = struct
         m1 *. m2, var1 *. var2 +. var1 *. m2 ** 2. +. m2 *. m1 ** 2.
     | Dist_app (_, _) as d ->
         stats_float (Dist_sampler ((fun () -> draw d), (fun _ -> assert false)))
-    | Dist_mv_gaussian (_, _) -> assert false
+    | Dist_mv_gaussian (_, _, _, _, _) -> assert false
     | Dist_joint j -> stats_float_joint j
     end
   and stats_float_joint : float joint_distr -> float * float =
@@ -1420,7 +1443,7 @@ module rec Distribution_rec: DISTRIBUTION = struct
         m1 *. m2
     | Dist_app (_, _) ->
         mean_float (Dist_sampler ((fun () -> draw d), (fun _ -> assert false)))
-    | Dist_mv_gaussian (_, _) -> assert false
+    | Dist_mv_gaussian (_, _, _, _, _) -> assert false
     | Dist_joint j -> mean_float_joint j
     end
   and mean_float_joint : float joint_distr -> float =
@@ -1470,7 +1493,7 @@ module rec Distribution_rec: DISTRIBUTION = struct
       | Dist_sampler_float (draw, _ , _) -> sample_mean meanfn draw
       | Dist_gaussian (mu, sigma2) ->
           sample_mean meanfn (fun () -> gaussian_draw mu sigma2)
-      | Dist_mv_gaussian (mu, sigma) ->
+      | Dist_mv_gaussian (mu, sigma, _, _, _) ->
           sample_mean meanfn (fun () -> mv_gaussian_draw mu sigma)
       | Dist_beta (a, b) -> beta_draw a b
       | Dist_bernoulli p ->
@@ -1557,7 +1580,7 @@ module rec Distribution_rec: DISTRIBUTION = struct
     | Dist_uniform_int (a, b) -> uniform_int_mean a b
     | Dist_poisson a ->
         poisson_mean a
-    | Dist_mv_gaussian (_, _) -> assert false
+    | Dist_mv_gaussian (_, _, _, _, _) -> assert false
     | Dist_joint j -> mean_int_joint j
     end
   and mean_int_joint (d: int joint_distr) =
@@ -1587,7 +1610,7 @@ module rec Distribution_rec: DISTRIBUTION = struct
         List.fold_left (fun acc (d, w) -> acc +. w *. mean_bool d) 0. l
     | Dist_app (_, _) ->
         mean_bool (Dist_sampler ((fun () -> draw d), (fun _ -> assert false)))
-    | Dist_mv_gaussian (_, _) -> assert false
+    | Dist_mv_gaussian (_, _, _, _, _) -> assert false
     | Dist_joint j -> mean_bool_joint j
     end
   and mean_bool_joint (d: bool joint_distr) =
@@ -1620,7 +1643,7 @@ module rec Distribution_rec: DISTRIBUTION = struct
     | Dist_app (_, _) ->
         mean_signal_present
           (Dist_sampler ((fun () -> draw d), (fun _ -> assert false)))
-    | Dist_mv_gaussian (_, _) -> assert false
+    | Dist_mv_gaussian (_, _, _, _, _) -> assert false
     | Dist_joint j -> mean_signal_present_joint j
     end
   and mean_signal_present_joint : type a. (a * bool) joint_distr -> float =
@@ -1656,7 +1679,7 @@ module rec Distribution_rec: DISTRIBUTION = struct
           (fun acc (v, w) -> Owl.Mat.(acc + (mean_matrix v *$ w)))
           Owl.Mat.(mean_matrix v *$ w) sup
     | Dist_mixture [] -> assert false
-    | Dist_mv_gaussian (mu, _) -> mu
+    | Dist_mv_gaussian (mu, _, _, _, _) -> mu
     | Dist_sampler_float _ -> assert false
     | Dist_pair _ -> assert false
     | Dist_list _ -> assert false

@@ -70,6 +70,7 @@ val gaussian_variance : 'a -> float -> float
 val gaussian : float * float -> float t
 
 val mv_gaussian : Mat.mat * Mat.mat -> Mat.mat t
+val mv_gaussian_curried : Mat.mat -S-> Mat.mat -> Mat.mat t
 
 val beta_draw : float -> float -> float
 val beta_score : float -> float -> float -> float

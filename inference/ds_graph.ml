@@ -161,7 +161,7 @@ module Make(Distribution: DISTRIBUTION) = struct
     | DSgraph_Initialized (_, AffineMeanGaussian _) -> KGaussian
     | DSgraph_Marginalized (Dist_gaussian _, _) -> KGaussian
     | DSgraph_Initialized (_, AffineMeanGaussianMV (_, _, _)) -> KMVGaussian
-    | DSgraph_Marginalized (Dist_mv_gaussian (_, _), _) -> KMVGaussian
+    | DSgraph_Marginalized (Dist_mv_gaussian _, _) -> KMVGaussian
     | DSgraph_Initialized (_, CBernoulli) -> KBernoulli
     | DSgraph_Initialized (_, CBernBern _) -> KBernoulli
     | DSgraph_Marginalized (Dist_bernoulli _, _) -> KBernoulli
@@ -189,7 +189,7 @@ module Make(Distribution: DISTRIBUTION) = struct
     begin match r.ds_graph_node_state with
     | DSgraph_Initialized (_, AffineMeanGaussianMV (_, b, _)) ->
         let rows, _ = Mat.shape b in rows
-    | DSgraph_Marginalized (Dist_mv_gaussian(mu, _), _) ->
+    | DSgraph_Marginalized (Dist_mv_gaussian(mu, _, _, _, _), _) ->
         let rows, _ = Mat.shape mu in rows
     | DSgraph_Realized v ->
         let rows, _ = Mat.shape v in rows

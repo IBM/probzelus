@@ -412,7 +412,10 @@ module Make(DS_ll: DS_ll_S) = struct
                   let mask = Mat.zeros 1 n in Mat.set mask 0 i 1.0;
                   let mu' = Mat.dot mask v in
                   let cov = Mat.create 1 1 sigma2 in
-                  let rv = DS_ll.assume_constant (Dist_mv_gaussian(mu', cov)) in
+                  let rv =
+                    DS_ll.assume_constant
+                      (Dist_mv_gaussian(mu', cov, None, None, None))
+                  in
                   Some { value = Evec_get ({ value = Ervar (RV rv)}, i)}
               | Some (AErvar (m, RV x, b)) ->
                   begin match DS_ll.get_distr_kind x with
@@ -422,7 +425,10 @@ module Make(DS_ll: DS_ll_S) = struct
                       let m' = Mat.dot mask m in
                       let b' = Mat.dot mask b in
                       let cov = Mat.create 1 1 sigma2 in
-                      let rv = DS_ll.assume_conditional x (AffineMeanGaussianMV(m', b', cov)) in
+                      let rv =
+                        DS_ll.assume_conditional x
+                          (AffineMeanGaussianMV(m', b', cov))
+                      in
                       Some { value = Evec_get ({ value = Ervar (RV rv)}, i)}
                   | _ -> None
                   end
@@ -474,7 +480,10 @@ module Make(DS_ll: DS_ll_S) = struct
       let is _prob =
         begin match affine_vec_of_vec mu with
         | Some (AEconst v) ->
-            let rv = DS_ll.assume_constant (Dist_mv_gaussian(v, sigma)) in
+            let rv =
+              DS_ll.assume_constant
+                (Dist_mv_gaussian(v, sigma, None, None, None))
+            in
             Some { value = (Ervar (RV rv)) }
         | Some (AErvar (m, RV x, b)) ->
             begin match DS_ll.get_distr_kind x with

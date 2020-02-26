@@ -53,7 +53,12 @@ type _ distr =
   | Dist_add : float distr * float distr -> float distr
   | Dist_mult : float distr * float distr -> float distr
   | Dist_app : ('a -> 'b) distr * 'a distr -> 'b distr
-  | Dist_mv_gaussian : Mat.mat * Mat.mat -> Mat.mat distr
+  (* Dist_mv_gaussian (mu, sigma, 1/sigma, det(sigma), svd(sigma)) *)
+  | Dist_mv_gaussian : (Mat.mat * Mat.mat *
+                        Mat.mat option *
+                        float option *
+                        (Mat.mat * Mat.mat * Mat.mat) option) -> Mat.mat distr
+
   | Dist_joint : 'a joint_distr -> 'a distr
 
 and _ joint_distr =
@@ -170,6 +175,7 @@ module type DISTRIBUTION = sig
     (float, Bigarray.float64_elt) Owl_dense_matrix_generic.t ->
     Owl.Linalg.D.mat -> Owl.Arr.arr -> float
   val mv_gaussian : Owl.Mat.mat * Owl.Mat.mat -> Owl.Mat.mat t
+  val mv_gaussian_curried : Mat.mat -> Mat.mat -> Mat.mat t
   val beta_draw : float -> float -> float
   val beta_score : float -> float -> float -> float
   val beta_mean : float -> float -> float
