@@ -10,13 +10,16 @@ all: $(ZCI) byte opt
 
 .phony: byte opt
 
-byte: metrics.ml
+byte: metrics.ml utils.ml
 	dune build trackerlib.cma
 
-opt:
+opt: metrics.ml utils.ml
 	dune build trackerlib.cmxa
 
 metrics.ml : metrics.zls
+	$(ZELUC) -noreduce $<
+
+utils.ml : utils.zls lib.zci
 	$(ZELUC) -noreduce $<
 
 %.zci: %.zli
@@ -24,6 +27,6 @@ metrics.ml : metrics.zls
 
 clean:
 	dune clean
-	-rm -f *.zci
+	-rm -f *.zci metrics.ml utils.ml
 cleanall: clean
 	rm -f *~

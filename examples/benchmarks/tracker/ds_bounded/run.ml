@@ -30,15 +30,15 @@ module M = struct
     end;
     ()
   let main = Tracker_ds_bounded.main
-  let metrics = Trackerlib.Metrics.main
-  let string_of_output (xt, cmd) = 
+
+  let string_of_output (xt, cmd) =
     let string_of_vec v =
       Printf.sprintf "(%f, %f, %f)" (Mat.get v 0 0) (Mat.get v 1 0) (Mat.get v 2 0)
     in
     Printf.sprintf "%s, %s" (string_of_vec xt) (string_of_vec cmd)
 end
 
-module H = Harness_metrics.Make(M)
+module H = Harness.Make(M)
 
 let () =
   H.run ()

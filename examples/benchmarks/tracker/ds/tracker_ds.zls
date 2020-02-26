@@ -20,61 +20,21 @@ open Infer_ds_gc
 open Zelus_owl
 open Trackerlib
 open Lib
-
-let position x = Mat.get x 0 0
-let acceleration x = Mat.get x 2 0
-let speed x = Mat.get x 1 0
-
-(* Using variable names matching here:
-  https://en.wikipedia.org/wiki/Linear–quadratic_regulator
- *)
-let lqr a b q r n =
-  let p = Linalg_d.dare a b q r in
-  let btp = Mat.dot (Mat.transpose b) p in
-  let f = Linalg_d.linsolve
-    (Mat.add r (Mat.dot btp b))
-    (Mat.add (Mat.transpose n) (Mat.dot btp a))
-  in Mat.mul_scalar f (-1.)
-
-let controller x_dist =
-  let x = mean_matrix x_dist in
-  let k = lqr a_approx b q r n in
-  Mat.mul (Mat.dot k x) (Lib.of_list [0.; 0.; 1.] 3 1)
-
-let x_init = vec [50.; 0.; 0.5]
-let noise = diagm [0.01; 0.01; 0.01]
-
-let node env (call_gps, cmd) = x, acc, gps where
-  rec mu = x_init -> Mat.add (Mat.dot a (pre x)) (Mat.dot b cmd)
-  and x = draw (Distribution.mv_gaussian (mu, noise))
-  and acc = draw (Distribution.gaussian (acceleration x, 0.1))
-  and present call_gps -> do emit gps = draw (Distribution.gaussian (position x, 0.1)) done
-
-let timed_env = Lib.time env
+open Utils
 
 let proba model (acc, gps, cmd) = x where
-  rec mu = (const x_init) -> mat_add (mat_dot (const a, pre x), mat_dot (const b, const cmd))
+  rec mu = (const x_init) -> mat_add (mat_dot (const a, pre x),
+                                      mat_dot (const b, const cmd))
   and x = sample (mv_gaussian (mu, noise))
   and () = observe (gaussian (vec_get (x, 2), 0.1), acc)
-  and present gps(p) -> do () = observe (gaussian (vec_get (x, 0), 0.001), p) done
+  and present gps(p) -> do () = observe (gaussian (vec_get (x, 0), 0.001), p)
+                        done
 
-let node main particles () = (xt, cmd) where
-  rec t = 0 fby t + 1
-  and call_gps = (t mod 50 = 0)
-  and xt, acc, gps = env (call_gps, cmd)
-  and x_dist = infer particles model (acc, gps, cmd)
+let node main_no_metric particles () = (xt, cmd) where
+  rec xt, acc, gps = env cmd
+  and x_dist = infer_marginal particles model (acc, gps, cmd)
   and cmd = Mat.zeros 3 1 -> controller (pre x_dist)
 
-let node main_time_env particles () = ((xt, cmd), env_time) where
-  rec t = 0 fby t + 1
-  and call_gps = (t mod 50 = 0)
-  and ((xt, acc, gps), env_time) = timed_env (call_gps, cmd)
-  and x_dist = infer particles model (acc, gps, cmd)
-  and cmd = Mat.zeros 3 1 -> controller (pre x_dist)
-
-let node main_time_all particles () = (o, (t_main, t_env)) where
-  rec ((o, t_env), t_main) = (Lib.time (main_time_env particles)) ()
-
-let node main_time_noenv particles () = (o, t_env) where
-  rec (o, t_env) = (Lib.time (main particles)) ()
-
+let node main particles () = ((xt, cmd), e) where
+  rec (xt, cmd) = main_no_metric particles ()
+  and e = Metrics.lqr_err (xt, cmd)
