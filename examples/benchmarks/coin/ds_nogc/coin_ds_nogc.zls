@@ -17,11 +17,15 @@
 open Probzelus
 open Distribution
 open Infer_ds_naive
+open Coinlib
 
 let proba coin yobs = xt where
   rec init xt = sample (beta (1., 1.))
   and () = observe (bernoulli xt, yobs)
 
-
-let node main particles (_, observed) =
+let node main_no_metric particles observed =
   infer particles coin observed
+
+let node main particles (true_p, observed) = (d, mse) where
+  rec d = main_no_metric particles observed
+  and mse = Metrics.mse (true_p, d)
