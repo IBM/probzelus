@@ -47,7 +47,7 @@ bench_mem_ideal:
 
 .PHONY: publish bench build
 
-build: main.ml
+build: main.ml kalmanlib/kalmanlib.zci
 	$(MAKE) -C kalmanlib
 	dune build main.exe
 

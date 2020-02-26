@@ -16,14 +16,8 @@ byte: metrics.ml
 opt: metrics.ml
 	dune build outlierlib.cmxa
 
-test:
-	dune build test.exe
-
 %.zci: %.zli
 	$(ZELUC) $<
-
-test.ml : test.zls util.zci
-	$(ZELUC) test.zls -s main
 
 metrics.ml : metrics.zls
 	$(ZELUC) -noreduce metrics.zls
