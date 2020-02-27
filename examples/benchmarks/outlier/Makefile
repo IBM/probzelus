@@ -45,6 +45,12 @@ bench_mem_ideal:
 	$(MAKE) -C ds_nogc bench_mem_ideal
 	$(MAKE) -C ds_bounded bench_mem_ideal
 
+analyse:
+	$(MAKE) -C particles analyse
+	$(MAKE) -C ds analyse
+	$(MAKE) -C ds_bounded analyse
+	$(MAKE) -C ds_nogc analyse
+
 .PHONY: publish bench build
 
 build: main.ml

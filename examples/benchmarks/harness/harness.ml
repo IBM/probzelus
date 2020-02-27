@@ -97,9 +97,9 @@ module Make(M: sig
     | false -> ()
     | true ->
         if !Config.per_step then
-          Format.fprintf ppf "Step, #step";
-        Format.fprintf ppf
-          "Time stamp, Model, Algo, #particles, loss, time, live words, output@."
+          Stats.fprint_per_step_header ppf
+        else
+          Stats.fprint_per_particles_header ppf
     end
 
   let rec read_file _ =
@@ -128,15 +128,16 @@ module Make(M: sig
     | false -> (fun _ -> "")
     end
 
-  let output_stats step loss time output =
-    Format.fprintf ppf "%f, %s, %s, %d, %f, %f, %f, %s@\n"
-      (Unix.time())
-      M.name M.algo
-      !Config.particles
-      loss
-      time
-      (gc_stat ())
-      (string_of_output output);
+  let output_entry step loss time output =
+    Stats.printf_entry ppf
+      { Stats.entry_time_stamp = Unix.time();
+        entry_name = M.name;
+        entry_algo = M.algo;
+        entry_particles = !Config.particles;
+        entry_loss = loss;
+        entry_time = time;
+        entry_gc = gc_stat ();
+        entry_result = string_of_output output; };
     ignore step;
     ()
 
@@ -164,7 +165,7 @@ module Make(M: sig
       let (o, e), t = time f i in
       incr cpt;
       Format.fprintf ppf "Step, %d, " !cpt;
-      output_stats step e t o;
+      output_entry step e t o;
       (o, e)
 
   let do_warmup n inp =
@@ -187,7 +188,7 @@ module Make(M: sig
         inp
     in
     if !Config.file <> None then Format.printf ".@?";
-    output_stats step e t o;
+    output_entry step e t o;
     Format.fprintf ppf "@?";
     ()
 

@@ -36,6 +36,16 @@ bench_mem_ideal:
 			-particles $(P) \
 			-mem-ideal-step mem-ideal.csv
 
+analyse:
+	time $(ANALYZE_EXE) \
+			-per_particles per_particles.csv \
+			-per_step per_step.csv \
+			-per_step_mem per_step_mem.csv \
+			-acc accuracy.csv \
+			-perf perf.csv \
+			-perf-step perf-step.csv \
+			-mem-ideal-step mem-ideal.csv
+
 $(NAME).ml : $(NAME).zls
 	$(ZELUC) -noreduce $(NAME).zls
 

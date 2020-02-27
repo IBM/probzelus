@@ -52,7 +52,7 @@ latency: build \
 	tracker.latency
 
 build:
-	dune build ./mse_search.exe ./latency_search.exe ./bench.exe
+	dune build ./mse_search.exe ./latency_search.exe ./bench.exe ./analyze_csv.exe
 
 coin.mse:
 	@$(foreach DIR,$(DIRS), \
@@ -123,4 +123,4 @@ clean:
 	dune clean
 
 cleanall: clean
-	rn *~
+	-rm *~
