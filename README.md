@@ -36,6 +36,12 @@ Finally install probzelus
 make
 ```
 
+To compile and execute the benchmark, you need the following additional dependencies:
+```
+opam install csv mtime
+```
+
+
 ## Examples
 
 A set of examples is available in the `examples` directory.
