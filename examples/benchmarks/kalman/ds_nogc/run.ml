@@ -17,6 +17,8 @@
 open Benchlib
 
 module M = struct
+  let name = "Kalman-1D"
+  let algo = "DS-naive"
   type input = float * float
   type output = float Probzelus.Distribution.t
   let read_input () = Scanf.scanf ("%f, %f\n") (fun t o -> (t, o))

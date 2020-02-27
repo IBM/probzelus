@@ -18,6 +18,9 @@ open Benchlib
 open Slamlib
 
 module M = struct
+  let name = "SLAM"
+  let algo = "BDS"
+
   type input = bool array * unit
   type output = (int * (bool array * int) Probzelus.Distribution.t)
 

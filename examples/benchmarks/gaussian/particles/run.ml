@@ -17,6 +17,8 @@
 open Benchlib
 
 module M = struct
+  let name = "Gaussian-Gaussian"
+  let algo = "PF"
   type input = (float * float) * float
   type output = (float * float) Probzelus.Distribution.t
   let read_input () = Scanf.scanf ("%f, %f, %f\n") (fun mu sigma y -> ((mu, sigma), y))

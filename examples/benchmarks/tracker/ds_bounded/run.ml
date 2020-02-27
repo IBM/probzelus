@@ -18,6 +18,8 @@ open Benchlib
 open Zelus_owl
 
 module M = struct
+  let name = "Robot"
+  let algo = "BDS"
   type input = unit
   type output = Mat.mat * Mat.mat
   let iters = ref 0

@@ -18,6 +18,9 @@ open Benchlib
 open Owl
 
 module M = struct
+  let name = "MTT"
+  let algo = "DS-naive"
+
   type input = ((int * Mat.mat) list) * (Mat.mat list)
   type output = ((int * Mat.mat ) list) Probzelus.Distribution.t
 

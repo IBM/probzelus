@@ -17,11 +17,14 @@
 open Benchlib
 
 module M = struct
+  let name = "Beta-Bernoulli"
+  let algo = "PF"
   type input = float * bool
   type output = float Probzelus.Distribution.t
   let read_input () = Scanf.scanf ("%f, %B\n") (fun t o -> (t, o))
   let main = Coin_particles.main
-  let string_of_output out = string_of_float (Probzelus.Distribution.mean_float out)
+  let string_of_output out =
+    string_of_float (Probzelus.Distribution.mean_float out)
 end
 
 module H = Harness.Make(M)

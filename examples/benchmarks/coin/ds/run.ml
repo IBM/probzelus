@@ -17,6 +17,8 @@
 open Benchlib
 
 module M = struct
+  let name = "Beta-Bernoulli"
+  let algo = "SDS"
   type input = float * bool
   type output = float Probzelus.Distribution.t
   let read_input () = Scanf.scanf ("%f, %B\n") (fun t o -> (t, o))
