@@ -71,6 +71,7 @@ clean:
 cleanall: clean
 	-rm -f *~
 	dune clean
+	$(MAKE) -C slamlib cleanall
 	$(MAKE) -C particles cleanall
 	$(MAKE) -C ds cleanall
 	$(MAKE) -C ds_bounded cleanall

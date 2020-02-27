@@ -52,7 +52,7 @@ latency: build \
 	tracker.latency
 
 build:
-	dune build ./mse_search.exe
+	dune build ./mse_search.exe ./latency_search.exe ./bench.exe
 
 coin.mse:
 	@$(foreach DIR,$(DIRS), \

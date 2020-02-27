@@ -48,6 +48,7 @@ bench_mem_ideal:
 .PHONY: publish bench build
 
 build: trackerlib/lib.zci trackerlib/trackerlib.zci main.ml
+	$(MAKE) -C trackerlib
 	dune build main.exe
 
 
@@ -66,6 +67,7 @@ clean:
 cleanall: clean
 	-rm -f *~
 	dune clean
+	$(MAKE) -C trackerlib cleanall
 	$(MAKE) -C particles cleanall
 	$(MAKE) -C ds cleanall
 	$(MAKE) -C ds_bounded cleanall

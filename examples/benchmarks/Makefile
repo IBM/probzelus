@@ -1,5 +1,6 @@
 all:
 	$(MAKE) -C harness
+	$(MAKE) -C tools
 	$(MAKE) -C coin
 	$(MAKE) -C gaussian
 	$(MAKE) -C kalman
@@ -65,6 +66,7 @@ publish:
 
 clean:
 	$(MAKE) -C harness clean
+	$(MAKE) -C tools clean
 	$(MAKE) -C coin clean
 	$(MAKE) -C gaussian clean
 	$(MAKE) -C kalman clean
@@ -76,6 +78,7 @@ clean:
 realclean cleanall:
 	-rm -f *~
 	$(MAKE) -C harness cleanall
+	$(MAKE) -C tools cleanall
 	$(MAKE) -C coin cleanall
 	$(MAKE) -C gaussian cleanall
 	$(MAKE) -C kalman cleanall

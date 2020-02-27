@@ -46,6 +46,7 @@ bench_mem_ideal:
 .PHONY: publish bench build
 
 build: $(ZCI) main.ml
+	$(MAKE) -C mttlib
 	dune build main.exe
 
 

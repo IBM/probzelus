@@ -30,6 +30,6 @@ metrics.ml : metrics.zls
 
 clean:
 	dune clean
-	-rm -f *.zci
+	-rm -f *.zci metrics.ml
 cleanall: clean
 	rm -f *~
