@@ -35,6 +35,7 @@ module Make(M: sig
     let seed_long = ref None
     let per_step = ref false
     let mem_ideal = ref None
+    let header = ref true
 
     let args =
       Arg.align [
@@ -54,6 +55,8 @@ module Make(M: sig
          " output the computed result");
         ("-mem-ideal", Bool (fun b -> mem_ideal := Some b),
          "bool Output memory statistics (with or without Gc.compact)");
+        ("-no-header", Clear header,
+         " Do not print the header in the output");
         ("-seed", Int (fun i -> seed := Some i),
          "n Set seed of random number generator");
         ("-seed-long", String (fun s -> seed_long := Some s),
@@ -87,6 +90,16 @@ module Make(M: sig
     | Some f, true ->
         let ch = open_out_gen [Open_creat; Open_text; Open_append] 0o640 f in
         Format.formatter_of_out_channel ch, Some ch
+    end
+
+  let () =
+    begin match !Config.header with
+    | false -> ()
+    | true ->
+        if !Config.per_step then
+          Format.fprintf ppf "Step, #step";
+        Format.fprintf ppf
+          "Time stamp, Model, Algo, #particles, loss, time, live words, output@."
     end
 
   let rec read_file _ =

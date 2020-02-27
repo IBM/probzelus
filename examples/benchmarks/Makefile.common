@@ -3,6 +3,9 @@
 build: $(NAME).ml
 	dune build run.exe
 
+exec: build
+	dune exec ./run.exe -- -result < ../data
+
 bench_find_mse: build
 	time cat ../data | $(RUN) \
 	    -pgf \
@@ -12,7 +15,7 @@ bench_find_mse: build
 		-acc accuracy.csv
 
 bench_per_particles: build
-	time cat ../data | $(RUN) -exp \
+	time $(BENCH_EXE) -cmd $(RUN) -input ../data -exp \
 			-num-runs $(NUMRUNS) \
 			-min-particles $(MIN) \
 			-max-particles $(MAX) \
@@ -21,14 +24,14 @@ bench_per_particles: build
 			-acc accuracy.csv
 
 bench_per_steps: build
-	time cat ../data | $(RUN) \
+	time $(BENCH_EXE) -cmd $(RUN) -input ../data \
 			-num-runs $(NUMRUNS) \
 			-particles $(P) \
 			-perf-step perf-step.csv \
 			-mem-step mem.csv
 
 bench_mem_ideal: build
-	time cat ../data | $(RUN) \
+	time $(BENCH_EXE) -cmd $(RUN) -input ../data \
 			-num-runs 100 \
 			-particles $(P) \
 			-mem-ideal-step mem-ideal.csv
