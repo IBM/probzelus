@@ -19,10 +19,18 @@ publish:
 	$(MAKE) -C ds_bounded publish
 	$(MAKE) -C ds_nogc publish
 
-bench:
+bench: bench_particles bench_ds bench_ds_bounded bench_ds_nogc
+
+bench_particles:
 	$(MAKE) -C particles bench
+
+bench_ds:
 	$(MAKE) -C ds bench
+
+bench_ds_bounded:
 	$(MAKE) -C ds_bounded bench
+
+bench_ds_nogc:
 	$(MAKE) -C ds_nogc bench
 
 bench_per_particles:
@@ -49,7 +57,8 @@ analyse:
 	$(MAKE) -C ds_bounded analyse
 	$(MAKE) -C ds_nogc analyse
 
-.PHONY: publish bench build
+.PHONY: publish bench build \
+	bench_particles bench_ds bench_ds_bounded bench_ds_nogc
 
 build: $(ZCI) main.ml
 	$(MAKE) -C mttlib
