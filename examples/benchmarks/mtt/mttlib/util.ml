@@ -612,12 +612,40 @@ let string_of_output : ((int * Mat.mat) list) Distribution.t -> string =
       assert false
     end
 
-open Probzelus
-open Types
 
-let mv_gaussian_curried sigma =
-  let sig_inv = Linalg.D.inv sigma in
-  let sig_det = Linalg.D.det sigma in
-  let sig_svd = Linalg.Generic.svd sigma in
-  fun mu ->
-    Dist_mv_gaussian (mu, sigma, Some sig_inv, Some sig_det, Some sig_svd)
+let is_valid out =
+  try
+    let _ = Probzelus.Distribution.draw out in
+    true
+  with Probzelus.Distribution.Draw_error ->
+    false
+
+open Ztypes
+
+type 'a with_retry_state =
+  { state_copy : 'a;
+    state : 'a; }
+
+let with_retry is_valid (Cnode f) =
+  let alloc () =
+    { state_copy = f.alloc (); state = f.alloc (); }
+  in
+  let reset state =
+    f.reset state.state
+  in
+  let copy src dst =
+    f.copy src.state dst.state
+  in
+  let rec step_rec state i =
+    let o = f.step state.state i in
+    if is_valid o then o
+    else begin
+      f.copy state.state_copy state.state;
+      step_rec state i
+    end
+  in
+  let step state i =
+    f.copy state.state state.state_copy;
+    step_rec state i
+  in
+  Cnode { alloc; reset; copy; step; }

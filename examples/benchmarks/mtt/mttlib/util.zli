@@ -47,7 +47,11 @@ val string_of_int_list : int list -> string
 
 type tr_map
 val empty_matching : tr_map
-val matching : tr_map -> 
+val matching : tr_map ->
                (int * Mat.mat) list ->
                (int * Mat.mat) list ->
                ((float * int * int * int * int * int) * tr_map)
+
+val with_retry : ('b -> bool) -S-> ('a -D-> 'b) -S-> 'a -D-> 'b
+
+val is_valid : 'a Distribution.t -> bool

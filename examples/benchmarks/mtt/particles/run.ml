@@ -75,12 +75,7 @@ module M = struct
   let main = Mtt_particles.main
 
   let string_of_output = Mttlib.Util.string_of_output
-  let valid out =
-    try
-      let _ = Probzelus.Distribution.draw out in
-      true
-    with Probzelus.Distribution.Draw_error ->
-      false
+
 end
 
 module H = Harness.Make(M)

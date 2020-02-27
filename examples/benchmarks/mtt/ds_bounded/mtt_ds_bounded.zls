@@ -59,7 +59,7 @@ let proba model inp = lst t_expr where
       do () = (ListP.iter2 obsfn (obs_shuffled, inp)) done
 
 let node main_no_metric particles obs = tr_distr where
-  rec tr_distr = infer_bounded particles model obs
+  rec tr_distr = with_retry is_valid (infer_bounded particles model) obs
   (* and () = print_string ((string_of_vec2_list tr) ^ " : " ^ (string_of_vec2_list obs) ^ "\n") *)
 
 let node main particles (true_tr, obs) = (tr_distr, e) where
