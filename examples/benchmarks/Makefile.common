@@ -14,6 +14,7 @@ bench_per_particles:
 			-num-runs $(NUMRUNS) \
 			-min-particles $(MIN) \
 			-max-particles $(MAX) \
+			-w $(WARMUP) \
 			-incr $(INCR) \
 			-per_particles per_particles.csv
 
@@ -21,11 +22,12 @@ bench_per_steps:
 	time $(BENCH_EXE) -cmd $(RUN) -input ../data \
 			-num-runs $(NUMRUNS) \
 			-particles $(P) \
+			-w $(WARMUP) \
 			-per_step per_step.csv
 
 bench_mem_ideal:
 	time $(BENCH_EXE) -cmd $(RUN) -input ../data \
-			-num-runs 1 \
+			-num-runs 10 \
 			-particles $(P) \
 			-per_step_mem per_step_mem.csv
 

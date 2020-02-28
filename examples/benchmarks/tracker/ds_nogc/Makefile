@@ -3,11 +3,6 @@ ZELUC+=-I ../trackerlib -I ../../../../owl
 
 NAME=tracker_ds_nogc
 RUN=$(BROOT)/tracker/ds_nogc/run.exe
-MIN=100
-MAX=1000
-P=100
-INCR=2
-NUMRUNS=10
 CSV_FILES=perf.csv perf-step.csv mem.csv mem-ideal.csv accuracy.csv
 
 all: build

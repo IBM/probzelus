@@ -5,11 +5,6 @@ ZELUC += -I $(OWLLIB) -I ../mttlib/
 
 NAME=mtt_particles
 RUN=$(BROOT)/mtt/particles/run.exe
-MIN=1
-MAX=1000
-P=100
-INCR=2
-NUMRUNS=10
 CSV_FILES=perf.csv perf-step.csv mem.csv mem-ideal.csv accuracy.csv
 
 all: build
