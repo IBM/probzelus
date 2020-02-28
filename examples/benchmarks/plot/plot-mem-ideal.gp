@@ -11,7 +11,7 @@ set output ex.'-mem-ideal.png'
 set xlabel 'Step'
 set logscale y
 set ylabel 'Words in heap (in thousands, log scale)'
-set title ex.': Ideal Memory of '
+set title ex.': Ideal Memory'
 
 plot dir.'particles/mem-ideal.csv' using 1:3 every 10 lt 3 pt 7 title 'PF', \
      dir.'ds_bounded/mem-ideal.csv' using 1:3 every 10 lt 4 pt 5 title 'BDS', \
