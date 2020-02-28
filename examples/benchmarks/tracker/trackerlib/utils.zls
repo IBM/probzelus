@@ -42,13 +42,14 @@ let controller x_dist =
   let k = lqr a_approx b q r n in
   Mat.mul (Mat.dot k x) (Lib.of_list [0.; 0.; 1.] 3 1)
 
-let x_init = vec [50.; 0.; 0.5]
+let x0 = vec [50.; 0.; 0.5]
 let noise = diagm [0.01; 0.01; 0.01]
+let u0 = Mat.zeros 3 1
 
 let node env cmd = x, acc, gps where
   rec t = 0 fby t + 1
   and call_gps = (t mod 50 = 0)
-  and mu = x_init -> Mat.add (Mat.dot a (pre x)) (Mat.dot b cmd)
+  and mu = x0 -> Mat.add (Mat.dot a (pre x)) (Mat.dot b cmd)
   and x = draw (Distribution.mv_gaussian (mu, noise))
   and acc = draw (Distribution.gaussian (acceleration x, 0.1))
   and present call_gps -> do emit gps = draw (Distribution.gaussian (position x, 0.1)) done

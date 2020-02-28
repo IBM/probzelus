@@ -30,4 +30,5 @@ val q : mat
 val r : mat
 val n : mat
 
-val time : ('a -D-> 'b) -S-> ('a -D-> ('b * float))
+val ( +@ ) : Mat.mat  -> Mat.mat  -> Mat.mat
+val ( *@ ) : Mat.mat  -> Mat.mat  -> Mat.mat

@@ -38,19 +38,5 @@ let q = diagm [1.0; 0.1; 0.1]
 let r = diagm [1000.; 1000.; 1.0]
 let n = Mat.zeros 3 3
 
-
-let time n = 
-  let Cnode { alloc = n_alloc; reset = n_reset; step = n_step; copy = n_copy } = n in
-
-  Cnode {
-    alloc = (n_alloc);
-    reset = n_reset;
-    step = (fun x a ->
-      let prev_time = Mtime_clock.now () in
-      let ret = n_step x a in
-      let new_time = Mtime_clock.now () in
-      let elapsed_ms = Mtime.Span.to_ms (Mtime.span prev_time new_time) in
-      (ret, elapsed_ms)
-    );
-    copy = n_copy
-  }
+let ( +@ ) x y = Mat.add x y
+let ( *@ ) x y = Mat.dot x y

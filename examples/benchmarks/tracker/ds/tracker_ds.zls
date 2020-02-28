@@ -22,18 +22,17 @@ open Trackerlib
 open Lib
 open Utils
 
-let proba model (acc, gps, cmd) = x where
-  rec mu = (const x_init) -> mat_add (mat_dot (const a, pre x),
-                                      mat_dot (const b, const cmd))
+let proba kalman (u, acc, gps) = x where
+  rec mu = const x0 -> (const a *@~ pre x) +@~ (const b *@~ const u)
   and x = sample (mv_gaussian (mu, noise))
   and () = observe (gaussian (vec_get (x, 2), 0.1), acc)
-  and present gps(p) -> do () = observe (gaussian (vec_get (x, 0), 0.001), p)
-                        done
+  and present gps(pos) ->
+      do () = observe (gaussian (vec_get (x, 0), 0.001), pos) done
 
 let node main_no_metric particles () = (xt, cmd) where
   rec xt, acc, gps = env cmd
-  and x_dist = infer_marginal particles model (acc, gps, cmd)
-  and cmd = Mat.zeros 3 1 -> controller (pre x_dist)
+  and x_dist = infer_marginal particles kalman (cmd, acc, gps)
+  and cmd = u0 -> controller (pre x_dist)
 
 let node main particles () = ((xt, cmd), e) where
   rec (xt, cmd) = main_no_metric particles ()
