@@ -7,8 +7,9 @@ all:
 	$(MAKE) -C outlier
 	$(MAKE) -C slam
 	$(MAKE) -C tracker
+	$(MAKE) -C mtt
 
-bench: bench-coin bench-gaussian bench-kalman bench-outlier bench-slam bench-tracker
+bench: bench-coin bench-gaussian bench-kalman bench-outlier bench-slam bench-tracker bench-mtt
 bench-coin:
 	$(MAKE) -C coin bench
 bench-gaussian:
@@ -21,6 +22,8 @@ bench-slam:
 	$(MAKE) -C slam bench
 bench-tracker:
 	$(MAKE) -C tracker bench
+bench-mtt:
+	$(MAKE) -C mtt bench
 
 
 bench_find_mse:
@@ -30,6 +33,7 @@ bench_find_mse:
 	$(MAKE) -C outlier bench_find_mse
 	$(MAKE) -C slam bench_find_mse
 	$(MAKE) -C tracker bench_find_mses
+	$(MAKE) -C mtt bench_find_mses
 
 bench_per_particles:
 	$(MAKE) -C coin bench_per_particles
@@ -38,6 +42,7 @@ bench_per_particles:
 	$(MAKE) -C outlier bench_per_particles
 	$(MAKE) -C slam bench_per_particles
 	$(MAKE) -C tracker bench_per_particles
+	$(MAKE) -C mtt bench_per_particles
 
 bench_per_steps:
 	$(MAKE) -C coin bench_per_steps
@@ -46,6 +51,7 @@ bench_per_steps:
 	$(MAKE) -C outlier bench_per_steps
 	$(MAKE) -C slam bench_per_steps
 	$(MAKE) -C tracker bench_per_steps
+	$(MAKE) -C mtt bench_per_steps
 
 bench_mem_ideal:
 	$(MAKE) -C coin bench_mem_ideal
@@ -54,6 +60,7 @@ bench_mem_ideal:
 	$(MAKE) -C outlier bench_mem_ideal
 	$(MAKE) -C slam bench_mem_ideal
 	$(MAKE) -C tracker bench_mem_ideal
+	$(MAKE) -C mtt bench_mem_ideal
 
 analyze:
 	$(MAKE) -C coin analyze
@@ -62,6 +69,7 @@ analyze:
 	$(MAKE) -C outlier analyze
 	$(MAKE) -C slam analyze
 	$(MAKE) -C tracker analyze
+	$(MAKE) -C mtt analyze
 
 publish:
 	$(MAKE) -C coin publish
@@ -70,6 +78,7 @@ publish:
 	$(MAKE) -C outlier publish
 	$(MAKE) -C slam publish
 	$(MAKE) -C tracker publish
+	$(MAKE) -C mtt publish
 
 clean:
 	$(MAKE) -C harness clean
@@ -80,7 +89,7 @@ clean:
 	$(MAKE) -C outlier clean
 	$(MAKE) -C slam clean
 	$(MAKE) -C tracker clean
-
+	$(MAKE) -C mtt clean
 
 realclean cleanall:
 	-rm -f *~
@@ -92,6 +101,7 @@ realclean cleanall:
 	$(MAKE) -C outlier cleanall
 	$(MAKE) -C slam cleanall
 	$(MAKE) -C tracker cleanall
+	$(MAKE) -C mtt cleanall
 
-.PHONY: bench bench-coin bench-gaussian bench-kalman bench-outlier bench-slam bench-tracker
+.PHONY: bench bench-coin bench-gaussian bench-kalman bench-outlier bench-slam bench-tracker bench-mtt
 
