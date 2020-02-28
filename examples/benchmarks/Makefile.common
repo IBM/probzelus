@@ -29,7 +29,7 @@ bench_mem_ideal:
 			-particles $(P) \
 			-per_step_mem per_step_mem.csv
 
-analyse:
+analyze:
 	time $(ANALYZE_EXE) \
 			-per_particles per_particles.csv \
 			-per_step per_step.csv \

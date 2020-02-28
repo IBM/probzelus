@@ -45,11 +45,11 @@ bench_mem_ideal:
 	$(MAKE) -C ds_bounded bench_mem_ideal
 	$(MAKE) -C ds_nogc bench_mem_ideal
 
-analyse:
-	$(MAKE) -C particles analyse
-	$(MAKE) -C ds analyse
-	$(MAKE) -C ds_bounded analyse
-	$(MAKE) -C ds_nogc analyse
+analyze:
+	$(MAKE) -C particles analyze
+	$(MAKE) -C ds analyze
+	$(MAKE) -C ds_bounded analyze
+	$(MAKE) -C ds_nogc analyze
 
 .PHONY: publish bench build
 

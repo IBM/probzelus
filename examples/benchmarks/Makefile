@@ -55,13 +55,13 @@ bench_mem_ideal:
 	$(MAKE) -C slam bench_mem_ideal
 	$(MAKE) -C tracker bench_mem_ideal
 
-analyse:
-	$(MAKE) -C coin analyse
-	$(MAKE) -C gaussian analyse
-	$(MAKE) -C kalman analyse
-	$(MAKE) -C outlier analyse
-	$(MAKE) -C slam analyse
-	$(MAKE) -C tracker analyse
+analyze:
+	$(MAKE) -C coin analyze
+	$(MAKE) -C gaussian analyze
+	$(MAKE) -C kalman analyze
+	$(MAKE) -C outlier analyze
+	$(MAKE) -C slam analyze
+	$(MAKE) -C tracker analyze
 
 publish:
 	$(MAKE) -C coin publish

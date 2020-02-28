@@ -199,7 +199,7 @@ module Make(M: sig
     Format.fprintf ppf "@?";
     ()
 
-  let run =
+  let run_once =
     begin match !Config.per_step with
     | true -> run_per_step
     | false -> run_per_particle
@@ -207,13 +207,14 @@ module Make(M: sig
 
   let do_runs num_runs inp =
     for _ = 0 to num_runs - 1 do
-      run inp
+      run_once inp
     done;
     Format.printf "@.";
     ()
 
   let run () =
     let inp = read_file () in
-    do_runs !Config.num_runs inp
+    do_runs !Config.num_runs inp;
+    Stats.option_iter close_out ch_opt
 
 end

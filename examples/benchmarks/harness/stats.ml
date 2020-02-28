@@ -248,10 +248,10 @@ let per_particles_stats get_info config l =
   Array.of_list (List.rev res)
 
 let per_particles_accuracy_stats config l =
-  per_particles_stats get_time_array config l
+  per_particles_stats get_loss_array config l
 
 let per_particles_latency_stats config l =
-  per_particles_stats get_loss_array config l
+  per_particles_stats get_time_array config l
 
 (* Per step stats *)
 
