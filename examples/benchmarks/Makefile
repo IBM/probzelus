@@ -32,8 +32,8 @@ bench_find_mse:
 	$(MAKE) -C kalman bench_find_mse
 	$(MAKE) -C outlier bench_find_mse
 	$(MAKE) -C slam bench_find_mse
-	$(MAKE) -C tracker bench_find_mses
-	$(MAKE) -C mtt bench_find_mses
+	$(MAKE) -C tracker bench_find_mse
+	$(MAKE) -C mtt bench_find_mse
 
 bench_per_particles:
 	$(MAKE) -C coin bench_per_particles

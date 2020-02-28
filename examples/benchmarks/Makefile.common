@@ -7,7 +7,7 @@ exec: build
 	dune exec ./run.exe -- -result < ../data
 
 bench_find_mse:
-	true
+	- $(MSE_SEARCH_EXE) -mse-target $(MSE_TARGET) accuracy.csv
 
 bench_per_particles:
 	time $(BENCH_EXE) -cmd $(RUN) -input ../data -exp \
