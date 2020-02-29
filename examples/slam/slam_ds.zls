@@ -40,7 +40,9 @@ let proba slam (obs, cmd) = pair (array map, const x) where
   rec init map = Array_misc.ini (max_pos + 1) bernoulli_priors ()
   and x = move (0, cmd)
   and o = Array_misc.get map x
-  and () = observe (bernoulli (Infer_ds_gc.ite o (const (1. -. sensor_noise)) (const sensor_noise)), obs)
+  and () = observe (bernoulli (Infer_ds_gc.ite o
+                                 (const (1. -. sensor_noise))
+                                 (const sensor_noise)), obs)
 
 let node slam_ctrl (event, pos_dist) = dir where
   rec x = Distribution.draw pos_dist

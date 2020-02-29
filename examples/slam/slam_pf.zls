@@ -44,21 +44,6 @@ let proba slam (obs, cmd) = pair (array map, const x) where
   and o = Array_misc.get map x
   and () = observe (bernoulli (if o then 0.9 else 0.1), obs)
 
-(* let node slam_ctrl (event, pos_dist) = dir where *)
-(*   rec x = Distribution.draw pos_dist *)
-(*   and match event with *)
-(*       | 1 -> do dir = Right done *)
-(*       | -1 -> do dir = Left done *)
-(*       | _ -> do automaton *)
-(*         | Incr -> *)
-(*             do dir = Right *)
-(*             unless (x = max_pos) then Decr *)
-(*         | Decr -> *)
-(*             do dir = Left *)
-(*             unless (x = 0) then Incr *)
-(*         end done *)
-(*       end *)
-
 let node slam_ctrl (event, pos_dist) = dir where
   rec init x = 0
   and match event with
