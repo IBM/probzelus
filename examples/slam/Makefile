@@ -34,7 +34,7 @@ clean:
 
 .phony: build exec
 
-exec: exec_ds
+exec: exec_2d
 
 exec_pf: main_pf.ml main_ds.ml main_rb.ml main_2d.ml
 	dune exec ./main_pf.exe
