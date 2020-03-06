@@ -15,6 +15,6 @@ test : $(NAME).ml test.ml
 publish:
 	cp $(CSV_FILES) $(PPL-ZELUS)/data/mtt/particle
 
-bench: bench_per_particles bench_per_steps bench_mem_ideal
+bench: bench_per_steps bench_mem_ideal
 
 include ../../Makefile.common
