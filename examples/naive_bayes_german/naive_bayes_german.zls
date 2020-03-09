@@ -17,7 +17,7 @@
 open Zelus_owl
 open Probzelus
 open Distribution
-open Infer_ds
+open Infer_ds_gc
 open Utils
 
 let proba gaussian_model o = pair (mu, sigma) where
