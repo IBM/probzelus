@@ -202,10 +202,32 @@ module Make(DS_ll: DS_ll_S) = struct
           in
           e.value <- Econst v;
           v
+      (* | Emat_add ( { value = Emat_dot (e1, e2) } , e2) -> *)
+      (*     let m1 = eval e1 in *)
+      (*     let m2 = eval e2 in *)
+      (*     let m3 = eval e3 in *)
+      (*     let aux = Mat.dot m1 m2 in *)
+      (*     Mat.add_ ~out:aux aux m3; *)
+      (*     let v = aux in *)
+      (*     e.value <- Econst v; *)
+      (*     v *)
+
       | Emat_add (e1, e2) ->
-          let v = Mat.add (eval e1) (eval e2) in
-          e.value <- Econst v;
-          v
+          begin match e1.value with
+          | Emat_dot (e11, e12) ->
+              let m1 = eval e11 in
+              let m2 = eval e12 in
+              let m3 = eval e2 in
+              let aux = Mat.dot m1 m2 in
+              Mat.add_ ~out:aux aux m3;
+              let v = aux in
+              e.value <- Econst v;
+              v
+          | _ ->
+              let v = Mat.add (eval e1) (eval e2) in
+              e.value <- Econst v;
+              v
+          end
       | Emat_scalar_mul (e1, e2) ->
           let v = Mat.scalar_mul (eval e1) (eval e2) in
           e.value <- Econst v;
@@ -414,7 +436,7 @@ module Make(DS_ll: DS_ll_S) = struct
                   let cov = Mat.create 1 1 sigma2 in
                   let rv =
                     DS_ll.assume_constant
-                      (Dist_mv_gaussian(mu', cov, None, None, None))
+                      (Dist_mv_gaussian(mu', cov, None))
                   in
                   Some { value = Evec_get ({ value = Ervar (RV rv)}, i)}
               | Some (AErvar (m, RV x, b)) ->
@@ -482,7 +504,7 @@ module Make(DS_ll: DS_ll_S) = struct
         | Some (AEconst v) ->
             let rv =
               DS_ll.assume_constant
-                (Dist_mv_gaussian(v, sigma, None, None, None))
+                (Dist_mv_gaussian(v, sigma, None))
             in
             Some { value = (Ervar (RV rv)) }
         | Some (AErvar (m, RV x, b)) ->

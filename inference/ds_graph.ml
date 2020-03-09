@@ -189,7 +189,7 @@ module Make(Distribution: DISTRIBUTION) = struct
     begin match r.ds_graph_node_state with
     | DSgraph_Initialized (_, AffineMeanGaussianMV (_, b, _)) ->
         let rows, _ = Mat.shape b in rows
-    | DSgraph_Marginalized (Dist_mv_gaussian(mu, _, _, _, _), _) ->
+    | DSgraph_Marginalized (Dist_mv_gaussian(mu, _, _), _) ->
         let rows, _ = Mat.shape mu in rows
     | DSgraph_Realized v ->
         let rows, _ = Mat.shape v in rows

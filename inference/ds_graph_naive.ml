@@ -234,7 +234,7 @@ let shape : type a. ((a, Mat.mat) ds_naive_node) -> int =
   begin match r.ds_naive_node_state with
   | DSnaive_Initialized (_, AffineMeanGaussianMV (_, b, _)) ->
       let rows, _ = Mat.shape b in rows
-  | DSnaive_Marginalized (Dist_mv_gaussian(mu, _, _, _, _), _) ->
+  | DSnaive_Marginalized (Dist_mv_gaussian(mu, _, _), _) ->
       let rows, _ = Mat.shape mu in rows
   | DSnaive_Realized v ->
       let rows, _ = Mat.shape v in rows

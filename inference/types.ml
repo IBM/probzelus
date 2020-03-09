@@ -54,12 +54,14 @@ type _ distr =
   | Dist_mult : float distr * float distr -> float distr
   | Dist_app : ('a -> 'b) distr * 'a distr -> 'b distr
   (* Dist_mv_gaussian (mu, sigma, 1/sigma, det(sigma), svd(sigma)) *)
-  | Dist_mv_gaussian : (Mat.mat * Mat.mat *
-                        Mat.mat option *
-                        float option *
-                        (Mat.mat * Mat.mat * Mat.mat) option) -> Mat.mat distr
+  | Dist_mv_gaussian : (Mat.mat * Mat.mat * mv_gaussian_ext option) -> Mat.mat distr
 
   | Dist_joint : 'a joint_distr -> 'a distr
+
+and mv_gaussian_ext =
+  { mvg_inv_sigma : Mat.mat; (* 1/sigma *)
+    mvg_det_sigma : float; (* det(sigma) *)
+    mvg_svd_sigma : Mat.mat * Mat.mat * Mat.mat; (* svd(sigma) *) }
 
 and _ joint_distr =
   | JDist_const : 'a -> 'a joint_distr
