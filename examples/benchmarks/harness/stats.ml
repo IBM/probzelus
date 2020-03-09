@@ -135,7 +135,7 @@ type entry =
 
 let fprint_per_particles_header ppf =
   Format.fprintf ppf
-    "Time stamp, Model, Algo, #particles, loss, time, live words, output@."
+    "Time stamp, Model, Algo, #particles, time, loss, live words, output@."
 
 let fprint_per_step_header ppf =
   Format.fprintf ppf "Step, #step, ";
