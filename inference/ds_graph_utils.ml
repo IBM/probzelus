@@ -28,7 +28,9 @@ let cdistr_to_mdistr : type a b.
   | CBernoulli ->
       Dist_bernoulli obs
   | AffineMeanGaussianMV (m, b, sigma) ->
-      Dist_mv_gaussian (Mat.add (Mat.dot m obs) b, sigma, None)
+      let aux = Mat.dot m obs in
+      Mat.add_ ~out:aux aux b;
+      Dist_mv_gaussian (aux, sigma, None)
   | CBernBern (bfn) ->
       Dist_bernoulli (bfn obs)
   end
@@ -42,12 +44,12 @@ let make_marginal : type a b.
                      m ** 2. *. var +. obsvar)
   | Dist_mv_gaussian (mu0, sigma0, _),
     AffineMeanGaussianMV(m, b, sigma) ->
-      let mu_aux = Mat.dot m mu0 in
-      Mat.add_ ~out:mu_aux mu_aux b;
-      let mu' = mu_aux in
-      let sigma_aux = Mat.dot (Mat.dot m sigma0) (Mat.transpose m) in
-      Mat.add_ ~out:sigma_aux sigma_aux sigma;
-      let sigma' = sigma_aux in
+      let n, k = Mat.shape sigma in
+      let mu' = Mat.dot m mu0 in
+      Mat.add_ ~out:mu' mu' b;
+      let sigma' = Mat.empty n k in
+      Mat.dot_ ~c:sigma' (Mat.dot m sigma0) ~transb: true m;
+      Mat.add_ ~out:sigma' sigma' sigma;
       Dist_mv_gaussian (mu', sigma', None)
   | Dist_beta (a, b),  CBernoulli ->
       Dist_bernoulli (a /. (a +. b))
@@ -78,18 +80,27 @@ let make_conditional : type a b.
         Dist_gaussian (mu', var')
     | Dist_mv_gaussian(mu0, sigma0, _),
       AffineMeanGaussianMV(m, b, sigma) ->
-        let obs' = Mat.sub obs b in
-        let innov = Mat.sub obs' (Mat.dot m mu0) in
+        let innov = Mat.sub obs b in
+        Mat.sub_ ~out:innov innov (Mat.dot m mu0);
+        let mt = Mat.transpose m in
         let innov_sigma =
-          Mat.add (Mat.dot m (Mat.dot sigma0 (Mat.transpose m))) sigma
+          let aux = Mat.dot m (Mat.dot sigma0 mt) in
+          Mat.add_ ~out:aux aux sigma;
+          aux
         in
         let gain =
-          Mat.dot sigma0 (Mat.dot (Mat.transpose m) (Linalg.D.inv innov_sigma))
+          Mat.dot sigma0 (Mat.dot mt (Linalg.D.inv innov_sigma))
         in
-        let mu' = Mat.add mu0 (Mat.dot gain innov) in
+        let mu' =
+          let aux = Mat.dot gain innov in
+          Mat.add_ ~out:aux mu0 aux;
+          aux
+        in
         let sigma' =
           let kh = Mat.dot gain m in
-          Mat.dot (Mat.sub (Mat.eye (Mat.row_num kh)) kh) sigma0
+          let aux = Mat.eye (Mat.row_num kh) in
+          Mat.sub_ ~out:aux aux kh;
+          Mat.dot aux sigma0
         in
         Dist_mv_gaussian (mu', sigma', None)
 

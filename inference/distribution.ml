@@ -248,11 +248,19 @@ module rec Distribution_rec: DISTRIBUTION = struct
   *)
 
   let mv_gaussian_draw' mu _sigma a =
+    (* let n, _ = Mat.shape mu in *)
     let n = (Arr.shape mu).(0) in
-    let xs =
-      Arr.init [| n; 1 |] (fun _ -> gaussian_draw 0. 1.)
-    in
-    Mat.(mu + a *@ xs)
+    let xs = Arr.init [| n; 1 |] (fun _ -> gaussian_draw 0. 1.) in
+    (* V1 *)
+    (* Mat.(mu + a *@ xs) *)
+    (* V2 *)
+    (* let res = Mat.copy mu in *)
+    (* Mat.dot_ a xs ~beta:1. ~c:res; *)
+    (* res *)
+    (* V3 *)
+    let res = Mat.(a *@ xs) in
+    Mat.add_ ~out:res mu res;
+    res
 
   let mv_gaussian_draw mu sigma =
     let sig_svd = Linalg.Generic.svd sigma in
@@ -261,12 +269,20 @@ module rec Distribution_rec: DISTRIBUTION = struct
     mv_gaussian_draw' mu sigma a
 
   let mv_gaussian_score' mu _sigma sig_inv sig_det x =
-    let d = float (Arr.shape x).(0) in
+    let d =  (Arr.shape x).(0) in
+    let n, k =  Mat.shape x in
     let x_m = Mat.(x - mu) in
-    -. 0.5 *. log ((two_pi ** d) *. sig_det)
-    -. 0.5 *. Mat.(get (transpose x_m *@ sig_inv *@ x_m) 0 0)
- (* -. 0.5 *. log (two_pi ** d *. Linalg.D.det sigma) *)
- (* -. 0.5 *. Mat.(get (transpose (Linalg.D.linsolve sigma x_m) *@ x_m) 0 0) *)
+    (* V1 *)
+  (* -. 0.5 *. log (two_pi ** float d *. Linalg.D.det sigma) *)
+  (* -. 0.5 *. Mat.(get (transpose (Linalg.D.linsolve sigma x_m) *@ x_m) 0 0) *)
+    (* V2 *)
+  (* -. 0.5 *. log ((two_pi ** float d) *. sig_det) *)
+  (* -. 0.5 *. Mat.(get (transpose x_m *@ sig_inv *@ x_m) 0 0) *)
+    (* V3 *)
+    let aux = Mat.empty k n in
+    Mat.dot_ ~transa:true ~c:aux x_m sig_inv;
+    -. 0.5 *. log ((two_pi ** float d) *. sig_det)
+    -. 0.5 *. Mat.(get (aux *@ x_m) 0 0)
 
 
   let mv_gaussian_score mu sigma x =

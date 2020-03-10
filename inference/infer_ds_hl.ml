@@ -202,25 +202,14 @@ module Make(DS_ll: DS_ll_S) = struct
           in
           e.value <- Econst v;
           v
-      (* | Emat_add ( { value = Emat_dot (e1, e2) } , e2) -> *)
-      (*     let m1 = eval e1 in *)
-      (*     let m2 = eval e2 in *)
-      (*     let m3 = eval e3 in *)
-      (*     let aux = Mat.dot m1 m2 in *)
-      (*     Mat.add_ ~out:aux aux m3; *)
-      (*     let v = aux in *)
-      (*     e.value <- Econst v; *)
-      (*     v *)
-
       | Emat_add (e1, e2) ->
           begin match e1.value with
           | Emat_dot (e11, e12) ->
               let m1 = eval e11 in
               let m2 = eval e12 in
               let m3 = eval e2 in
-              let aux = Mat.dot m1 m2 in
-              Mat.add_ ~out:aux aux m3;
-              let v = aux in
+              let v = Mat.dot m1 m2 in
+              Mat.add_ ~out:v v m3;
               e.value <- Econst v;
               v
           | _ ->
