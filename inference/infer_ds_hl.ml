@@ -495,16 +495,16 @@ module Make(DS_ll: DS_ll_S) = struct
     in
     ds_distr_with_fallback d is iobs
 
-
-  let mv_gaussian : Mat.mat expr * Mat.mat -> Mat.mat ds_distribution =
-    begin fun (mu, sigma) ->
-      let d () = Distribution.mv_gaussian(eval mu, sigma) in
+  let mv_gaussian_aux : Mat.mat expr -> Mat.mat -> mv_gaussian_ext option ->
+    Mat.mat ds_distribution =
+    begin fun mu sigma ext ->
+      let d () = Dist_mv_gaussian(eval mu, sigma, ext) in
       let is _prob =
         begin match affine_vec_of_vec mu with
         | Some (AEconst v) ->
             let rv =
               DS_ll.assume_constant
-                (Dist_mv_gaussian(v, sigma, None))
+                (Dist_mv_gaussian(v, sigma, ext))
             in
             Some { value = (Ervar (RV rv)) }
         | Some (AErvar (m, RV x, b)) ->
@@ -535,6 +535,17 @@ module Make(DS_ll: DS_ll_S) = struct
         end
       in
       ds_distr_with_fallback d is iobs
+    end
+
+  let mv_gaussian : Mat.mat expr * Mat.mat -> Mat.mat ds_distribution =
+    begin fun (mu, sigma) ->
+      mv_gaussian_aux mu sigma None
+    end
+
+  let mv_gaussian_curried : Mat.mat -> Mat.mat expr -> Mat.mat ds_distribution =
+    begin fun sigma ->
+      let ext = Distribution.mv_gaussian_ext sigma in
+      fun mu -> mv_gaussian_aux mu sigma (Some ext)
     end
 
 

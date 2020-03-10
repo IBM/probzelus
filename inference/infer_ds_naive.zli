@@ -48,7 +48,8 @@ val of_distribution : 'a Distribution.t -> 'a ds_distribution
 val gaussian : float expr * float -> float ds_distribution
 val beta : float * float -> float ds_distribution
 val bernoulli : float expr -> bool ds_distribution
-val mv_gaussian: Mat.mat expr * Mat.mat -> Mat.mat ds_distribution
+val mv_gaussian : Mat.mat expr * Mat.mat -> Mat.mat ds_distribution
+val mv_gaussian_curried : Mat.mat -> Mat.mat expr -> Mat.mat ds_distribution
 
 val factor : float ~D~> unit
 val sample : 'a ds_distribution ~D~> 'a expr

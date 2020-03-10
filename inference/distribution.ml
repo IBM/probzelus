@@ -247,9 +247,7 @@ module rec Distribution_rec: DISTRIBUTION = struct
       @see<https://en.wikipedia.org/wiki/Multivariate_normal_distribution>
   *)
 
-  let mv_gaussian_draw' mu _sigma sig_svd =
-    let u, s, _ = sig_svd in
-    let a = Mat.(u *@ (sqrt (diagm s))) in
+  let mv_gaussian_draw' mu _sigma a =
     let n = (Arr.shape mu).(0) in
     let xs =
       Arr.init [| n; 1 |] (fun _ -> gaussian_draw 0. 1.)
@@ -258,7 +256,9 @@ module rec Distribution_rec: DISTRIBUTION = struct
 
   let mv_gaussian_draw mu sigma =
     let sig_svd = Linalg.Generic.svd sigma in
-    mv_gaussian_draw' mu sigma sig_svd
+    let u, s, _ = sig_svd in
+    let a = Mat.(u *@ (sqrt (diagm s))) in
+    mv_gaussian_draw' mu sigma a
 
   let mv_gaussian_score' mu _sigma sig_inv sig_det x =
     let d = float (Arr.shape x).(0) in
@@ -277,14 +277,20 @@ module rec Distribution_rec: DISTRIBUTION = struct
   let mv_gaussian (mu, sigma) =
     Dist_mv_gaussian (mu, sigma, None)
 
-  let mv_gaussian_curried sigma =
+  let mv_gaussian_ext sigma =
     let sig_inv = Linalg.D.inv sigma in
     let sig_det = Linalg.D.det sigma in
     let sig_svd = Linalg.Generic.svd sigma in
+    let u, s, _ = sig_svd in
+    let a = Mat.(u *@ (sqrt (diagm s))) in
+    { mvg_inv_sigma = sig_inv;
+      mvg_det_sigma = sig_det;
+      mvg_draw_cache = a; }
+
+  let mv_gaussian_curried sigma =
+    let ext = mv_gaussian_ext sigma in
     fun mu ->
-      Dist_mv_gaussian (mu, sigma, Some { mvg_inv_sigma = sig_inv;
-                                          mvg_det_sigma = sig_det;
-                                          mvg_svd_sigma =  sig_svd })
+      Dist_mv_gaussian (mu, sigma, Some ext)
 
 
   (** [beta(a, b)] is a beta distribution of parameters [a] and [b].
@@ -694,8 +700,8 @@ module rec Distribution_rec: DISTRIBUTION = struct
         | Dist_gaussian (mu, sigma2) -> gaussian_draw mu sigma2
         | Dist_mv_gaussian (mu, sigma, ext) ->
             begin match ext with
-            | Some { mvg_svd_sigma = sig_svd; _ } ->
-                mv_gaussian_draw' mu sigma sig_svd
+            | Some { mvg_draw_cache = a; _ } ->
+                mv_gaussian_draw' mu sigma a
             | None ->
                 mv_gaussian_draw mu sigma
             end
