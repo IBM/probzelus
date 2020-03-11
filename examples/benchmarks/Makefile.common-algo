@@ -41,6 +41,10 @@ analyze:
 			-perf-step perf-step.csv \
 			-mem-ideal-step mem-ideal.csv
 
+publish:
+	cp $(CSV_FILES) $(PPL-ZELUS)/data/$(EX)/$(ALGO)
+
+
 $(NAME).ml : $(NAME).zls
 	$(ZELUC) -noreduce $(NAME).zls
 

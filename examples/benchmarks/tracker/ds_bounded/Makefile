@@ -1,15 +1,16 @@
-include ../../Makefile.common-config
-ZELUC+=-I ../trackerlib -I ../../../../owl
-
+EX=tracker
+ALGO=ds_bounded
 NAME=tracker_ds_bounded
-RUN=$(BROOT)/tracker/ds_bounded/run.exe
-CSV_FILES=perf.csv perf-step.csv mem.csv mem-ideal.csv accuracy.csv
+
+include ../../Makefile.common-config
+
+CSV_FILES=perf.csv perf-step.csv mem-ideal.csv accuracy.csv \
+	per_particles.csv per_step.csv per_step_mem.csv
+
+ZELUC += -I ../trackerlib -I ../../../../owl
 
 all: build
 
-publish:
-	cp $(CSV_FILES) $(PPL-ZELUS)/data/tracker/ds_bounded
-
 bench: bench_per_particles bench_per_steps bench_mem_ideal
 
-include ../../Makefile.common
+include ../../Makefile.common-algo

@@ -1,16 +1,16 @@
+EX=outlier
+ALGO=particles
+NAME=outlier_particles
+
 include ../../Makefile.common-config
 
-NAME=outlier_particles
-RUN=$(BROOT)/outlier/particles/run.exe
-CSV_FILES=perf.csv perf-step.csv mem.csv mem-ideal.csv accuracy.csv
+CSV_FILES=perf.csv perf-step.csv mem-ideal.csv accuracy.csv \
+	per_particles.csv per_step.csv per_step_mem.csv
 
 ZELUC += -I ../outlierlib
 
 all: build
 
-publish:
-	cp $(CSV_FILES) $(PPL-ZELUS)/data/outlier/particle
-
 bench: bench_per_particles bench_per_steps bench_mem_ideal
 
-include ../../Makefile.common
+include ../../Makefile.common-algo

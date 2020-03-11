@@ -1,20 +1,17 @@
-include ../../Makefile.common-config
-OWLLIB=../../../../owl
-ZELUC=zeluc -copy -I $(INFERLIB) -I $(OWLLIB) -I ../mttlib/
-
-
+EX=mtt
+ALGO=ds
 NAME=mtt_ds_nogc
-RUN=$(BROOT)/mtt/ds_nogc/run.exe
-CSV_FILES=perf.csv perf-step.csv mem.csv mem-ideal.csv accuracy.csv
+
+include ../../Makefile.common-config
+
+CSV_FILES=perf-step.csv mem-ideal.csv \
+	per_step.csv per_step_mem.csv
+
+OWLLIB=../../../../owl
+ZELUC += -I $(OWLLIB) -I ../mttlib
 
 all: build
 
-test : $(NAME).ml test.ml
-	dune build test.exe
-
-publish:
-	cp $(CSV_FILES) $(PPL-ZELUS)/data/mtt/particle
-
 bench: bench_per_steps bench_mem_ideal
 
-include ../../Makefile.common
+include ../../Makefile.common-algo

@@ -1,16 +1,16 @@
+EX=kalman
+ALGO=ds_bounded
+NAME=kalman_ds_bounded
+
 include ../../Makefile.common-config
 
-NAME=kalman_ds_bounded
-RUN=$(BROOT)/kalman/ds_bounded/run.exe
-CSV_FILES=perf.csv perf-step.csv mem.csv mem-ideal.csv accuracy.csv
+CSV_FILES=perf.csv perf-step.csv mem-ideal.csv accuracy.csv \
+	per_particles.csv per_step.csv per_step_mem.csv
 
 ZELUC += -I ../kalmanlib
 
 all: build
 
-publish:
-	cp $(CSV_FILES) $(PPL-ZELUS)/data/kalman/ds_bounded
+bench: bench_per_particles bench_per_steps bench_mem_ideal
 
-bench: bench_per_particles bench_mem_ideal bench_per_steps
-
-include ../../Makefile.common
+include ../../Makefile.common-algo

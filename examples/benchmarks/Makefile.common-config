@@ -2,6 +2,7 @@ PPL-ZELUS=$(HOME)/probabilistic/mit-ibm/ppl-zelus
 INFERLIB=../../../../inference
 ZELUC=zeluc -copy -I $(INFERLIB)
 BROOT=../../../../_build/default/examples/benchmarks
+RUN=$(BROOT)/$(EX)/$(ALGO)/run.exe
 # BENCH_EXE=dune exec ../../tools/bench.exe --
 BENCH_EXE=$(BROOT)/tools/bench.exe
 ANALYZE_EXE=$(BROOT)/tools/analyze_csv.exe

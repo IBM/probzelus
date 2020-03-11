@@ -1,15 +1,16 @@
-include ../../Makefile.common-config
-ZELUC+=-I ../slamlib
-
+EX=slam
+ALGO=ds
 NAME=slam_ds
-RUN=$(BROOT)/slam/ds/run.exe
-CSV_FILES=perf.csv perf-step.csv mem.csv mem-ideal.csv accuracy.csv
+
+include ../../Makefile.common-config
+
+CSV_FILES=perf.csv perf-step.csv mem-ideal.csv accuracy.csv \
+	per_particles.csv per_step.csv per_step_mem.csv
+
+ZELUC += -I ../slamlib
 
 all: build
 
-publish:
-	cp $(CSV_FILES) $(PPL-ZELUS)/data/slam/ds
-
 bench: bench_per_particles bench_per_steps bench_mem_ideal
 
-include ../../Makefile.common
+include ../../Makefile.common-algo

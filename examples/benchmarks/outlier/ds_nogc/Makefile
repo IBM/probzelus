@@ -1,16 +1,16 @@
+EX=outlier
+ALGO=ds
+NAME=outlier_ds_nogc
+
 include ../../Makefile.common-config
 
-NAME=outlier_ds_nogc
-RUN=$(BROOT)/outlier/ds_nogc/run.exe
-CSV_FILES=perf.csv perf-step.csv mem.csv mem-ideal.csv accuracy.csv
+CSV_FILES=perf-step.csv mem-ideal.csv \
+	per_step.csv per_step_mem.csv
 
 ZELUC += -I ../outlierlib
 
 all: build
 
-publish:
-	cp perf-step.csv mem.csv mem-ideal.csv $(PPL-ZELUS)/data/outlier/ds_nogc
-
 bench: bench_per_steps bench_mem_ideal
 
-include ../../Makefile.common
+include ../../Makefile.common-algo
