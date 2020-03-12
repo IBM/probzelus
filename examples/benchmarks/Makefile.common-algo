@@ -42,7 +42,8 @@ analyze:
 			-mem-ideal-step mem-ideal.csv
 
 publish:
-	cp $(CSV_FILES) $(PPL-ZELUS)/data/$(EX)/$(ALGO)
+	- mkdir -p $(PPL-ZELUS)/papers/pldi20/data/$(EX)/$(ALGO)
+	- cp $(CSV_FILES) $(PPL-ZELUS)/papers/pldi20/data/$(EX)/$(ALGO)
 
 
 $(NAME).ml : $(NAME).zls
