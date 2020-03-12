@@ -4,8 +4,7 @@ NAME=gaussian_ds
 
 include ../../Makefile.common-config
 
-CSV_FILES=perf.csv perf-step.csv mem-ideal.csv accuracy.csv \
-	per_particles.csv per_step.csv per_step_mem.csv
+CSV_FILES=perf.csv perf-step.csv mem-ideal.csv accuracy.csv
 
 ZELUC += -I ../gaussianlib
 

@@ -4,8 +4,7 @@ NAME=mtt_ds_nogc
 
 include ../../Makefile.common-config
 
-CSV_FILES=perf-step.csv mem-ideal.csv \
-	per_step.csv per_step_mem.csv
+CSV_FILES=perf-step.csv mem-ideal.csv
 
 OWLLIB=../../../../owl
 ZELUC += -I $(OWLLIB) -I ../mttlib
