@@ -40,7 +40,7 @@ val mat_dot : Mat.mat expr * Mat.mat expr -> Mat.mat expr
 val ( *@~ ) : Mat.mat expr -> Mat.mat expr -> Mat.mat expr
 val vec_get : Mat.mat expr * int -> float expr
 
-val eval : 'a expr -> 'a
+val eval : 'a expr -AD-> 'a
 
 type 'a ds_distribution
 
