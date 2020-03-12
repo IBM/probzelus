@@ -26,8 +26,8 @@ let proba kalman (u, acc, gps) = x where
   rec mu = x0 -> (a *@ pre x) +@ (b *@ u)
   and x = sample (mv_gaussian (mu, noise))
   and () = observe (gaussian (vec_get (x, 2), 0.1), acc)
-  and present gps(pos) ->
-      do () = observe (gaussian (vec_get (x, 0), 0.001), pos) done
+  and () = present gps(pos) -> observe (gaussian (vec_get (x, 0), 0.001), pos)
+           else ()
 
 let node main_no_metric particles () = (xt, u) where
   rec xt, acc, gps = env u
