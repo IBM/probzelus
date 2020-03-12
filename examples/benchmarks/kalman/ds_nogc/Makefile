@@ -1,5 +1,5 @@
 EX=kalman
-ALGO=ds
+ALGO=ds_nogc
 NAME=kalman_ds_nogc
 
 include ../../Makefile.common-config

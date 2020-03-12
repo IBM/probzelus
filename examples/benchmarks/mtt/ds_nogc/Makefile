@@ -1,5 +1,5 @@
 EX=mtt
-ALGO=ds
+ALGO=ds_nogc
 NAME=mtt_ds_nogc
 
 include ../../Makefile.common-config

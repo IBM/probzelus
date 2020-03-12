@@ -1,5 +1,5 @@
 EX=coin
-ALGO=ds
+ALGO=ds_nogc
 NAME=coin_ds_nogc
 
 include ../../Makefile.common-config

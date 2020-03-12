@@ -1,5 +1,5 @@
 EX=slam
-ALGO=ds
+ALGO=ds_nogc
 NAME=slam_ds_nogc
 
 include ../../Makefile.common-config

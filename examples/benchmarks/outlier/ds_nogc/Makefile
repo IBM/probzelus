@@ -1,5 +1,5 @@
 EX=outlier
-ALGO=ds
+ALGO=ds_nogc
 NAME=outlier_ds_nogc
 
 include ../../Makefile.common-config

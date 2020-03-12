@@ -1,5 +1,5 @@
 EX=tracker
-ALGO=ds
+ALGO=ds_nogc
 NAME=tracker_ds_nogc
 
 include ../../Makefile.common-config

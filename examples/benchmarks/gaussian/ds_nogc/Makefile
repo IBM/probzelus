@@ -1,5 +1,5 @@
 EX=gaussian
-ALGO=ds
+ALGO=ds_nogc
 NAME=gaussian_ds_nogc
 
 include ../../Makefile.common-config
