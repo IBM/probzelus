@@ -28,7 +28,7 @@ let proba move (x_init, cmd) = x where
 
 let proba bernoulli_priors i = sample (bernoulli (const 0.5))
 
-let proba slam (obs, cmd) = pair (array map, const x) where
+let proba slam (obs, cmd) = (map, x) where
   rec init map = Array_misc.ini (max_pos + 1) bernoulli_priors ()
   and x = move (0, cmd)
   and o = Array_misc.get map x
