@@ -57,6 +57,8 @@ val mean_bool : bool t -> float
 val mean_signal_present : 'a signal t -> float
 val mean_matrix: Mat.mat t -> Mat.mat
 
+val dirac : 'a -> 'a t
+
 val bernoulli_draw : float -> bool
 val bernoulli_score : float -> bool -> float
 val bernoulli_mean : 'a -> 'a
