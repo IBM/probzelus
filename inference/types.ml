@@ -239,4 +239,5 @@ module type DISTRIBUTION = sig
   val mean_bool : bool t -> float
   val mean_signal_present : ('a * bool) t -> float
   val mean_matrix : Owl.Mat.mat t -> Owl.Mat.mat
+  val map : ('a -> 'b) -> 'a t -> 'b t
 end

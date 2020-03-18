@@ -1741,6 +1741,56 @@ module rec Distribution_rec: DISTRIBUTION = struct
     | JDist_array _ -> assert false
     | JDist_list _ -> assert false
     end
+
+  let rec map: type a b. (a -> b) -> a t -> b t =
+    fun f dist ->
+    let to_sampler d =
+      Dist_sampler ((fun () -> f (draw d)),
+                    (fun _ -> assert false))
+    in
+    begin match dist with
+    | Dist_sampler (_, _) -> to_sampler dist
+    | Dist_sampler_float (_, _, _) -> to_sampler dist
+    | Dist_support l -> Dist_support (List. map (fun (x, p) -> (f x, p)) l)
+    | Dist_mixture l ->
+        Dist_mixture (List.map (fun (d, p) -> (map f d, p)) l)
+    | Dist_pair(_, _) -> to_sampler dist
+    | Dist_list _ -> to_sampler dist
+    | Dist_array _ -> to_sampler dist
+    | Dist_gaussian (_, _) -> to_sampler dist
+    | Dist_mv_gaussian (_, _, _) -> to_sampler dist
+    | Dist_beta (_, _) -> to_sampler dist
+    | Dist_bernoulli _ -> to_sampler dist
+    | Dist_uniform_int _ -> to_sampler dist
+    | Dist_uniform_float (_, _) -> to_sampler dist
+    | Dist_exponential _ -> to_sampler dist
+    | Dist_poisson _ -> to_sampler dist
+    | Dist_add _ -> to_sampler dist
+    | Dist_mult _ -> to_sampler dist
+    | Dist_app (_, _) -> to_sampler dist
+    | Dist_joint j -> Dist_joint (map_joint f j)
+    end
+  and map_joint : type a b. (a -> b) -> a joint_distr -> b joint_distr  =
+    fun f dist ->
+    let to_app d = JDist_app (JDist_const f, d) in
+    begin match dist with
+    | JDist_const x -> JDist_const (f x)
+    | JDist_rvar _ -> to_app dist
+    | JDist_app _ -> to_app dist
+    | JDist_ite (b, d1, d2) ->
+        JDist_ite (b, map_joint f d1, map_joint f d2)
+    | JDist_vec_get _ -> to_app dist
+    | JDist_matrix _ -> to_app dist
+    | JDist_mat_add _ -> to_app dist
+    | JDist_mat_scalar_mul _ -> to_app dist
+    | JDist_mat_dot _ -> to_app dist
+    | JDist_add _ -> to_app dist
+    | JDist_mult _ -> to_app dist
+    | JDist_pair _ -> to_app dist
+    | JDist_array _ -> to_app dist
+    | JDist_list _ -> assert false
+    end
+
 end
 
 include Distribution_rec

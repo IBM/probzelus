@@ -130,3 +130,4 @@ val split_matrix : 'a array array t -> 'a t array array
 val split_list : 'a list t -> 'a t list
 val to_mixture : 'a t t -> 'a t
 val to_signal : 'a signal t -> 'a t signal
+val map : ('a -> 'b) -> 'a t -> 'b t
