@@ -1,0 +1,99 @@
+open Probzelus
+open Distribution
+open Infer_pf
+
+type population = {
+    time: float;
+    susceptible: int;
+    infectious: int; }
+
+let n = 120
+
+let proba sir n (lambda, gamma) = population where
+  rec population = {
+        time = t;
+        susceptible = s;
+        infectious = i; }
+  and init s = n - 1
+  and init i = 1
+  and init t = 0.
+  and automaton
+      | Infect -> local lnsi, gi, tau, u in
+          do  t = last t +. tau
+          and lnsi = (lambda  *. (float (last s * last i))) /. (float n)
+          and gi = gamma *. (float last i)
+          and tau = sample(exponential(lnsi +. gi))
+          and u = sample(uniform_float(0., 1.))
+          (* and () = print_string "t: "; print_float t; *)
+          (*          print_string " Infectious: "; print_int i; *)
+          (*          print_string " Susceptible: "; print_int s; *)
+          (*          print_endline "" *)
+          and present (u < (lnsi /. (lnsi +. gi))) ->
+                do  s = last s - 1
+                and i = last i + 1 done
+              else
+                do i = last i - 1 done
+          unless (last i = 0) then Cured
+      | Cured ->
+          do  t = max_float done
+
+let p0 n = {
+  time = 0.;
+  susceptible = n - 1;
+  infectious = 1; }
+
+
+let total_population p = p.susceptible + p.susceptible
+
+let node removal (p) = t2 - t1 where
+  rec init o = p0(n)
+  and t1 = total_population (last o)
+  and t2 = total_population (p)
+  and o = p
+
+
+let proba model n (obs) = stop, pop.infectious where
+  rec init pop = p0(n)
+  and init stop = false
+  and init lambda = sample(exponential(0.1))
+  and init gamma = sample(exponential(0.1))
+  and automaton
+      | Wait ->
+          do stop = true
+          until obs(t, rs) continue Compute(t, rs)
+      | Compute(t, rs) ->
+          do  stop = false
+          and pop = sir n (lambda, gamma)
+          until (pop.time > t) then Observe(rs)
+      | Observe(rs) -> local ro in
+          do  ro = removal(pop)
+          and () = observe(gaussian(float rs, 1.), float ro)
+          then Wait
+      end
+
+let node edge (c) = o where
+  rec o = (c <> (false fby c)) && c
+
+
+let node main () = () where
+  rec cpt = 0 fby cpt + 1
+  (* and () = print_int cpt; print_endline "--------------" *)
+  and dist = infer_subresample 1 (model n) (c, obs)
+  and stop_dist, i_dist  = split (dist)
+  and init time = 0.
+  and c = false -> score(pre stop_dist, true) > -. 0.0001
+  and present (edge(c)) -> do () =  print_float (mean_int i_dist);
+           print_string " infected, time: ";
+           print_float time;
+           print_endline "" done
+  and present (edge(c)) -> local removal in
+        do time, removal =
+          let () = print_string "horizon: " in
+          let () = flush stdout in
+          let h  = read_float () in
+          let () = print_string "removal: " in
+          let () = flush stdout in
+          let r  = read_int () in
+          let () = print_endline "" in
+          last time +. h, r
+        and emit obs = time, removal done
