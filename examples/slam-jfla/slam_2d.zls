@@ -16,7 +16,7 @@
 
 open Probzelus
 open Distribution
-open Infer_ds_gc
+open Infer_ds_streaming
 
 type direction = Up | Down | Left | Right
 

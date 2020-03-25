@@ -14,30 +14,12 @@
  * limitations under the License.
  *)
 
-open Types
-
-include Ds_graph_naive
-
 (** Inference with delayed sampling *)
 
-type pstate = Infer_pf.pstate
+module DS_hl = Ds_high_level.Make(struct
+    include Ds_streaming_low_level
+    type ('p, 'a) ds_node = ('p, 'a) Types.ds_graph_node
+  end)
 
-let factor' = Infer_pf.factor'
-let factor = Infer_pf.factor
+include DS_hl
 
-let observe : type a b.
-  pstate -> b -> (a, b) ds_naive_node -> unit =
-  fun prob x n ->
-  begin match n.ds_naive_node_state with
-  | DSnaive_Marginalized (mdistr, _) ->
-      factor' (prob, Distribution.score(mdistr, x));
-      realize x n
-  | DSnaive_Initialized _ | DSnaive_Realized _ -> assert false
-  end
-
-let observe_conditional : type a b c.
-  pstate -> (a, b) ds_naive_node -> (b, c) cdistr -> c -> unit =
-  fun prob p cdistr obs ->
-  let n = assume_conditional p cdistr in
-  graft n;
-  observe prob obs n

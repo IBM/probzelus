@@ -16,7 +16,7 @@
 
 open Probzelus
 open Distribution
-open Infer_ds_gc
+open Infer_ds_streaming
 
 type direction = Up | Down | Left | Right
 
@@ -49,7 +49,7 @@ let proba slam (obs, cmd) = pair (matrix map, pair (const x, const y)) where
   rec init map = Mat_misc.ini (max_x + 1) (max_y + 1) bernoulli_priors ()
   and x, y = move (0, 0, cmd)
   and o = Mat_misc.get map x y
-  and () = observe (bernoulli (Infer_ds_gc.ite o (const (1. -. sensor_noise)) (const sensor_noise)), obs)
+  and () = observe (bernoulli (Infer_ds_streaming.ite o (const (1. -. sensor_noise)) (const sensor_noise)), obs)
   (* and () = observe (bernoulli o, obs) *)
 
 let node slam_ctrl_auto (x,y) = dir where

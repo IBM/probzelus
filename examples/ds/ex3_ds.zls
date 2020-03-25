@@ -16,7 +16,7 @@
 
 open Probzelus
 open Infer_ds_naive
-(* open Infer_ds_gc *)
+(* open Infer_ds_streaming *)
 
 let proba verybad () = x where
   rec x = sample(gaussian(const 0. -> pre x, 1.))

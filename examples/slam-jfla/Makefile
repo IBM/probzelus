@@ -19,15 +19,15 @@ $(NAME_DS).ml main_ds.ml: $(ZCI) $(NAME_DS).zls
 
 $(NAME_RB).ml main_rb.ml: $(ZCI) $(NAME_RB).zls
 	$(ZELUC) -s main_rb $(NAME_RB).zls
-	
+
 $(NAME_2D).ml main_2d.ml: $(ZCI) $(NAME_2D).zls
 	$(ZELUC) -s main_2d $(NAME_2D).zls
 
 clean:
-	rm -f $(NAME).ml main.ml
+	rm -f $(NAME_PF).ml main_pf.ml
 	rm -f $(NAME_DS).ml main_ds.ml
 	rm -f $(NAME_RB).ml main_rb.ml
-	rm -f $(NAME_RB).ml main_2d.ml
+	rm -f $(NAME_2D).ml main_2d.ml
 	rm -f *.zci
 
 ## Generic rules
@@ -44,7 +44,7 @@ exec_ds: main_pf.ml main_ds.ml main_rb.ml main_2d.ml
 
 exec_rb: main_pf.ml main_ds.ml main_rb.ml main_2d.ml
 	dune exec ./main_rb.exe
-	
+
 exec_2d: main_pf.ml main_ds.ml main_rb.ml main_2d.ml
 	dune exec ./main_2d.exe
 

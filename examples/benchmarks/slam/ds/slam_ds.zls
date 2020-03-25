@@ -16,7 +16,7 @@
 
 open Probzelus
 open Slamlib
-open Infer_ds_gc
+open Infer_ds_streaming
 open Lib
 
 let proba move (x_init, cmd) = x where

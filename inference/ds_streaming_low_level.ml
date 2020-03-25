@@ -33,7 +33,8 @@ let observe : type a b.
   | DSgraph_Marginalized (mdistr, None) ->
       factor' (prob, Distribution.score(mdistr, x));
       realize x n
-  | DSgraph_Initialized _ | DSgraph_Realized _ | DSgraph_Marginalized (_, Some _) -> assert false
+  | DSgraph_Initialized _ | DSgraph_Realized _
+  | DSgraph_Marginalized (_, Some _) -> assert false
   end
 
 let observe_conditional : type a b c.

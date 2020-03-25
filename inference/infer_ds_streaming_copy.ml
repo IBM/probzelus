@@ -18,7 +18,7 @@
 open Ztypes
 open Types
 
-(* type 'a random_var = RV : ('b, 'a) Infer_ds_ll_gc.ds_node -> 'a random_var *)
+(* type 'a random_var = RV : ('b, 'a) Ds_streaming_low_level.ds_node -> 'a random_var *)
 type 'a random_var = { rv_id : int; }
 type ('a, 'b) ds_node = ('a, 'b) ds_graph_node
 
@@ -98,7 +98,7 @@ type ('a, 'b) ds_node = ('a, 'b) ds_graph_node
 (*             | Some x ->  E.set_key e' x; *)
 (*             | _ -> () *)
 (*           end; *)
-(*           let n' = Infer_ds_ll_gc.copy_node tbl n in *)
+(*           let n' = Ds_streaming_low_level.copy_node tbl n in *)
 (*           M.add dst.live_nodes k (e', n')) *)
 (*         src.live_nodes *)
 (* end *)
@@ -219,13 +219,13 @@ end
 (*       (\* clean src; *\) *)
 (*       clear dst; *)
 (*       H.iter *)
-(*         (fun k n -> H.add dst k (Infer_ds_ll_gc.copy_node tbl n)) *)
+(*         (fun k n -> H.add dst k (Ds_streaming_low_level.copy_node tbl n)) *)
 (*         src *)
 (*  end *)
 
 
 type pstate =
-  { pf_state: Infer_ds_ll_gc.pstate;
+  { pf_state: Ds_streaming_low_level.pstate;
     ds_graph: Gnodes.t; }
 
 let rv_node : type a p.
@@ -247,13 +247,13 @@ let add_random_var: type a p.
 
 let rv_kind prob rv =
   let n = rv_node prob rv in
-  Infer_ds_ll_gc.get_distr_kind n
+  Ds_streaming_low_level.get_distr_kind n
 
 let rv_distr prob rv =
   let n = rv_node prob rv in
-  Infer_ds_ll_gc.get_distr n
+  Ds_streaming_low_level.get_distr n
 
-let factor' (prob, s) = Infer_ds_ll_gc.factor' (prob.pf_state, s)
+let factor' (prob, s) = Ds_streaming_low_level.factor' (prob.pf_state, s)
 let factor =
   let alloc () = () in
   let reset _state = () in
@@ -322,7 +322,7 @@ let rec eval' : type t.
     | Econst v -> v
     | Ervar x ->
         let n = rv_node prob x in
-        let v = Infer_ds_ll_gc.value n in
+        let v = Ds_streaming_low_level.value n in
         e.value <- Econst v;
         v
     | Eadd (e1, e2) ->
@@ -360,7 +360,7 @@ let eval =
    begin fun e ->
    begin match e.value with
    | Econst v -> v
-   | Ervar (RV x) -> Infer_ds_ll_gc.fvalue x
+   | Ervar (RV x) -> Ds_streaming_low_level.fvalue x
    | Eadd (e1, e2) -> fval e1 +. fval e2
    | Emult (e1, e2) -> fval e1 *. fval e2
    | Eapp (e1, e2) -> (fval e1) (fval e2)
@@ -461,7 +461,7 @@ let rec affine_of_expr : float expr -> affine_expr option =
 let assume_constant : type a.
   pstate -> a mdistr -> a random_var =
   fun prob d ->
-  let n = Infer_ds_ll_gc.assume_constant d in
+  let n = Ds_streaming_low_level.assume_constant d in
   let rv = { rv_id = n.ds_graph_node_id } in
   add_random_var prob rv n;
   rv
@@ -470,7 +470,7 @@ let assume_conditional : type b c.
   pstate -> b random_var -> (b, c) cdistr -> c random_var =
   fun prob p d ->
   let par = rv_node prob p in
-  let n = Infer_ds_ll_gc.assume_conditional par d in
+  let n = Ds_streaming_low_level.assume_conditional par d in
   let rv = { rv_id = n.ds_graph_node_id } in
   add_random_var prob rv n;
   rv
@@ -480,7 +480,7 @@ let observe_conditional : type b c.
   fun prob p cdistr obs ->
   let par = rv_node prob p in
   let _ = assume_conditional prob p cdistr in
-  Infer_ds_ll_gc.observe_conditional prob.pf_state par cdistr obs
+  Ds_streaming_low_level.observe_conditional prob.pf_state par cdistr obs
 
 
 (** Gaussian distribution (gaussianPD in Haskell) *)

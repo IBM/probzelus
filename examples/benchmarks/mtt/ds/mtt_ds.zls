@@ -19,7 +19,7 @@ open Probzelus
 open Util
 open Distribution
 open Zelus_owl
-open Infer_ds_gc
+open Infer_ds_streaming
 
 let observe_distr = mv_gaussian_curried sigma_obs
 let init_distr = mv_gaussian_curried sigma_new

@@ -4,6 +4,7 @@ all:
 	$(MAKE) -C beta_bernoulli
 	$(MAKE) -C coin
 	$(MAKE) -C ds
+	$(MAKE) -C epidemic
 	$(MAKE) -C gaussian_gaussian
 	$(MAKE) -C geometric
 	echo "Ignore:" $(MAKE) -C gym-cartpole
@@ -14,9 +15,12 @@ all:
 	$(MAKE) -C ilmdp
 	$(MAKE) -C line
 	$(MAKE) -C mv_gaussian
+	$(MAKE) -C naive_bayes_german
 	$(MAKE) -C pid
 	$(MAKE) -C restaurants
 	$(MAKE) -C slam
+	$(MAKE) -C slam-jfla
+	echo "Ignore:" $(MAKE) -C tracker
 	$(MAKE) -C walker
 
 clean:
@@ -25,6 +29,7 @@ clean:
 	$(MAKE) -C beta_bernoulli clean
 	$(MAKE) -C coin clean
 	$(MAKE) -C ds clean
+	$(MAKE) -C epidemic clean
 	$(MAKE) -C gaussian_gaussian clean
 	$(MAKE) -C geometric clean
 	$(MAKE) -C gym-cartpole clean
@@ -35,9 +40,12 @@ clean:
 	$(MAKE) -C ilmdp clean
 	$(MAKE) -C line clean
 	$(MAKE) -C mv_gaussian clean
+	$(MAKE) -C naive_bayes_german clean
 	$(MAKE) -C pid clean
 	$(MAKE) -C restaurants clean
 	$(MAKE) -C slam clean
+	$(MAKE) -C slam-jfla clean
+	$(MAKE) -C tracker clean
 	$(MAKE) -C walker clean
 
 realclean cleanall:
@@ -46,6 +54,7 @@ realclean cleanall:
 	$(MAKE) -C beta_bernoulli cleanall
 	$(MAKE) -C coin cleanall
 	$(MAKE) -C ds cleanall
+	$(MAKE) -C epidemic cleanall
 	$(MAKE) -C gaussian_gaussian cleanall
 	$(MAKE) -C geometric cleanall
 	$(MAKE) -C gym-cartpole cleanall
@@ -56,8 +65,11 @@ realclean cleanall:
 	$(MAKE) -C ilmdp cleanall
 	$(MAKE) -C line cleanall
 	$(MAKE) -C mv_gaussian cleanall
+	$(MAKE) -C naive_bayes_german cleanall
 	$(MAKE) -C pid cleanall
 	$(MAKE) -C restaurants cleanall
 	$(MAKE) -C slam cleanall
+	$(MAKE) -C slam-jfla cleanall
+	$(MAKE) -C tracker cleanall
 	$(MAKE) -C walker cleanall
 	-rm -f *~

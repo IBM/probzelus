@@ -18,7 +18,8 @@ open Probzelus
 open Distribution
 (* open Infer_pf *)
 (* open Infer_importance *)
-open Infer_ds_gc_copy
+(* open Infer_ds_streaming_copy *)
+open Infer_ds_streaming
 
 
 let node print_stats name (m, s) =

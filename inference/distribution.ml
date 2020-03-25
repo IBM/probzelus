@@ -24,7 +24,7 @@ exception Draw_error
 
 module rec Distribution_rec: DISTRIBUTION = struct
 
-  module DS_graph = Ds_graph.Make(Distribution_rec)
+  module DS_graph = Ds_streaming_graph.Make(Distribution_rec)
 
   type 'a t = 'a distr
 

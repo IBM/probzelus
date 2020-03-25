@@ -15,7 +15,7 @@
  *)
 
 open Probzelus
-open Infer_ds_gc
+open Infer_ds_streaming
 
 let proba f () = const x where
   rec init x0 = sample(gaussian(const 0., 1.))

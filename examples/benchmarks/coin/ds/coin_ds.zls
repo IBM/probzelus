@@ -16,7 +16,7 @@
 
 open Probzelus
 open Distribution
-open Infer_ds_gc
+open Infer_ds_streaming
 open Coinlib
 
 let proba coin yobs = xt where

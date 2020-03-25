@@ -23,7 +23,7 @@
 open Probzelus
 open Display
 (* open Infer_ds *)
-open Infer_ds_gc
+open Infer_ds_streaming
 
 (* noisy observation of the mouse position. It is a gaussian centered on the *)
 (* exact position *)
