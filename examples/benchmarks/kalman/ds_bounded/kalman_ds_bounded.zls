@@ -16,7 +16,7 @@
 
 open Probzelus
 open Distribution
-open Infer_ds_streaming
+open Infer_ds_naive
 open Kalmanlib
 
 let proba kalman1d yobs = xt where
