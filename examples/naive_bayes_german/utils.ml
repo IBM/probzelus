@@ -36,13 +36,13 @@ let pca n_components train =
   let x = Mat.(train - (mean ~axis:0 train)) in
   let u,s,v = Linalg.D.svd x in
   let k = n_components - 1 in
-  let v = Mat.(v.${[[]; [0; k]]}) in
+  let v = Mat.(v.${[]; [0; k]}) in
   fun test -> Mat.(test *@ v)
 
 let split_data p m =
   let extract_labels m =
-    Mat.(m.${[[]; [0;-2]]}),
-    Mat.(m.${[[]; [-1]]} -$ 1.)
+    Mat.(m.${[]; [0;-2]}),
+    Mat.(m.${[]; [-1]} -$ 1.)
   in
   let n, _ = Mat.shape m in
   let tflag = Mat.bernoulli ~p n 1 in

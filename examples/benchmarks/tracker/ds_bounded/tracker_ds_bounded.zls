@@ -29,7 +29,7 @@ let proba kalman (u, acc, gps) = x where
   and () = present gps(pos) -> observe (gaussian (vec_get (x, 0), 0.001), pos)
            else ()
 
-let node main_no_metric particles () = (xt, cmd) where
+let atomic node main_no_metric particles () = (xt, cmd) where
   rec xt, acc, gps = env cmd
   and x_dist = infer_bounded particles kalman (cmd, acc, gps)
   and cmd = u0 -> controller (pre x_dist)
