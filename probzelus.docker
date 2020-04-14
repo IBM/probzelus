@@ -10,30 +10,26 @@ USER opam
 
 ##################### PREREQUISITES ########################
 
-RUN sudo apt-get -y update \
- && sudo apt-get -y install m4 wget unzip aspcud libshp-dev \
-                 libplplot-dev gfortran pkg-config git camlp4-extra \
-                 libopenblas-dev liblapacke-dev
-RUN cd /home/opam/opam-repository && git pull --quiet origin master \
- && opam update -q
+RUN sudo apt-get -y update
+RUN sudo apt-get -y install m4 wget unzip aspcud libshp-dev libplplot-dev gfortran
+RUN sudo apt-get -y install pkg-config git camlp4-extra
+RUN sudo apt-get -y install libopenblas-dev liblapacke-dev
+RUN cd /home/opam/opam-repository && git pull --quiet origin master
+RUN opam update -q
 
-####################   INSTALL OWL  #######################
+####################   INSTALL OWL  ########################
 
 ENV OWLPATH /home/opam/owl
-RUN opam install graphics owl owl-plplot menhir -y
-RUN eval $(opam env)
+RUN opam install graphics owl owl-top owl-plplot menhir -y
 
-############## SET UP DEFAULT CONTAINER VARS ##############
+############## SET UP DEFAULT CONTAINER VARS ###############
 
 RUN echo "#require \"owl-top\";; open Owl;;" >> /home/opam/.ocamlinit \
- && bash -c 'echo -e "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH" >> /home/opam/.profile' \
- && opam config env >> /home/opam/.profile \
- && bash -c "source /home/opam/.profile"
+    && echo 'eval $(opam env)' >> /home/opam/.bashrc
 
-# Create main directory
+####################### COPY FILES #########################
+
 RUN mkdir -p /home/opam/probzelus
-
-# Copy zelus files in `workdir`
 COPY --chown=opam . /home/opam/probzelus
 
 
@@ -41,7 +37,6 @@ COPY --chown=opam . /home/opam/probzelus
 WORKDIR /home/opam/probzelus/zelus-2.1/zelus-2.1-debian
 
 RUN opam config exec ./configure
-RUN opam config exec make
 RUN sudo make install
 
 ###################### INSTALL PROBZELUS ###################
