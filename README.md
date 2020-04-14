@@ -6,15 +6,11 @@
 
 The easiest way to use ProZelus is via the docker image.
 ```
-docker build -t probzelus -f probzelus.docker .
-docker run -ti --rm -e DISPLAY=host.docker.internal:0 probzelus bash
+make docker_build
+make docker_run
 ```
 
 On MacOS you need XQuartz for the examples with a graphical visualization.
-Remember to allow connections in XQuartz settings, and add localhost:
-```
-xhost + 127.0.0.1
-```
 
 ### From source for MacOS
 
