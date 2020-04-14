@@ -24,9 +24,9 @@ brew install openblas plplot
 opam install dune menhir owl owl-plplot
 ```
 
-Then install zelus-2.0 (binary distribution availabe in the `zelus-2.0` directory)
+Then install zelus-2.1 (binary distribution availabe in the `zelus-2.1` directory)
 ```
-cd zelus-2.0/zelus-2.0-macos
+cd zelus-2.1/zelus-2.1-macos
 ./configure
 make && make install
 ```
