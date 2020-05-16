@@ -15,7 +15,20 @@
  *)
 
 open Probzelus
+open Zelus_owl
 open Ztypes
+
+let mu_prior = Mat.of_arrays [| [| 127. |];
+                                [| 127. |];
+                                [| 127. |] |]
+
+let sigma_prior = Mat.of_arrays [| [| 150.; 0.; 0. |];
+                                   [| 0.; 150.; 0. |];
+                                   [| 0.; 0.; 150. |] |]
+
+let sigma_obs = Mat.of_arrays [| [| 50.; 0.; 0. |];
+                                 [| 0.; 50.; 0. |];
+                                 [| 0.; 0.; 50. |] |]
 
 let with_graphics, max_pos =
   let with_graphics = ref true in
@@ -50,6 +63,9 @@ let mean_bool = Distribution.mean (fun b ->
         0.
   ) 
 
+let real_map = Array.init (max_pos + 1) (fun _ ->
+  Distribution.draw (Distribution.mv_gaussian (mu_prior, sigma_prior))
+) 
 
 let ini n (Cnode f)  =
   let alloc () = f.alloc () in
@@ -60,6 +76,14 @@ let ini n (Cnode f)  =
   in
   Cnode { alloc; reset; copy; step; }
 
+let ini2 n (Cnode f)  =
+  let alloc () = f.alloc () in
+  let reset state = f.reset state in
+  let copy src dst = f.copy src dst in
+  let step state (proba, arg) =
+    Array.init n (fun i -> f.step state (proba, i))
+  in
+  Cnode { alloc; reset; copy; step; }
 
 open Distribution
 
@@ -118,6 +142,15 @@ let draw_bot x obs =
   else Graphics.set_color (Graphics.black);
   Graphics.fill_circle (x * width + width / 2) (3 * height / 2) 5
 
+let draw_bot_color x obs =
+  Graphics.set_color (Graphics.blue);
+  Graphics.fill_circle (x * width + width / 2) (3 * height / 2) 10;
+  let r = Mat.get obs 0 0 in
+  let g = Mat.get obs 1 0 in
+  let b = Mat.get obs 1 0 in
+  let color_of_float i = max 0 (min 255 (int_of_float i)) in
+  Graphics.set_color (Graphics.rgb (color_of_float r) (color_of_float g) (color_of_float b));
+  Graphics.fill_circle (x * width + width / 2) (3 * height / 2) 5
 
 let draw_position_dist d =
   for x = 0 to max_pos do
@@ -155,12 +188,36 @@ let draw_map_dist_ds map_dist =
       Graphics.fill_rect (i * width)  0  width height)
     mw
 
+let draw_map_dist_ds_color map_dist =
+  let mw = Array.map
+      (fun d -> Distribution.mean_matrix d)
+      (Distribution.split_array map_dist)
+  in
+  Array.iteri (fun i w ->
+      let r = Mat.get w 0 0 in
+      let g = Mat.get w 1 0 in
+      let b = Mat.get w 2 0 in
+      let color_of_float i = max 0 (min 255 (int_of_float i)) in
+      Graphics.set_color (Graphics.rgb (color_of_float r) (color_of_float g) (color_of_float b));
+      Graphics.fill_rect (i * width) 0 width height)
+    mw
+
 let draw_map m =
   Array.iteri (fun i b ->
       if b then Graphics.set_color (Graphics.white)
       else Graphics.set_color (Graphics.black);
       Graphics.fill_rect (i * width)  height  width height)
     m
+
+let draw_map_color m =
+  let color_of_float i = max 0 (min 255 (int_of_float i)) in
+  Array.iteri (fun i v ->
+    let r = Mat.get v 0 0 in
+    let g = Mat.get v 1 0 in
+    let b = Mat.get v 2 0 in
+    Graphics.set_color (Graphics.rgb (color_of_float r) (color_of_float g) (color_of_float b));
+    Graphics.fill_rect (i * width) height width height)
+  m
 
 let random n theta =
   Array.init n
@@ -189,6 +246,20 @@ let output =
     (fun real_map real_x obs map_dist pos_dist ->
        print_map_dist map_dist) *)
 
+let output_ds_color = 
+  assert with_graphics;
+  (fun real_map real_x obs map_dist pos_dist ->
+     (print_string "Starting output_ds_color\n"; flush stdout);
+     draw_map_color real_map;
+     (print_string "Finished  draw_map_color \n"; flush stdout);
+     draw_bot_color real_x obs;
+     (print_string "Finished draw_bot_color \n"; flush stdout);
+     draw_map_dist_ds_color map_dist;
+     (print_string "Finished draw_map_dist_ds_color \n"; flush stdout);
+     draw_position_dist pos_dist;
+     (print_string "Finished output_ds_color\n"; flush stdout);
+     clear ())
+
 let output_ds =
   if with_graphics then
     (fun real_map real_x obs map_dist pos_dist ->
@@ -213,5 +284,14 @@ let error (map, x) map_d d_x =
   let e = ref ((float x -. Distribution.mean_int d_x) ** 2.) in
   for i = 0 to len - 1 do
     e := !e +. (float_of_bool map.(i) -. mean_bool map_d.(i)) ** 2.
+  done;
+  !e
+
+let error_color (map, x) map_d d_x =
+  let len = Array.length map in
+  let e = ref ((float x -. Distribution.mean_int d_x) ** 2.) in
+  for i = 0 to len - 1 do
+    let m = mean_matrix map_d.(i)  in
+    e := !e +. (Mat.get (Mat.dot (Mat.transpose (map.(i))) m) 0 0 )
   done;
   !e
