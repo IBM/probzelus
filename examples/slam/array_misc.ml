@@ -249,15 +249,10 @@ let output =
 let output_ds_color = 
   assert with_graphics;
   (fun real_map real_x obs map_dist pos_dist ->
-     (print_string "Starting output_ds_color\n"; flush stdout);
      draw_map_color real_map;
-     (print_string "Finished  draw_map_color \n"; flush stdout);
      draw_bot_color real_x obs;
-     (print_string "Finished draw_bot_color \n"; flush stdout);
      draw_map_dist_ds_color map_dist;
-     (print_string "Finished draw_map_dist_ds_color \n"; flush stdout);
      draw_position_dist pos_dist;
-     (print_string "Finished output_ds_color\n"; flush stdout);
      clear ())
 
 let output_ds =
