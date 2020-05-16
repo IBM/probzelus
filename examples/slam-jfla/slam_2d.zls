@@ -127,31 +127,50 @@ let real_map =
     (*  [false; false; false; true; false ]; *)
     (*  [true ; true ; true ; true ; true ]; *)
     (*  [false; false; false; false; false]] *)
+  (* Mat_misc.of_list *)
+  (* [[false; false; false; false; false; false]; *)
+  (*  [true; false; false; false; false; true]; *)
+  (*  [true; false; false; false; false; true]; *)
+  (*  [true; true; true; true; true; true]; *)
+  (*  [false; false; false; false; false; true]; *)
+  (*  [false; false; false; false; false; true]; *)
+  (*  [false; false; false; false; false; false]; *)
+  (*  [true; true; true; true; true; true]; *)
+  (*  [false; false; false; true; false; true]; *)
+  (*  [false; false; false; true; false; true]; *)
+  (*  [false; false; false; false; false; true]; *)
+  (*  [false; false; false; false; false; false]; *)
+  (*  [true; true; true; true; true; true]; *)
+  (*  [true; false; false; false; false; false]; *)
+  (*  [true; false; false; false; false; false]; *)
+  (*  [false; false; false; false; false; false]; *)
+  (*  [false; false; false; false; false; false]; *)
+  (*  [true; true; true; true; true; true]; *)
+  (*  [false; false; true; false; false; true]; *)
+  (*  [false; false; true; false; false; true]; *)
+  (*  [true; true; true; true; true; true]; *)
+  (*  [false; false; false; false; false; false]] *)
+  (*Mat_misc.random (max_x + 1) (max_y + 1) 0.6 *)
   Mat_misc.of_list
   [[false; false; false; false; false; false];
-   [true; false; false; false; false; true];
-   [true; false; false; false; false; true];
-   [true; true; true; true; true; true];
-   [false; false; false; false; false; true];
-   [false; false; false; false; false; true];
-   [false; false; false; false; false; false];
    [true; true; true; true; true; true];
    [false; false; false; true; false; true];
    [false; false; false; true; false; true];
-   [false; false; false; false; false; true];
+   [false; false; false; true; true; true];
    [false; false; false; false; false; false];
    [true; true; true; true; true; true];
    [true; false; false; false; false; false];
    [true; false; false; false; false; false];
    [false; false; false; false; false; false];
+   [true; true; true; true; true; true];
+   [true; false; false; false; false; true];
+   [true; false; false; false; false; true];
+   [false; true; true; true; true; false];
    [false; false; false; false; false; false];
+   [true; false; false; false; false; true];
    [true; true; true; true; true; true];
-   [false; false; true; false; false; true];
-   [false; false; true; false; false; true];
-   [true; true; true; true; true; true];
+   [true; false; false; false; false; true];
    [false; false; false; false; false; false]]
-  (*Mat_misc.random (max_x + 1) (max_y + 1) 0.6 *)
-
 
 let node main_2d () = () where
   rec map_dist, pos_dist = Distribution.split (infer particles slam (obs, dir))

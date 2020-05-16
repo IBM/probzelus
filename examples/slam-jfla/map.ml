@@ -5,7 +5,7 @@
  (*   X   X    X    X  X  *)
  (* XXX   X    XXX  X  X  *)
 
-let m =
+let jfla =
   [
     [ false; true;  true;  true;  true;  true;  false; true;  true;  true;  true;  false; true;  false; false; false; false; true;  true;  true;  true;  false; ];
     [ false; false; false; true;  false; false; false; true;  false; false; false; false; true;  false; false; false; false; true;  false; false; true;  false; ];
@@ -13,6 +13,24 @@ let m =
     [ false; false; false; true;  false; false; false; true;  false; false; false; false; true;  false; false; false; false; true;  true;  true;  true;  false; ];
     [ false; false; false; true;  false; false; false; true;  false; false; false; false; true;  false; false; false; false; true;  false; false; true;  false; ];
     [ false; true;  true;  true;  false; false; false; true;  false; false; false; false; true;  true;  true;  false; false; true;  false; false; true;  false; ];
+  ]
+
+
+ (* XXXX X   XXX  XXX *)
+ (* X  X X   X  X  X  *)
+ (* XXXX X   X  X  X  *)
+ (* X    X   X  X  X  *)
+ (* X    X   X  X  X  *)
+ (* X    XXX XXX  XXX *)
+
+let pldi =
+  [
+    [ false; true; true; true; true; false; true; false; false; false; true; true; true; false; false; true; true; true; false; ];
+    [ false; true; false; false; true; false; true; false; false; false; true; false; false; true; false; false; true; false; false; ];
+    [ false; true; true; true; true; false; true; false; false; false; true; false; false; true; false; false; true; false; false; ];
+    [ false; true; false; false; false; false; true; false; false; false; true; false; false; true; false; false; true; false; false; ];
+    [ false; true; false; false; false; false; true; false; false; false; true; false; false; true; false; false; true; false; false; ];
+    [ false; true; false; false; false; false; true; true; true; false; true; true; true; false; false; true; true; true; false; ];
   ]
 
 let rec t m =
@@ -27,6 +45,6 @@ let rec t m =
   end
 
 let tm =
-  t m
+  t pldi
 
-let _ = List.length m;;
+let _ = List.length tm;;
