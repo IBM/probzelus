@@ -15,7 +15,20 @@
  *)
 
 open Probzelus
+open Zelus_owl
 open Ztypes
+
+let mu_prior = Mat.of_arrays [| [| 127. |];
+                                [| 127. |];
+                                [| 127. |] |]
+
+let sigma_prior = Mat.of_arrays [| [| 150.; 0.; 0. |];
+                                   [| 0.; 150.; 0. |];
+                                   [| 0.; 0.; 150. |] |]
+
+let sigma_obs = Mat.of_arrays [| [| 50.; 0.; 0. |];
+                                 [| 0.; 50.; 0. |];
+                                 [| 0.; 0.; 50. |] |]
 
 let with_graphics, max_x, max_y =
   let with_graphics = ref true in
@@ -27,6 +40,11 @@ let with_graphics, max_x, max_y =
       "-y", Arg.Set_int y, "Set the ysize of the map"; ]
     (fun _ -> ()) "options:";
   !with_graphics, !x - 1, !y - 1
+
+let real_map = 
+  Array.init (max_x + 1)
+    (fun _ -> Array.init (max_y + 1)
+      (fun _ -> Distribution.draw (Distribution.mv_gaussian (mu_prior, sigma_prior))))
 
 type 'a t = 'a array array
 
@@ -122,6 +140,15 @@ let draw_bot x y obs =
   else Graphics.set_color (Graphics.black);
   Graphics.fill_circle (x * width + width / 2) (y * height + height / 2) 13
 
+let draw_bot_color x y obs =
+  Graphics.set_color (Graphics.green);
+  Graphics.fill_circle (x * width + width / 2) (y * height + height / 2) 15;
+  let r = Mat.get obs 0 0 in
+  let g = Mat.get obs 1 0 in
+  let b = Mat.get obs 1 0 in
+  let color_of_float i = max 0 (min 255 (int_of_float i)) in
+  Graphics.set_color (Graphics.rgb (color_of_float r) (color_of_float g) (color_of_float b));
+  Graphics.fill_circle (x * width + width / 2) (y * height + height / 2) 13
 
 let draw_position_dist d =
   let d_x, d_y = Distribution.split d in
@@ -179,6 +206,27 @@ let draw_map_dist_ds map_dist =
          ai)
     mw
 
+let draw_map_dist_ds_color map_dist =
+  let mw = Array.map
+      (fun ai ->
+         Array.map
+           (fun d -> Distribution.mean_matrix d)
+           ai)
+      (Distribution.split_matrix map_dist)
+  in
+  Array.iteri
+    (fun i ai ->
+       Array.iteri
+         (fun j w ->
+            let r = Mat.get w 0 0 in
+            let g = Mat.get w 1 0 in
+            let b = Mat.get w 2 0 in
+            let color_of_float i = max 0 (min 255 (int_of_float i)) in
+            Graphics.set_color (Graphics.rgb (color_of_float r) (color_of_float g) (color_of_float b));
+            Graphics.fill_rect (i * width)  (j * height)  width height)
+         ai)
+    mw
+
 let draw_map m =
   Array.iteri
     (fun i ai ->
@@ -227,6 +275,16 @@ let output_ds =
   else
     (fun _ -> assert false)
 
+let output_ds_color =
+  if with_graphics then
+    (fun real_map real_x real_y obs map_dist pos_dist ->
+       draw_map_dist_ds_color map_dist;
+       draw_bot_color real_x real_y obs;
+       draw_position_dist pos_dist;
+       clear ())
+  else
+    (fun _ -> assert false)
+
 let float_of_bool b =
   if b then 1. else 0.
 
@@ -243,6 +301,20 @@ let error (map, x, y) map_d d_x d_y =
   for i = 0 to len_x - 1 do
     for j = 0 to len_y -1 do
       e := !e +. (float_of_bool map.(i).(j) -. mean_bool map_d.(i).(j)) ** 2.
+    done
+  done;
+  !e
+
+let error_color (map, x, y) map_d d_x d_y =
+  let len_x = Array.length map in
+  let len_y = Array.length map.(0) in
+  let e =
+    ref ((float x -. Distribution.mean_int d_x) ** 2. +. (float y -. Distribution.mean_int d_y) ** 2.)
+  in
+  for i = 0 to len_x - 1 do
+    for j = 0 to len_y -1 do
+      let m = mean_matrix map_d.(i).(j)  in
+      e := !e +.  (Mat.get (Mat.dot (Mat.transpose (map.(i).(j))) m) 0 0)
     done
   done;
   !e
