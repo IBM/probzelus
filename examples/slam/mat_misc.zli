@@ -15,6 +15,12 @@
  *)
 
 type 'a t = 'a array array
+val mu_prior : Mat.mat
+val sigma_prior : Mat.mat
+val sigma_obs : Mat.mat
+
+val real_map : Mat.mat t
+
 val get : 'a t -> int -> int -> 'a
 val set : 'a t -> int -> int -> 'a -AD-> 'a t
 val of_list : 'a list list -> 'a t
@@ -40,5 +46,8 @@ val output : bool t -> int -> int ->
 
 val output_ds : bool t -> int -> int ->
     bool -> bool t Distribution.t -> (int * int) Distribution.t -AD-> unit
+val output_ds_color : Mat.mat t -> int -> int ->
+    Mat.mat -> Mat.mat t Distribution.t -> (int * int) Distribution.t -AD-> unit
 
 val error : bool array array * int * int -> bool Distribution.t array array -> int Distribution.t -> int Distribution.t -> float
+val error_color : Mat.mat array array * int * int -> Mat.mat Distribution.t array array -> int Distribution.t -> int Distribution.t -> float
