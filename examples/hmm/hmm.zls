@@ -37,7 +37,7 @@ let node display (obs, pos_dist) =
  *)
 let proba hmm obs = p where
   rec p = sample (sph_gaussian(obs fby p, speed))
-  and () = factor (Distribution.score(sph_gaussian(p, noise), obs))
+  and () = observe (sph_gaussian(p, noise), obs)
   and init t = traj_init ()
   and t = traj_add (last t, p)
   and () = traj_draw t

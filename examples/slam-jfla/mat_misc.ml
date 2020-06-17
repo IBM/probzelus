@@ -57,7 +57,60 @@ let ini nx ny (Cnode f)  =
   Cnode { alloc; reset; copy; step; }
 
 
+open Types
 open Distribution
+
+let map_dist_init (max_x, max_y) =
+  let a =
+    Array.make_matrix (max_x - 1) (max_y - 1) (Distribution.beta (1., 1.))
+  in
+  of_array (Array.map of_array a)
+
+(* let variance d = *)
+(*   snd (Distribution.stats_float d) *)
+
+let uncertainty_cmp (d1, d2) =
+  let r =
+    let m1, v1 = stats_float d1 in
+    let m2, v2 = stats_float d2 in
+    let c1 = abs_float (0.5 -. m1) in
+    let c2 = abs_float (0.5 -. m2) in
+    if c1 = c2 then
+      if v1 > v2 then 1
+      else -1
+    else if c1 < c2 then 1
+    else -1
+  in
+  begin match d1, d2 with
+  | Dist_beta (a1, b1), Dist_beta (a2, b2) ->
+      (* Format.printf "XXXXXXX@."; *)
+      let diff = (a1 +. b1) -. (a2 +. b2) in
+      if diff < 5. then r
+      else if diff > 0. then -1
+      else 1
+  | _ ->
+      (* print_float_t d1; *)
+      (* print_newline (); *)
+      r
+  end
+
+
+let map_max_uncertainty ((x_init, y_init), map) =
+  let x = ref x_init in
+  let y = ref y_init in
+  let () =
+    for i = 0 to Array.length map - 1 do
+      for j = 0 to Array.length map.(i) - 1 do
+        if uncertainty_cmp (map.(!x).(!y), map.(i).(j)) < 0 then begin
+          x := i;
+          y := j
+        end
+      done
+    done
+  in
+  (* Format.printf "XXXXXXX current: %d, %d@." x_init y_init; *)
+  (* Format.printf "XXXXXXX objective: %d, %d@." !x !y; *)
+  (!x, !y)
 
 let print to_string a =
   Format.printf "[ @[";
