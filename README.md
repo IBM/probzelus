@@ -1,5 +1,19 @@
 # ProbZelus
 
+ProbZelus is synchronous probabilistic programming language. It is a conservative extension of [Zelus](http://zelus.di.ens.fr/) with probabilistic constructs to model uncertainties and perform inference-in-the-loop.
+
+More information about ProbZelus are available in the paper [Reactive Probabilistic Programming](https://arxiv.org/abs/1908.07563).
+
+```
+@inproceedings{rppl-plid20,
+  author = {Baudart, Guillaume and Mandel, Louis and Atkinson, Eric and Sherman, Benjamin and Pouzet, Marc and Carbin, Michael},
+  title = {Reactive Probabilistic Programming},
+year = {2020},
+  booktitle = {Proceedings of the 41st ACM SIGPLAN Conference on Programming Language Design and Implementation},
+  series = {PLDI 2020}
+}
+```
+
 ## Install
 
 ### Docker
@@ -10,33 +24,27 @@ make docker_build
 make docker_run
 ```
 
-On MacOS you need XQuartz for the examples with a graphical visualization.
-
 ### From source for MacOS
 
-First install dependencies:
+First install OCaml 4.10.0 and the Opam package manager using the following instructions: https://opam.ocaml.org/doc/Install.html
+
+Then install the project dependencies:
 ```
 brew install openblas plplot
 opam install dune menhir owl owl-plplot
 ```
 
-Then install zelus-2.1 (binary distribution availabe in the `zelus-2.1` directory for OCaml 4.10.0)
+Install zelus-2.1 (binary distribution availabe in the `zelus-2.1` directory for OCaml 4.10.0)
 ```
 cd zelus-2.1/zelus-2.1-macos
 ./configure
 make && make install
 ```
 
-Finally install probzelus
+Finally install probzelus from the root directory of the project.
 ```
-make
+make && make -C owl-plplot
 ```
-
-To compile and execute the benchmark, you need the following additional dependencies:
-```
-opam install csv mtime
-```
-
 
 ## Examples
 
@@ -48,6 +56,14 @@ make exec
 ```
 
 The probzelus code is in the `*.zls` files
+
+Most of the examples requires a X11 server. It can be install on MacOS using [XQuartz](https://www.xquartz.org/).
+
+To compile and execute the benchmark, you need the following additional dependencies:
+```
+opam install csv mtime
+```
+
 
 
 ## Contributions
