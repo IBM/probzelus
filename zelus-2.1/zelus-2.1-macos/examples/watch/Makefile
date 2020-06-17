@@ -9,12 +9,19 @@ byte: $(EXAMPLE:%.zls=%.byte)
 opt:  $(EXAMPLE:%.zls=%.opt)
 
 watch.byte: draw.cmo watch.cmo watch_main.cmo
-	$(OCAMLC) $(OCAMLFLAGS) -o $@ $(INCLUDES) \
-	    -I $(ZLLIB) $(ZLSTDLIBS) $(ZLEXTRALIBS) graphics.cma $^
-
+	$(OCAMLFIND) $(OCAMLC) $(OCAMLFLAGS) -o $@ $(INCLUDES) \
+	    -I $(ZLLIB) $(ZLSTDLIBS) $(ZLEXTRALIBS) $^ -package graphics -linkpkg
+		
 watch.opt: draw.cmx watch.cmx watch_main.cmx
-	$(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ $(INCLUDES) \
-	    -I $(ZLLIB) $(ZLSTDLIBS:.cma=.cmxa) $(ZLEXTRALIBS:.cma=.cmxa) graphics.cmxa $^
+	$(OCAMLFIND) $(OCAMLOPT) $(OCAMLOPTFLAGS) -o $@ $(INCLUDES) \
+	    -I $(ZLLIB) $(ZLSTDLIBS:.cma=.cmxa) $(ZLEXTRALIBS:.cma=.cmxa) \
+		$^ -package graphics -linkpkg
+		
+draw.cmo: draw.ml
+	$(OCAMLFIND) $(OCAMLC) $(OCAMLFLAGS) draw.ml -package graphics -linkpkg
+
+draw.cmx: draw.ml
+	$(OCAMLFIND) $(OCAMLOPT) $(OCAMLFLAGS) draw.ml -package graphics -linkpkg
 
 watch_main.cmo: INCLUDE += $(SUNDIALS)
 watch_main.cmx: INCLUDE += $(SUNDIALS)
