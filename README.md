@@ -8,7 +8,7 @@ More information about ProbZelus are available in the paper [Reactive Probabilis
 @inproceedings{rppl-plid20,
   author = {Baudart, Guillaume and Mandel, Louis and Atkinson, Eric and Sherman, Benjamin and Pouzet, Marc and Carbin, Michael},
   title = {Reactive Probabilistic Programming},
-year = {2020},
+  year = {2020},
   booktitle = {Proceedings of the 41st ACM SIGPLAN Conference on Programming Language Design and Implementation},
   series = {PLDI 2020}
 }
