@@ -34,7 +34,7 @@ brew install openblas plplot
 opam install dune menhir owl owl-plplot
 ```
 
-Install zelus-2.1 (binary distribution availabe in the `zelus-2.1` directory for OCaml 4.10.0)
+Install zelus-2.1 the binary distribution availabe in the `zelus-2.1` directory for OCaml 4.10.0 (the source distribution of Zelus is available at https://github.com/INRIA/zelus).
 ```
 cd zelus-2.1/zelus-2.1-macos
 ./configure
