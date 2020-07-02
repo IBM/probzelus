@@ -45,6 +45,7 @@ val print_any_t : 'a t -AD-> unit
 val print_float_t : float t -AD-> unit
 val print_int_t : int t -AD-> unit
 val print_bool_t : bool t -AD-> unit
+val print_t : ('a -> string) -S-> 'a t -AD-> unit
 
 val stats_float : float t -> float * float
 val mean_float : float t -> float

@@ -30,6 +30,18 @@ module rec Distribution_rec: DISTRIBUTION = struct
 
   (** {2 Utils}*)
 
+  let support_remove_duplicate l =
+    let tbl = Hashtbl.create 7 in
+    List.iter
+      (fun (x, p) ->
+         let k = Marshal.to_bytes x [Marshal.Closures] in
+         try
+           let (_, p') = Hashtbl.find tbl k in
+           Hashtbl.replace tbl k (x, p +. p')
+         with Not_found -> Hashtbl.add tbl k (x, p))
+      l;
+    Hashtbl.fold (fun _ (x, n) acc -> (x, n)::acc) tbl []
+
   let pp_print_any : type a. Format.formatter -> a -> unit =
     fun ppf _ ->
     Format.fprintf ppf "_"
@@ -57,7 +69,7 @@ module rec Distribution_rec: DISTRIBUTION = struct
           (Format.pp_print_list
              ~pp_sep:(fun ppf () -> Format.fprintf ppf ",@ ")
              (fun ppf (v, p) -> Format.fprintf ppf "(%a, %f)" pp_v v p))
-          l
+          (support_remove_duplicate l)
     | Dist_mixture l ->
         Format.fprintf ppf "mixture [ @[%a@] ]"
           (Format.pp_print_list
@@ -136,6 +148,12 @@ module rec Distribution_rec: DISTRIBUTION = struct
     fun dist ->
     Format.printf "%a@?"
       (pp_print (fun ppf v -> Format.fprintf ppf "%B" v))
+      dist
+
+  let print_t : type a. (a -> string) -> a t -> unit =
+    fun to_string dist ->
+    Format.printf "%a@?"
+      (pp_print (fun ppf v -> Format.fprintf ppf "%s" (to_string v)))
       dist
 
   module Map_float = Map.Make(struct

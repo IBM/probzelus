@@ -156,6 +156,7 @@ module type DISTRIBUTION = sig
   val print_float_t : float t -> unit
   val print_int_t : int t -> unit
   val print_bool_t : bool t -> unit
+  val print_t : ('a -> string) -> 'a t -> unit
 
   val gamma : float -> float
   val log_gamma : float -> float
