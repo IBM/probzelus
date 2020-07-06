@@ -1,0 +1,97 @@
+open Probzelus
+open Distribution
+open Infer_pf
+
+type state = A | B | C
+
+let string_of_state s =
+  match s with
+  | A -> "A"
+  | B -> "B"
+  | C -> "C"
+  end
+
+let observation (p1, p2, p3, x) = o where
+  rec o =
+    match x with
+    | A -> (gaussian p1)
+    | B -> (gaussian p2)
+    | C -> (gaussian p3)
+
+let proba hmm_3st (d1, d2, d3, p1, p2, p3, x) = s where
+  rec automaton
+        |S1 -> do s = A
+               and t = sample (weighted_list d1)
+               until (t = B) then S2
+               else  (t = C) then S3
+        |S2 -> do  s = B
+               and t = sample (weighted_list d2)
+               until (t = A) then S1
+               else  (t = C) then S3
+        |S3 -> do  s = C
+               and t = sample (weighted_list d3)
+               until (t = A) then S1
+               else (t = B) then S2
+  and () = observe (observation (p1, p2, p3, s), x)
+
+let proba hmm_3st_parameterized (prior_d1, prior_d2, prior_d3,
+                                 p1, p2, p3,
+                                 x) =
+  s, ((d1, (d2, d3)), (p1, p2, p3)) where
+  rec init d1 = sample(prior_d1)
+  and (d1_A, d1_B, d1_C) = d1
+  and init d2 = sample(prior_d2)
+  and (d2_A, d2_B, d2_C) = d2
+  and init d3 = sample(prior_d3)
+  and (d3_A, d3_B, d3_C) = d3
+  and s = hmm_3st ([ (d1_A, A); (d1_B, B); (d1_C, C) ],
+                   [ (d2_A, A); (d2_B, B); (d2_C, C) ],
+                   [ (d3_A, A); (d3_B, B); (d3_C, C) ],
+                   p1, p2, p3, x)
+
+
+let node data d1 d2 d3 p1 p2 p3 () = s, obs where
+  rec s, _ = gen hmm_3st (d1, d2, d3, p1, p2, p3, 0.)
+  and obs = draw (observation (p1, p2, p3, s))
+
+let node learn d1 d2 d3 p1 p2 p3 (prior_d1, prior_d2, prior_d3) = x, obs, d where
+  rec automaton
+      | Learn(prior_d1, prior_d2, prior_d3) ->
+          do x, obs = data d1 d2 d3 p1 p2 p3 ()
+          and d = infer 50000 hmm_3st_parameterized
+                   (prior_d1, prior_d2, prior_d3,
+                    p1, p2, p3, obs)
+          and cpt = 0 -> pre cpt + 1
+          and (_, d_params) = split d
+          and (dd, _) = split d_params
+          and (dd1, dd23) = split dd
+          and (dd2, dd3) = split dd23
+          and dd1' = Misc.triple (draw dd1)
+          and dd2' = Misc.triple (draw dd2)
+          and dd3' = Misc.triple (draw dd3)
+          until (cpt > 100) then Learn(dd1', dd2', dd3')
+       init Learn(prior_d1, prior_d2, prior_d3)
+
+let d1 = [ (0.9, A); (0.1, B); (0., C) ]
+let d2 = [ (0.3, A); (0.3, B); (0.4, C) ]
+let d3 = [ (0.3, A); (0.3, B); (0.4, C) ]
+let p1 = (1., 0.0001)
+let p2 = (0., 0.0001)
+let p3 = (-1., 0.0001)
+
+let node main () = () where
+  rec prior_d1 = Misc.triple (0.3, 0.3, 0.3)
+  and prior_d2 = Misc.uniform_3
+  and prior_d3 = Misc.uniform_3
+  (* and d = infer 50000 hmm_3st_parameterized (prior_d1, prior_d2, prior_d3, *)
+  (*                                            p1, p2, p3, obs) *)
+  and x, obs, d = learn d1 d2 d3 p1 p2 p3
+                        (prior_d1, prior_d2, prior_d3)
+  and d_s, d_params = split d
+  and (((d1_A_inferred, _, _), _), _) = draw d_params
+  and () = print_string ("actual: "^(string_of_state x));
+           print_string (" obs: "^(string_of_float obs));
+           (* print_string ("\tdraw(d) = " ^ (string_of_state (draw d))); *)
+           print_string ("\td = "); print_t string_of_state d_s;
+           print_string ("\td1_A = "^(string_of_float d1_A_inferred));
+           print_newline ()

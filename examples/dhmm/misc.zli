@@ -1,0 +1,4 @@
+open Probzelus
+
+val uniform_3: (float * float * float) Distribution.t
+val triple: (float * float * float) -> (float * float * float) Distribution.t
