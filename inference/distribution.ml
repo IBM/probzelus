@@ -206,6 +206,9 @@ module rec Distribution_rec: DISTRIBUTION = struct
 
   (** {2 Distributions} *)
 
+  let sampler (draw, score) =
+    Dist_sampler (draw, score)
+
   (** [dirac x] is a dirac distribution.
       @see<https://en.wikipedia.org/wiki/Dirac_delta_function>
   *)

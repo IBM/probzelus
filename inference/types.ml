@@ -158,6 +158,7 @@ module type DISTRIBUTION = sig
   val print_bool_t : bool t -> unit
   val print_t : ('a -> string) -> 'a t -> unit
 
+  val sampler : (unit -> 'a) * ('a -> float) -> 'a t
   val gamma : float -> float
   val log_gamma : float -> float
   val dirac : 'a -> 'a t
