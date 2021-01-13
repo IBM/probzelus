@@ -59,13 +59,6 @@ To compile and execute the benchmark, you need the following additional dependen
 opam install csv mtime
 ```
 
-
-
-To compile and execute the benchmarks, you need to install the following additional dependencies:
-```
-opam install csv mtime
-```
-
 ## Contributions
 
 ProbZelus is still under development and we welcome contributions.
