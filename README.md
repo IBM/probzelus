@@ -16,34 +16,29 @@ More information about ProbZelus are available in the paper [Reactive Probabilis
 
 ## Install
 
+The easiest way to install probzelus is via [Opam](https://opam.ocaml.org/), the OCaml package manager.
+
+You first need to install [openblas](https://www.openblas.net/)
+
+Then:
+```
+opam install owl zelus
+make
+```
+
+
+An optional plplot library based on owl-plplot that can be built with:
+```
+opam install owl-plplot
+make with-plplot
+```
+
 ### Docker
 
-The easiest way to use ProZelus is via the docker image.
+We also provide a docker image.
 ```
 make docker_build
 make docker_run
-```
-
-### From source for MacOS
-
-First install OCaml 4.10.0 and the Opam package manager using the following instructions: https://opam.ocaml.org/doc/Install.html
-
-Then install the project dependencies:
-```
-brew install openblas plplot
-opam install dune menhir owl owl-plplot
-```
-
-Install zelus-2.1 the binary distribution availabe in the `zelus-2.1` directory for OCaml 4.10.0 (the source distribution of Zelus is available at https://github.com/INRIA/zelus).
-```
-cd zelus-2.1/zelus-2.1-macos
-./configure
-make && make install
-```
-
-Finally install probzelus from the root directory of the project.
-```
-make && make -C owl-plplot
 ```
 
 ## Examples
@@ -65,6 +60,11 @@ opam install csv mtime
 ```
 
 
+
+To compile and execute the benchmarks, you need to install the following additional dependencies:
+```
+opam install csv mtime
+```
 
 ## Contributions
 

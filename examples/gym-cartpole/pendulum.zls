@@ -70,7 +70,7 @@ let node pendulum (obs0, action) = obs, reward, stop where
 
 let node simple_pendulum (obs0, action) = obs where
   rec force = if action = Right then force_mag else -. force_mag
-  and theta_acc = (sin p_theta *. gravity *. total_mass -. cos p_theta *. x_acc)
+  and theta_acc = (sin p_theta *. gravity  -. cos p_theta *. x_acc)
       /. length
   and x_acc = force /. total_mass
 
@@ -89,8 +89,3 @@ let node simple_pendulum (obs0, action) = obs where
               cart_velocity = x_dot;
               pole_angle = theta;
               pole_velocity = theta_dot; }
-  (* and stop = (x < -. x_threshold) *)
-  (*     or (x > x_threshold) *)
-  (*     or (theta < -. theta_threshold_radians) *)
-  (*     or (theta > theta_threshold_radians) *)
-  (* and reward = if not stop then 1. else 0. *)

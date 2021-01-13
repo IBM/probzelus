@@ -24,7 +24,7 @@ ENV OWLPATH /home/opam/owl
 WORKDIR /home/opam/opam-repository
 RUN git pull --quiet origin master \
     && opam update -q \
-    && opam install -y graphics owl owl-top owl-plplot menhir mtime csv \
+    && opam install -y graphics owl owl-top owl-plplot zelus mtime csv \
     && echo "#require \"owl-top\";; open Owl;;" >> /home/opam/.ocamlinit \
     && echo 'eval $(opam env)' >> /home/opam/.bashrc
 
@@ -33,11 +33,6 @@ RUN git pull --quiet origin master \
 RUN mkdir -p /home/opam/probzelus
 COPY --chown=opam . /home/opam/probzelus
 
-###################### INSTALL ZELUS #######################
-
-WORKDIR /home/opam/probzelus/zelus-2.1/zelus-2.1-debian
-RUN opam config exec ./configure && \
-    sudo make install
 
 #################### INSTALL PROBZELUS #####################
 
