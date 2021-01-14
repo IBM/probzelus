@@ -30,6 +30,7 @@ let rec run_helper step state =
     let s = read_input () in
     let out = step state s in
     print_string ((string_of_output out) ^ "\n");
+    Gc.full_major ();
     run_helper step state
   with End_of_file -> []
 

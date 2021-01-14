@@ -14,7 +14,11 @@
  * limitations under the License.
  *)
 
-type instrumentation = Obj.t Weak.t list ref
+type instrumentation = instrumentation_impl ref
+and instrumentation_impl ={
+  weaks : Obj.t Weak.t list;
+  finaliser_count : int
+}
 
 type pstate = { 
   ds_state : Ds_streaming_low_level.pstate; 
@@ -27,17 +31,18 @@ let mk_pstate pf_state ins_state = {
 }
 
 let print_ins pstate =
-  let nodes_alive = 
+  let nodes_alive_weak = 
     List.fold_left (fun s w ->
       if Weak.check w 0 then
         s + 1
       else
         s
-    ) 0 !(pstate.nodes)
+    ) 0 (!(pstate.nodes)).weaks
   in
-  print_string ("Nodes alive: " ^ (string_of_int nodes_alive) ^ "\n")
+  let nodes_alive_finaliser = (!(pstate.nodes)).finaliser_count in
+  print_string ("Nodes alive weak: " ^ (string_of_int nodes_alive_weak) ^ ", Nodes alive finaliser: " ^ (string_of_int nodes_alive_finaliser) ^ "\n")
 
-let empty_ins _ = ref []
+let empty_ins _ = ref { weaks = []; finaliser_count = 0 }
 let copy_ins src dst = dst := !src
 
 let get_distr_kind = Ds_streaming_low_level.get_distr_kind
@@ -53,12 +58,25 @@ let assume_constant : type a p.
     let ret = Ds_streaming_low_level.assume_constant d in
     let w = Weak.create 1 in
     Weak.set w 0 (Some (Obj.repr ret));
-    Gc.finalise (fun _ -> ()) ret; (* Add a finaliser for the node to ensure
+    (*Gc.finalise (fun _ -> ()) ret; (* Add a finaliser for the node to ensure
                                       the node was heap-allocated. 
                                       Otherwise, the value will be copied into 
                                       the weak array and the weak pointer will 
-                                      not properly indicate memory usage. *)
-    ps.nodes := w :: !(ps.nodes);
+                                      not properly indicate memory usage. *)*)
+    (*Gc.finalise (fun _ -> (print_string "Finalizer called!\n")) ret;*)
+
+    Gc.finalise (fun _ ->
+      ps.nodes := {
+        weaks = (!(ps.nodes)).weaks;
+        finaliser_count = (!(ps.nodes)).finaliser_count - 1
+      }
+    ) ret;
+    
+    ps.nodes := {
+      weaks = w :: (!(ps.nodes)).weaks;
+      finaliser_count = (!(ps.nodes)).finaliser_count + 1
+    };
+
     ret
 
 let assume_conditional : type a b c.
@@ -67,12 +85,24 @@ let assume_conditional : type a b c.
     let ret = Ds_streaming_low_level.assume_conditional p cdistr in
     let w = Weak.create 1 in
     Weak.set w 0 (Some (Obj.repr ret));
-    Gc.finalise (fun _ -> ()) ret; (* Add a finaliser for the node to ensure
+    (*Gc.finalise (fun _ -> ()) ret; (* Add a finaliser for the node to ensure
                                       the node was heap-allocated. 
                                       Otherwise, the value will be copied into 
                                       the weak array and the weak pointer will 
-                                      not properly indicate memory usage. *)
-    ps.nodes := w :: !(ps.nodes);
+                                      not properly indicate memory usage. *)*)
+    (*Gc.finalise (fun _ -> (print_string "Finalizer called!\n")) ret;*)
+
+    Gc.finalise (fun _ ->
+      ps.nodes := {
+        weaks = (!(ps.nodes)).weaks;
+        finaliser_count = (!(ps.nodes)).finaliser_count - 1
+      }
+    ) ret;
+    
+    ps.nodes := {
+      weaks = w :: (!(ps.nodes)).weaks;
+      finaliser_count = (!(ps.nodes)).finaliser_count + 1
+    };
     ret
 
 let observe_conditional : type a b c.

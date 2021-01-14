@@ -6,7 +6,7 @@ ZELUC=zeluc -copy -I $(INFERLIB)
 ZELUC += -I ../kalmangslib
 
 $(NAME).ml : $(NAME.zls)
-	$(ZELUC) -noreduce $(NAME).zls
+	$(ZELUC) -noreduce -nopt -nosimplify -inline 0 $(NAME).zls
 
 %.zci : %.zli
 	$(ZELUC) $<

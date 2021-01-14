@@ -1,1 +1,2 @@
+val to_unit : 'a -> unit
 val gc_full_major : unit -> unit
