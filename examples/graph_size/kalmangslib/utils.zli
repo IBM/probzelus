@@ -1,0 +1,1 @@
+val gc_full_major : unit -> unit
