@@ -1,0 +1,43 @@
+#!/usr/bin/env ocaml
+
+#load "unix.cma"
+
+let prefix = ref (Filename.concat (Sys.getcwd ()) "_build/install/default/")
+let with_plplot = 
+  let cmd = "ocamlfind query zelus-owl-plplot > /dev/null 2>&1" in
+  match Sys.command cmd with
+  | 0 -> true
+  | _ -> false
+
+
+let get_prefix pkg = (Filename.concat !prefix "share/")^pkg
+
+let () =
+  let options =
+    [
+      "--prefix", Arg.Set_string prefix, " Installation prefix";
+    ]
+  in
+  Arg.parse
+    options
+    (fun cmd ->
+      Printf.eprintf "Don't know what to do with \"%s\".\n" cmd;
+      exit 1)
+    "Usage: ./configure [OPTIONS]";
+
+  (* Generate probzeluc.ml *)
+  let oc = open_out_bin "probzeluc.ml" in
+  let libs = "-I "^(get_prefix "probzelus")^" -I "^(get_prefix "zelus-owl") in
+  let libs = begin match with_plplot with
+    | false -> libs
+    | true ->  libs^" -I "^(get_prefix "zelus-owl-plplot")
+    end
+  in
+  Printf.fprintf oc {|let _ = 
+  let argv = Sys.argv in
+  let args = Array.fold_right (fun a x -> a^" "^x) Array.(sub argv 1 (length argv - 1)) " " in
+  let cmd = "zeluc -copy %s "^args in
+  Sys.command cmd
+|} 
+    libs;
+  close_out oc

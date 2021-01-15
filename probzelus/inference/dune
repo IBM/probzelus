@@ -1,0 +1,24 @@
+(rule
+ (deps (:zli distribution.zli))
+ (targets distribution.zci)
+ (action (bash "zeluc -I `zeluc -where`-owl %{zli}")))
+
+(rule
+ (deps (:zli infer_ds_naive.zli infer_ds_streaming.zli infer_ds_streaming_copy.zli infer_importance.zli infer_pf.zli) distribution.zci)
+ (targets infer_ds_naive.zci infer_ds_streaming.zci infer_ds_streaming_copy.zci infer_importance.zci infer_pf.zci)
+ (action (bash "zeluc -I `zeluc -where`-owl %{zli}")))
+
+(rule
+ (deps (:zli probzelus.zli))
+ (targets probzelus.zci)
+ (action (run zeluc %{zli}))) 
+
+(library
+ (name probzelus)
+ (public_name probzelus)
+ (libraries zelus zelus-owl))
+
+(install
+ (package probzelus)
+ (section share)
+ (files distribution.zci infer_ds_naive.zci infer_ds_streaming.zci infer_ds_streaming_copy.zci infer_importance.zci infer_pf.zci probzelus.zci))

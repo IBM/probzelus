@@ -1,0 +1,11 @@
+(dirs :standard \ examples)
+
+(executable
+ (name probzeluc)
+ (libraries zelus-owl)
+ (promote (until-clean)))
+
+(install
+ (package probzelus)
+ (section bin)
+ (files (probzeluc.exe as probzeluc)))

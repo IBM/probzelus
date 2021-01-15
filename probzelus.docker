@@ -37,4 +37,5 @@ COPY --chown=opam . /home/opam/probzelus
 #################### INSTALL PROBZELUS #####################
 
 WORKDIR /home/opam/probzelus
-RUN opam config exec make with-plplot
+RUN opam pin -k path -y zelus-owl \
+    && opam pin -k path -y probzelus

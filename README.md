@@ -17,20 +17,23 @@ More information about ProbZelus are available in the paper [Reactive Probabilis
 ## Install
 
 The easiest way to install probzelus is via [Opam](https://opam.ocaml.org/), the OCaml package manager.
+You first need to install [openblas](https://www.openblas.net/).
 
-You first need to install [openblas](https://www.openblas.net/)
-
-Then:
+Then pin the packages defined in this repo to add them to opam.
 ```
-opam install owl zelus
-make
+opam pin -k path -n zelus-owl
+opam pin -k path -n probzelus
+```
+
+You can now install ProbZelus with
+```
+opam install probzelus
 ```
 
 
 An optional plplot library based on owl-plplot that can be built with:
 ```
-opam install owl-plplot
-make with-plplot
+opam install zelus-owl-plplot
 ```
 
 ### Docker

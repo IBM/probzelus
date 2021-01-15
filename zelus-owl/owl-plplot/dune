@@ -1,0 +1,20 @@
+(rule
+ (deps (:zli plot.zli) ../owl/mat.zci)
+ (targets plot.zci)
+ (action (run zeluc -I ../owl %{zli})))
+
+(rule
+ (deps (:zli zelus_owl_plplot.zli))
+ (targets zelus_owl_plplot.zci)
+ (action (run zeluc %{zli})))
+
+(library
+ (name zelus_owl_plplot)
+ (public_name zelus-owl-plplot)
+ (libraries owl-plplot))
+
+(install
+ (package zelus-owl-plplot)
+ (section share)
+ (files plot.zci zelus_owl_plplot.zci))
+
