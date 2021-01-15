@@ -1,4 +1,4 @@
-PROBZELUC=zeluc -copy
+PROBZELUC=probzeluc
 
 ZLI=$(wildcard *.zli)
 ZCI=$(ZLI:zli=zci)
