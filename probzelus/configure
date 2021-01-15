@@ -3,7 +3,7 @@
 #load "unix.cma"
 
 let prefix = ref (Filename.concat (Sys.getcwd ()) "_build/install/default/")
-let with_plplot = 
+let with_plplot =
   let cmd = "ocamlfind query zelus-owl-plplot > /dev/null 2>&1" in
   match Sys.command cmd with
   | 0 -> true
@@ -33,11 +33,12 @@ let () =
     | true ->  libs^" -I "^(get_prefix "zelus-owl-plplot")
     end
   in
-  Printf.fprintf oc {|let _ = 
+  Printf.fprintf oc {|let _ =
   let argv = Sys.argv in
   let args = Array.fold_right (fun a x -> a^" "^x) Array.(sub argv 1 (length argv - 1)) " " in
   let cmd = "zeluc -copy %s "^args in
-  Sys.command cmd
-|} 
+  let code = Sys.command cmd in
+  exit code
+|}
     libs;
   close_out oc
