@@ -6,7 +6,7 @@ include ../../Makefile.common-config
 
 CSV_FILES=perf-step.csv mem-ideal.csv
 
-ZELUC += -I ../trackerlib -I ../../../../owl
+PROBZELUC += -I ../trackerlib
 
 all: build
 

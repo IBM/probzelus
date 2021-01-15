@@ -1,5 +1,4 @@
-INFERLIB=../../inference
-ZELUC=zeluc -copy -I $(INFERLIB)
+PROBZELUC=probzeluc
 
 NAME=gaussian_gaussian
 NAME_DS=gaussian_gaussian_ds
@@ -7,10 +6,10 @@ NAME_DS=gaussian_gaussian_ds
 all: build
 
 $(NAME).ml main.ml: $(NAME).zls
-	$(ZELUC) -s main $+
+	$(PROBZELUC) -s main $+
 
 $(NAME_DS).ml main_ds.ml: $(NAME_DS).zls
-	$(ZELUC) -s main_ds $+
+	$(PROBZELUC) -s main_ds $+
 
 clean:
 	rm -f $(NAME).ml main.ml
@@ -31,7 +30,7 @@ build: main.ml main_ds.ml
 	dune build main.exe main_ds.exe
 
 %.zci: %.zli
-	$(ZELUC) $<
+	$(PROBZELUC) $<
 
 cleanall: clean
 	dune clean

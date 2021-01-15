@@ -1,4 +1,4 @@
-ZELUC=zeluc -copy
+PROBZELUC=zeluc -copy
 
 ZLI=$(wildcard *.zli)
 ZCI=$(ZLI:zli=zci)
@@ -14,7 +14,7 @@ opt:
 	dune build benchlib.cmxa
 
 %.zci: %.zli
-	$(ZELUC) $<
+	$(PROBZELUC) $<
 
 clean:
 	dune clean

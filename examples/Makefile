@@ -15,7 +15,7 @@ all:
 	$(MAKE) -C ilmdp
 	$(MAKE) -C line
 	$(MAKE) -C mv_gaussian
-	$(MAKE) -C naive_bayes_german
+	echo "Ignore:" $(MAKE) -C naive_bayes_german
 	$(MAKE) -C pid
 	$(MAKE) -C restaurants
 	$(MAKE) -C slam

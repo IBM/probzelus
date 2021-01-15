@@ -1,5 +1,4 @@
-INFERLIB=../../inference
-ZELUC=zeluc -copy -I $(INFERLIB)
+PROBZELUC=probzeluc
 
 NUMS=1 2 3 4 5 6 7
 SRCS=$(patsubst %, ex%_ds.zls,$(NUMS))
@@ -12,7 +11,7 @@ all: build
 
 $(MLS) $(MAINS): $(SRCS)
 	$(foreach N,$(NUMS), \
-		$(ZELUC) -s main$(N) ex$(N)_ds.zls || exit 1;)
+		$(PROBZELUC) -s main$(N) ex$(N)_ds.zls || exit 1;)
 
 
 clean:
@@ -30,7 +29,7 @@ build: $(MAINS)
 	dune build $(EXECS)
 
 %.zci: %.zli
-	$(ZELUC) $<
+	$(PROBZELUC) $<
 
 cleanall: clean
 	dune clean

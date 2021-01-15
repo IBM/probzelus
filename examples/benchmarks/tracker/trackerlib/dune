@@ -4,4 +4,4 @@
 
 (library
  (name trackerlib)
- (libraries probzelus zelus_owl owl mtime mtime.clock mtime.clock.os))
+ (libraries probzelus zelus-owl owl mtime mtime.clock mtime.clock.os))
