@@ -30,6 +30,7 @@ You can now install ProbZelus with
 opam install probzelus
 ```
 
+This will install a `probzeluc` executable and the `probzelus` library in you Opam/OCaml echosystem.
 
 An optional plplot library based on owl-plplot that can be built with:
 ```
@@ -44,7 +45,62 @@ make docker_build
 make docker_run
 ```
 
-## Examples
+## A Simple Example
+
+Consider the example of a Hidden Markov Model. 
+The probzelus code is the following
+
+```ocaml
+open Probzelus
+open Distribution
+open Infer_pf
+
+let proba hmm obs = p where
+  rec p = sample (gaussian(0.0 fby p, 1.0))
+  and () = observe (gaussian(p, 0.5), obs)
+
+let node main () = () where
+  rec obs = 0.0 fby obs +. 1.1
+  and pos_dist = infer 1000 hmm obs
+  and mean, std = stats_float pos_dist
+  and () = 
+    print_string " mean: "; print_float mean; 
+    print_string " std: ";  print_float std; 
+    print_newline ()
+```
+
+We assume that at each step the position `p` is not too far from the previous position `0.0 fby p`, and that this position is also close to the observation `obs`.
+
+Node `main` launches the inference with `1000` particles and print the mean and standard deviation of the inferred distribution at each step.
+Here the observations are defined with a simple equation: starting from 0.0, at each step we add 1.1 to the value of previous observation. 
+
+```
+obs = 0.0, 1.1, 2.2, 3.3, 4.4, 5.5, ...
+```
+
+### Compilation
+
+The `probzeluc` executable is a wrapper around the Zelus compiler. 
+It takes a zelus file (e.g., `hmm.zls`) and compiles it to OCaml code (e.g., `hmm.ml`)
+
+```
+probzeluc hmm.zls
+```
+
+You can also specify a simulation node.
+The compiler then generates an additional files containing the simulation code (e.g., `main.ml`).
+
+```
+probzeluc -s main hmm.zls
+```
+
+To build an executable, you can then compile the simulation code using the `probzelus` library.
+
+```
+ocamlfind ocamlc -linkpkg -package probzelus hmm.ml main.ml -o hmm
+```
+
+## Other Examples
 
 A set of examples is available in the `examples` directory.
 Most of them can be built and executed with:
