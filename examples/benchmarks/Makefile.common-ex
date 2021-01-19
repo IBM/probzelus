@@ -1,6 +1,4 @@
-INFERLIB=../../../inference
-OWLLIB=../../../owl
-ZELUC=zeluc -copy -I $(OWLLIB) -I $(INFERLIB) -I $(EXLIB)
+PROBZELUC=probzeluc -I $(EXLIB)
 
 ZLI=$(wildcard $(EXLIB)/*.zli)
 ZCI=$(ZLI:zli=zci)
@@ -72,11 +70,11 @@ build_lib:
 
 
 %.zci: %.zli
-	$(ZELUC) $<
+	$(PROBZELUC) $<
 
 
 $(NAME).ml main.ml: $(NAME).zls
-	$(ZELUC) -s main $(NAME).zls
+	$(PROBZELUC) -s main $(NAME).zls
 
 clean:
 	-rm -f *.zc*

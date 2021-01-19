@@ -1,6 +1,4 @@
-INFERLIB=../../../../inference
-OWLLIB=../../../../owl
-ZELUC=zeluc -copy -I $(INFERLIB) -I $(OWLLIB)
+PROBZELUC=probzeluc
 
 
 ZLI=$(wildcard *.zli)
@@ -20,13 +18,13 @@ test:
 	dune build test.exe
 
 %.zci: %.zli
-	$(ZELUC) $<
+	$(PROBZELUC) $<
 
 test.ml : test.zls util.zci
-	$(ZELUC) test.zls -s main
+	$(PROBZELUC) test.zls -s main
 
 metrics.ml : metrics.zls
-	$(ZELUC) -noreduce metrics.zls
+	$(PROBZELUC) -noreduce metrics.zls
 
 clean:
 	dune clean

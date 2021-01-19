@@ -1,0 +1,35 @@
+opam-version: "2.0"
+synopsis: "ProbZelus, a synchronous probabilistic language"
+version: "1.0"
+authors: [
+  "Guillaume Baudart <guillaume.baudart@inria.fr>"
+  "Louis Mandel <lmandel@us.ibm.com>"
+  "Eric Atkinson <eatkinson@csail.mit.edu>"
+  "Benjamin Sherman <sherman@csail.mit.edu>"
+  "Marc Pouzet <marc.pouzet@ens.fr>"
+  "Michael Carbin <mcarbin@csail.mit.edu>"
+  ]
+maintainer: ["Guillaume Baudart <guillaume.baudart@inria.fr>"]
+homepage: "https://github.com/IBM/probzelus"
+bug-reports: "https://github.com/IBM/probzelus/issues"
+depends: [
+  "ocaml" {>= "4.10"}
+  "dune" {>= "2.6"}
+  "ocamlfind"
+  "zelus"
+  "zelus-owl"
+]
+depopts: [
+  "zelus-owl-plplot"
+]
+build: [
+  [
+    "./configure"
+    "--prefix" prefix
+  ]
+  [
+    "dune" "build" "-p" name "-j" jobs
+    "@install"
+  ]
+]
+dev-repo: "git+https://github.com/IBM/probzelus.git"

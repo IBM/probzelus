@@ -1,0 +1,42 @@
+(rule
+ (deps (:zli owl_types_common.zli zelus_owl_types_misc.zli zelus_owl.zli))
+ (targets owl_types_common.zci zelus_owl_types_misc.zci zelus_owl.zci)
+ (action (run zeluc %{zli})))
+
+
+(rule
+ (deps (:zli owl_dense_ndarray_generic.zli) owl_types_common.zci)
+ (targets owl_dense_ndarray_generic.zci)
+ (action (run zeluc %{zli})))
+
+(rule
+ (deps (:zli owl_dense_matrix_generic.zli) zelus_owl_types_misc.zci owl_types_common.zci owl_dense_ndarray_generic.zci)
+ (targets owl_dense_matrix_generic.zci)
+ (action (run zeluc %{zli})))
+
+(rule
+ (deps (:zli owl_dense_matrix_c.zli owl_dense_matrix_d.zli owl_dense_matrix_s.zli owl_dense_matrix_z.zli) zelus_owl_types_misc.zci owl_types_common.zci owl_dense_matrix_generic.zci)
+ (targets owl_dense_matrix_c.zci owl_dense_matrix_d.zci owl_dense_matrix_s.zci owl_dense_matrix_z.zci)
+ (action (run zeluc %{zli})))
+
+(rule
+ (deps (:zli mat.zli) owl_types_common.zci owl_dense_matrix_generic.zci)
+ (targets mat.zci)
+ (action (run zeluc %{zli})))
+
+
+(rule
+ (deps (:zli linalg_d.zli) zelus_owl_types_misc.zci owl_dense_matrix_generic.zci owl_dense_matrix_d.zci owl_dense_matrix_z.zci)
+ (targets linalg_d.zci)
+ (action (run zeluc %{zli})))
+
+(library
+ (name zelus_owl)
+ (public_name zelus-owl)
+ (libraries owl))
+
+(install
+ (package zelus-owl)
+ (section share)
+ (files linalg_d.zci mat.zci owl_dense_matrix_c.zci owl_dense_matrix_d.zci owl_dense_matrix_generic.zci owl_dense_matrix_s.zci owl_dense_matrix_z.zci owl_dense_ndarray_generic.zci owl_types_common.zci zelus_owl.zci zelus_owl_types_misc.zci))
+

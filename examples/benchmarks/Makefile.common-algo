@@ -47,10 +47,10 @@ publish:
 
 
 $(NAME).ml : $(NAME).zls
-	$(ZELUC) -noreduce $(NAME).zls
+	$(PROBZELUC) -noreduce $(NAME).zls
 
 %.zci: %.zli
-	$(ZELUC) $<
+	$(PROBZELUC) $<
 
 clean:
 	-rm -f *.zc*

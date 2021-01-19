@@ -4,4 +4,4 @@
 
 (executables
  (names main)
- (libraries probzelus mttlib zelus_owl))
+ (libraries probzelus mttlib zelus-owl))

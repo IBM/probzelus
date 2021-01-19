@@ -1,5 +1,4 @@
-INFERLIB=../../inference
-ZELUC=zeluc -copy -I $(INFERLIB)
+PROBZELUC=probzeluc
 
 ZLI=$(wildcard *.zli)
 ZCI=$(ZLI:zli=zci)
@@ -12,16 +11,16 @@ NAME_2D=slam_2d
 all: build
 
 $(NAME_pf).ml main_pf.ml: $(ZCI) $(NAME_PF).zls
-	$(ZELUC) -s main_pf $(NAME_PF).zls
+	$(PROBZELUC) -s main_pf $(NAME_PF).zls
 
 $(NAME_DS).ml main_ds.ml: $(ZCI) $(NAME_DS).zls
-	$(ZELUC) -s main_ds $(NAME_DS).zls
+	$(PROBZELUC) -s main_ds $(NAME_DS).zls
 
 $(NAME_RB).ml main_rb.ml: $(ZCI) $(NAME_RB).zls
-	$(ZELUC) -s main_rb $(NAME_RB).zls
+	$(PROBZELUC) -s main_rb $(NAME_RB).zls
 
 $(NAME_2D).ml main_2d.ml: $(ZCI) $(NAME_2D).zls
-	$(ZELUC) -s main_2d $(NAME_2D).zls
+	$(PROBZELUC) -s main_2d $(NAME_2D).zls
 
 clean:
 	rm -f $(NAME_PF).ml main_pf.ml
@@ -52,7 +51,7 @@ build: main_pf.ml main_ds.ml main_rb.ml main_2d.ml
 	dune build ./main_pf.exe ./main_ds.exe ./main_rb.exe
 
 %.zci: %.zli
-	$(ZELUC) $<
+	$(PROBZELUC) $<
 
 cleanall: clean
 	dune clean

@@ -1,6 +1,4 @@
-INFERLIB=../../inference
-OWLLIB=../../owl
-ZELUC=zeluc -copy -I $(INFERLIB) -I $(OWLLIB)
+PROBZELUC=probzeluc
 
 ZLI=$(wildcard *.zli)
 ZCI=$(ZLI:zli=zci)
@@ -15,22 +13,22 @@ NAME_2D_COLOR=slam_2d_color
 all: build
 
 $(NAME_pf).ml main_pf.ml: $(ZCI) $(NAME_PF).zls
-	$(ZELUC) -s main_pf $(NAME_PF).zls
+	$(PROBZELUC) -s main_pf $(NAME_PF).zls
 
 $(NAME_DS).ml main_ds.ml: $(ZCI) $(NAME_DS).zls
-	$(ZELUC) -s main_ds $(NAME_DS).zls
+	$(PROBZELUC) -s main_ds $(NAME_DS).zls
 
 $(NAME_DS_COLOR).ml main_ds_color.ml: $(ZCI) $(NAME_DS_COLOR).zls
-	$(ZELUC) -s main_ds_color $(NAME_DS_COLOR).zls
+	$(PROBZELUC) -s main_ds_color $(NAME_DS_COLOR).zls
 
 $(NAME_RB).ml main_rb.ml: $(ZCI) $(NAME_RB).zls
-	$(ZELUC) -s main_rb $(NAME_RB).zls
+	$(PROBZELUC) -s main_rb $(NAME_RB).zls
 
 $(NAME_2D).ml main_2d.ml: $(ZCI) $(NAME_2D).zls
-	$(ZELUC) -s main_2d $(NAME_2D).zls
+	$(PROBZELUC) -s main_2d $(NAME_2D).zls
 
 $(NAME_2D_COLOR).ml main_2d_color.ml: $(ZCI) $(NAME_2D_COLOR).zls
-	$(ZELUC) -s main_2d_color $(NAME_2D_COLOR).zls
+	$(PROBZELUC) -s main_2d_color $(NAME_2D_COLOR).zls
 
 clean:
 	rm -f $(NAME_PF).ml main_pf.ml
@@ -69,7 +67,7 @@ build: main_pf.ml main_ds.ml main_rb.ml main_2d.ml main_ds_color.ml main_2d_colo
 	dune build ./main_pf.exe ./main_ds.exe ./main_rb.exe ./main_ds_color.exe ./main_2d_color.exe
 
 %.zci: %.zli
-	$(ZELUC) $<
+	$(PROBZELUC) $<
 
 cleanall: clean
 	dune clean

@@ -6,8 +6,7 @@ include ../../Makefile.common-config
 
 CSV_FILES=perf.csv perf-step.csv mem-ideal.csv accuracy.csv
 
-OWLLIB=../../../../owl
-ZELUC +=  -I $(OWLLIB) -I ../mttlib
+PROBZELUC +=  -I ../mttlib
 
 all: build
 

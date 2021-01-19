@@ -1,0 +1,23 @@
+opam-version: "2.0"
+synopsis: "Zelus owl-plplot Library"
+version: "1.0"
+authors: [
+  "Guillaume Baudart <guillaume.baudart@inria.fr>"
+  "Louis Mandel <lmandel@us.ibm.com>"
+  ]
+maintainer: ["Guillaume Baudart <guillaume.baudart@inria.fr>"]
+homepage: "https://github.com/IBM/probzelus"
+bug-reports: "https://github.com/IBM/probzelus/issues"
+depends: [
+  "ocaml" {>= "4.10"}
+  "dune" {>= "2.6"}
+  "zelus"
+  "owl-plplot"
+]
+build: [
+  [
+    "dune" "build" "-p" name "-j" jobs
+    "@install"
+  ]
+]
+dev-repo: "git+https://github.com/IBM/probzelus.git"

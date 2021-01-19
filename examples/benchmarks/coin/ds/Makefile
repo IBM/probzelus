@@ -6,7 +6,7 @@ include ../../Makefile.common-config
 
 CSV_FILES=perf.csv perf-step.csv mem-ideal.csv accuracy.csv
 
-ZELUC += -I ../coinlib
+PROBZELUC += -I ../coinlib
 
 all: build
 

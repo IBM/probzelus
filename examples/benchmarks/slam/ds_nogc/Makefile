@@ -6,7 +6,7 @@ include ../../Makefile.common-config
 
 CSV_FILES=perf-step.csv mem-ideal.csv
 
-ZELUC += -I ../slamlib
+PROBZELUC += -I ../slamlib
 
 all: build
 

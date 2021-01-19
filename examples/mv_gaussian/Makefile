@@ -1,6 +1,4 @@
-INFERLIB=../../inference
-OWLLIB=../../owl
-ZELUC=zeluc -copy -I $(INFERLIB) -I $(OWLLIB)
+PROBZELUC=probzeluc
 
 ZLI=$(wildcard *.zli)
 ZCI=$(ZLI:zli=zci)
@@ -11,7 +9,7 @@ NAME=mv_gaussian
 all: build
 
 $(NAME).ml main.ml: $(ZCI) $(NAME).zls
-	$(ZELUC) -s main $(NAME).zls
+	$(PROBZELUC) -s main $(NAME).zls
 
 clean:
 	rm -f $(NAME).ml main.ml
@@ -28,7 +26,7 @@ build: main.ml
 	dune build main.exe
 
 %.zci: %.zli
-	$(ZELUC) $<
+	$(PROBZELUC) $<
 
 cleanall: clean
 	dune clean

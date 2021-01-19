@@ -1,12 +1,11 @@
-INFERLIB=../../inference
-ZELUC=zeluc -copy -I $(INFERLIB)
+PROBZELUC=probzeluc
 
 NAME=ilmdp
 
 all: build
 
 $(NAME).ml main.ml: $(NAME).zls
-	$(ZELUC) -s main $+
+	$(PROBZELUC) -s main $+
 
 clean:
 	rm -f $(NAME).ml main.ml
@@ -23,7 +22,7 @@ build: main.ml
 	dune build main.exe
 
 %.zci: %.zli
-	$(ZELUC) $<
+	$(PROBZELUC) $<
 
 cleanall: clean
 	dune clean

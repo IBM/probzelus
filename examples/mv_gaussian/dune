@@ -4,4 +4,4 @@
 
 (executables
  (names main)
- (libraries graphics probzelus zelus_owl))
+ (libraries graphics probzelus zelus-owl))

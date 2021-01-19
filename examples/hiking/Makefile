@@ -1,5 +1,4 @@
-INFERLIB=../../inference
-ZELUC=zeluc -copy -I $(INFERLIB)
+PROBZELUC=probzeluc
 
 ZLI=../gridworld/gridworld.zli $(wildcard *.zli)
 ZCI=$(ZLI:zli=zci)
@@ -10,7 +9,7 @@ NAME=hiking
 all: build
 
 $(NAME).ml main.ml: $(ZCI) $(NAME).zls
-	$(ZELUC) -I ../gridworld -s main $(NAME).zls
+	$(PROBZELUC) -I ../gridworld -s main $(NAME).zls
 
 clean:
 	rm -f $(NAME).ml main.ml
@@ -27,7 +26,7 @@ build: main.ml
 	dune build main.exe
 
 %.zci: %.zli
-	$(ZELUC) -I ../gridworld $<
+	$(PROBZELUC) -I ../gridworld $<
 
 cleanall: clean
 	dune clean
