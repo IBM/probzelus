@@ -60,7 +60,7 @@ let proba hmm obs = p where
   and () = observe (gaussian(p, 0.5), obs)
 
 let node main () = () where
-  rec obs = 0.0 fby obs +. 1.1
+  rec obs = 0.0 fby (obs +. 1.1)
   and pos_dist = infer 1000 hmm obs
   and mean, std = stats_float pos_dist
   and () = 
