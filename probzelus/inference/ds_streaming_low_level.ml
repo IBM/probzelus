@@ -37,6 +37,12 @@ let observe : type a b.
   | DSgraph_Marginalized (_, Some _) -> assert false
   end
 
+let observe_with_graft : type a b.
+  pstate -> b -> (a, b) ds_graph_node -> unit =
+  fun prob x n ->
+  graft n;
+  observe prob x n
+
 let observe_conditional : type a b c.
   pstate -> (a, b) ds_graph_node -> (b, c) cdistr -> c -> unit =
   fun prob p cdistr obs ->
