@@ -22,15 +22,13 @@ let read_input () = Scanf.scanf ("%f, %f\n") (fun t o -> (t, o))
 let main = Kalman_copy_instrumented.main
 let string_of_output (out, _) = string_of_float (Probzelus.Distribution.mean_float out)
 
-let num_particles = 10
-
+let num_particles = 2
 
 let rec run_helper step state =
   try
     let s = read_input () in
     let out = step state s in
-    print_string ((string_of_output out) ^ "\n");
-    Gc.full_major ();
+    print_string ("Output:" ^ (string_of_output out) ^ "\n");
     run_helper step state
   with End_of_file -> []
 

@@ -118,6 +118,8 @@ module Gnodes = struct
     { mutable live_nodes : (ephemeron * (Obj.t, Obj.t) ds_node) M.t;
       mutable ephemeron_pool: ephemeron list; }
 
+  let size g = M.cardinal g.live_nodes
+
   let create _ =
     { live_nodes = M.empty;
       ephemeron_pool = []; }
@@ -164,10 +166,14 @@ module Gnodes = struct
            b)
         g.live_nodes
 
-  let copy: t -> t -> unit =
-    fun src dst ->
+  let copy: Ds_streaming_low_level_instrumented.instrumentation -> t -> t -> unit =
+    fun ctx src dst ->
     let tbl = Hashtbl.create 41 in
-    (* clean src; *)
+    (*(print_string "-----START COPY-------\n");*)
+    (*(print_string ("Size pre-clean: " ^ (string_of_int (size src)) ^ "\n"));*)
+    Gc.full_major ();
+    clean src; 
+    (*(print_string ("Size post-clean: " ^ (string_of_int (size src)) ^ "\n"));*)
     clear dst;
     dst.live_nodes <- M.map (fun (e, n) ->
         let e' = new_ephemeron dst in
@@ -177,7 +183,11 @@ module Gnodes = struct
         end;
         let n' = Distribution.DS_graph.copy_node tbl n in
         (e', n'))
-        src.live_nodes
+        src.live_nodes;
+    (*(print_string ("Size dst: " ^ (string_of_int (size dst)) ^ "\n"));*)
+    Ds_streaming_low_level_instrumented.add_all_nodes ctx tbl;
+    (*(Ds_streaming_low_level_instrumented.print_ins_helper ctx);*)
+    (*(print_string "-----END COPY-------\n");*)
 end
 
 (* module Gnodes = struct *)
@@ -591,7 +601,8 @@ let infer n (Cnode { alloc; reset; copy; step; }) =
   in
   let reset state =
     reset state.node_state;
-    Gnodes.clear state.node_graph
+    Gnodes.clear state.node_graph;
+    Ds_streaming_low_level_instrumented.clear state.ins
   in
   let step state (pf_prob, x) =
     let prob =
@@ -604,8 +615,9 @@ let infer n (Cnode { alloc; reset; copy; step; }) =
   in
   let copy src dst =
     copy src.node_state dst.node_state;
-    Gnodes.copy src.node_graph dst.node_graph;
-    Ds_streaming_low_level_instrumented.copy_ins src.ins dst.ins
+    Ds_streaming_low_level_instrumented.clear dst.ins;
+    Gnodes.copy dst.ins src.node_graph dst.node_graph;
+    (*Ds_streaming_low_level_instrumented.copy_ins src.ins dst.ins*)
   in
   let Cnode {alloc = infer_alloc; reset = infer_reset;
              copy = infer_copy; step = infer_step;} =
