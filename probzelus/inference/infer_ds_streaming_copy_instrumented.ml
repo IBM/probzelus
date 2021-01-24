@@ -487,9 +487,8 @@ let assume_conditional : type b c.
 let observe_conditional : type b c.
   pstate -> b random_var -> (b, c) cdistr -> c -> unit =
   fun prob p cdistr obs ->
-  let par = rv_node prob p in
-  let _ = assume_conditional prob p cdistr in
-  Ds_streaming_low_level_instrumented.observe_conditional prob.pf_state par cdistr obs
+  let tmp_rv = assume_conditional prob p cdistr in
+  Ds_streaming_low_level_instrumented.observe_with_graft prob.pf_state obs (rv_node prob tmp_rv)
 
 
 (** Gaussian distribution (gaussianPD in Haskell) *)

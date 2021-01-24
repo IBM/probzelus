@@ -105,6 +105,13 @@ let assume_conditional : type a b c.
     };
     ret
 
+(* TODO(eatkinson): use Ds_streaming_low_level.observe_with_graft once it is merged *)
+let observe_with_graft : type a b.
+  pstate -> b -> (a, b) Types.ds_graph_node -> unit =
+  fun prob x n ->
+  Ds_streaming_low_level.graft n;
+  Ds_streaming_low_level.observe prob.ds_state x n
+
 let observe_conditional : type a b c.
   pstate -> (a, b) Types.ds_graph_node -> (b, c) Types.cdistr -> c -> unit =
   fun prob p cdistr obs ->

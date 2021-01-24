@@ -1,6 +1,7 @@
 INFERLIB=../../../inference
 OWLLIB=../../../owl
 ZELUC=zeluc -copy -I $(INFERLIB) -I $(OWLLIB)
+PROBZELUC=probzeluc
 
 
 ZLI=$(wildcard *.zli)
@@ -17,10 +18,10 @@ opt: metrics.ml
 	dune build kalmangslib.cmxa
 
 %.zci: %.zli
-	$(ZELUC) $<
+	$(PROBZELUC) $<
 
 metrics.ml : metrics.zls
-	$(ZELUC) -noreduce metrics.zls
+	$(PROBZELUC) -noreduce metrics.zls
 
 clean:
 	dune clean

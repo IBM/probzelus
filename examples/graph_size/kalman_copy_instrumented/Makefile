@@ -4,12 +4,14 @@ NAME=kalman_copy_instrumented
 INFERLIB=../../../inference
 ZELUC=zeluc -copy -I $(INFERLIB)
 ZELUC += -I ../kalmangslib
+PROBZELUC = probzeluc
+PROBZELUC += -I ../kalmangslib
 
 $(NAME).ml : $(NAME.zls)
-	$(ZELUC) -noreduce -nopt -nosimplify -inline 0 $(NAME).zls
+	$(PROBZELUC) -noreduce -nopt -nosimplify -inline 0 $(NAME).zls
 
 %.zci : %.zli
-	$(ZELUC) $<
+	$(PROBZELUC) $<
 
 build: $(NAME).ml run.ml
 	dune build run.exe
