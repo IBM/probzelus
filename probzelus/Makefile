@@ -1,5 +1,8 @@
-all:
+all: probzeluc.ml
 	dune build
+
+probzeluc.ml:
+	./configure
 
 clean:
 	dune clean

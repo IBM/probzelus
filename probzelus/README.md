@@ -5,7 +5,6 @@ This directory contains the inference library and a wrapper for the Zelus compil
 You can locally build the project with (you need to install `zelus-owl` first):
 
 ```
-./configure
 make
 ```
 

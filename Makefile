@@ -1,3 +1,11 @@
+all:
+	@echo "To build the probzelus, first install the zelus-owl package using opam:"
+	@echo "    opam pin -n -k path zelus-owl"
+	@echo "    opam install zelus-owl"
+	@echo "Then:"
+	@echo "    make -C probzelus"
+
+
 docker_build:
 	docker build -t probzelus -f probzelus.docker .
 	
