@@ -47,5 +47,4 @@ let observe_conditional : type a b c.
   pstate -> (a, b) ds_graph_node -> (b, c) cdistr -> c -> unit =
   fun prob p cdistr obs ->
   let n = assume_conditional p cdistr in
-  graft n;
-  observe prob obs n
+  observe_with_graft prob obs n
