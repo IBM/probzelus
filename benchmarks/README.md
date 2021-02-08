@@ -2,6 +2,14 @@
 
 This directory contains the benchmarks used in the PLDI 2020 paper entitled _Reactive Probabilistic Programming_ by Guillaume Baudart, Louis Mandel, Eric Atkinson, Benjamin Sherman, Marc Pouzet, and Michael Carbin.
 
+## Install
+
+In addition to ProbZelus, you need to install the following dependencies:
+
+```
+opam install csv mtime
+```
+
 # Step by Step Execution
 
 The different benchmarks are in the following directories:
