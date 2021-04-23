@@ -24,6 +24,10 @@ let sample = Infer_pf.sample
 let factor = Infer_pf.factor
 let observe = Infer_pf.observe
 
+let sample' = Infer_pf.sample'
+let factor' = Infer_pf.factor'
+let observe' = Infer_pf.observe'
+
 
 let infer_decay n decay (Cnode { alloc; reset; copy; step }) =
   let alloc () =
