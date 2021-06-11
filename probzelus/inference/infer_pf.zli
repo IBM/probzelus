@@ -14,9 +14,13 @@
  * limitations under the License.
  *)
 
+type prob
+
 val sample : 'a Distribution.t ~D~> 'a
+val sample' : prob * 'a Distribution.t -AD-> 'a
 val factor : float ~D~> unit
 val observe : 'a Distribution.t * 'a ~D~> unit
+val observe' : prob * ('a Distribution.t * 'a) -AD-> unit
 
 val const : 'a -> 'a
 val add : float * float -> float
@@ -63,5 +67,10 @@ val infer_depth :
 val infer_subresample :
   int -S-> ('a ~D~> 'b) -S-> bool * 'a -D-> 'b Distribution.t
 
+val infer_hybrid :
+  int -S-> (prob * 'a -C-> 'b) -S-> 'a -C-> 'b Distribution.t
 
 val gen : ('a ~D~> 'b) -S-> 'a -D-> 'b * float
+
+val gen_hybrid :
+  (prob * 'a -C-> 'b) -S-> 'a -C-> 'b * float

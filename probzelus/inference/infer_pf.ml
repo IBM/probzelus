@@ -32,6 +32,8 @@ type pstate = {
   scores : float array; (** score of each particle *)
 }
 
+type prob = pstate
+
 let factor' (pstate, f0) =
   pstate.scores.(pstate.idx) <- pstate.scores.(pstate.idx) +. f0
 
@@ -328,6 +330,12 @@ let infer_depth n k (Cnode model) =
   in
   Cnode { alloc = alloc; reset = reset; copy = copy; step = step }
 
+let infer_hybrid n m (cstate: Ztypes.cstate) = 
+  let Cnode { alloc; step; reset; copy; } = 
+    m cstate 
+  in
+  let hstep self (prob, (t, x)) = step self (t, (prob, x)) in
+  infer n (Cnode { alloc; step=hstep; reset; copy; })
 
 (** [gen f x] generates a value sampled from the model [f] with input [x] and
     its corresponding score. The score is reseted at each instant and does
@@ -353,3 +361,10 @@ let gen (Cnode { alloc; reset; copy; step }) =
     dst.infer_scores.(0) <- src.infer_scores.(0)
   in
   Cnode { alloc = alloc; reset = reset; copy = copy; step = step }
+
+let gen_hybrid m (cstate: Ztypes.cstate) = 
+  let Cnode { alloc; step; reset; copy; } = 
+    m cstate 
+  in
+  let hstep self (prob, (t, x)) = step self (t, (prob, x)) in
+  gen (Cnode { alloc; step=hstep; reset; copy; })
