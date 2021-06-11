@@ -31,3 +31,8 @@ build: main.ml
 cleanall: clean
 	dune clean
 	rm -f *~
+
+
+hybrid:
+	probzeluc -s main walker_cont.zls
+	ocamlfind ocamlc -g -linkpkg -package probzelus walker_cont.ml main.ml -o main

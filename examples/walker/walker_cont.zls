@@ -1,0 +1,76 @@
+open Probzelus
+open Infer_pf
+open Distribution
+
+type motion_type = Stationary | Walking | Running
+
+type walker = {
+  vx : float; 
+  vy : float;
+  st : float;
+  mt : motion_type;
+}
+
+let pi = 3.14
+
+let hybrid horizon h = up t where
+    rec der t = 1.0 init -.h reset up t -> -.h
+
+let node motion prob = {vx = vx; vy = vy; st = st; mt = mt} where 
+  rec angle = sample' (prob, uniform_float (0., 2. *. pi))
+  and vx, vy = v *. cos angle, v *. sin angle
+  and automaton
+  | Stat -> do v = 0.
+            and mt = Stationary
+            and st = 0.02
+            and t = sample' (prob, uniform_float (0., 30. +. 60. *. 5.))
+    until (t < 30.) then Walk
+     else (t < 30. +. 60. *. 5.) then Run
+  | Walk -> do v = sample' (prob, uniform_float (0., 2.))
+            and mt = Walking
+            and st = 0.77
+            and t = sample' (prob, uniform_float (0., 1. +. 10. +. 60.))
+    until (t < 1.) then Walk
+     else (t < 1. +. 10.) then Stat
+     else (t < 1. +. 10. +. 60.) then Run
+  | Run -> do v = sample' (prob, uniform_float (2., 7.))
+           and mt = Running
+           and st = 1.73
+           and t = sample' (prob, uniform_float (0., 0.5 +. 2.))
+    until (t < 0.5) then Run
+     else (t < 2.) then Walk
+
+let hybrid walker (prob, obs) = (px, py) where
+    rec z = horizon h
+    and h = present (init) | z -> sample' (prob, exponential(w.st)) init 0.
+    and w =
+      present z -> motion prob 
+      init {vx = 0.; vy = 0.; st = 10.; mt = Stationary}
+    and der px = w.vx init 0. reset z -> sample' (prob, gaussian(last px, 0.1))
+    and der py = w.vy init 0. reset z -> sample' (prob, gaussian(last py, 0.1))
+    and present obs(x, y) -> 
+          do () = observe' (prob, (gaussian(px, 0.1), x))
+          and () = observe' (prob, (gaussian(py, 0.1), y)) done
+
+let hybrid main () = () where
+  rec present (init) | (horizon 10.) -> 
+    local xm, ym in
+    do emit obs = (last x, last y)
+    and xm = mean_float (last xd)
+    and ym = mean_float (last yd)
+    and () = 
+      print_float t; 
+      print_string ": mean = ("; 
+      print_float xm;  print_string ", "; print_float ym;
+      print_string "), obs = (";
+      print_float (last x);  print_string ", "; print_float (last y);
+      print_endline ")"
+    done
+  and der t = 1.0 init 0.
+  and (x, y), _ = gen_hybrid walker obs
+  and d = infer_hybrid 300 walker obs 
+  and xd, yd = split d 
+  and init xd = gaussian(4012., 1.)
+  and init yd = gaussian(4012., 1.)
+  and init x = 0.
+  and init y = 0.
