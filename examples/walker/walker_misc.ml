@@ -89,7 +89,7 @@ let rec motion' (prob, (dt, w)) =
     List.fold_left (fun acc (t, mt) -> acc +. t) 0. trans_lam
   in
   let t_transition = sample' (prob, exponential st) in
-  if t_transition > dt then coast' (prob, (dt, w))
+  if t_transition > dt then coast' (prob, (dt, w)), t_transition
   else
     let w' = coast' (prob, (t_transition, w)) in
     let mt = sample' (prob, weighted_list trans_lam) in
@@ -97,19 +97,22 @@ let rec motion' (prob, (dt, w)) =
     motion' (prob,
              (dt -. t_transition, { w' with velocity = vel; motion_type = mt }))
 
-let motion : (pstate * (float * walker), walker) Ztypes.cnode =
+let motion : (pstate * (float * walker), walker * float) Ztypes.cnode =
   make_node motion'
 
 let real_motion (dt, w) =
-  motion' ((), (dt, w))
+  let w, _ = motion' ((), (dt, w)) in 
+  w
 
 let position_std_dev = 10.
+let time_std_dev = 1.0
 
 (* walkerMeasure :: Walker -> (Double, Double) -> PProg a () *)
-let walker_measure' ((prob: pstate), (w, (mx, my))) =
+let walker_measure' ((prob: pstate), (w, dtw, dt, (mx, my))) =
   let (x, y) = w.position in
   factor' (prob, score (gaussian (x, position_std_dev), mx));
-  factor' (prob, score (gaussian (y, position_std_dev), my))
+  factor' (prob, score (gaussian (y, position_std_dev), my));
+  factor' (prob, score (gaussian (dtw, time_std_dev), dt))
 
 let walker_measure = make_node walker_measure'
 
@@ -122,8 +125,8 @@ let walker_gen_measurement w =
 
 (* walkerStep :: Double -> (Double, Double) -> Walker -> PProg a Walker *)
 let walker_step' ((prob: pstate), (dt, measured_position, w)) =
-  let w' = motion' (prob, (dt, w)) in
-  walker_measure' (prob, (w', measured_position));
+  let w', dtw = motion' (prob, (dt, w)) in
+  walker_measure' (prob, (w', dtw, dt, measured_position));
   w'
 
 let walker_step =
