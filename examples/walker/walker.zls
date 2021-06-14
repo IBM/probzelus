@@ -34,4 +34,4 @@ let proba walker_simulate measurements = (w.motion_type, w.position) where
 (* main :: IO () *)
 let node main () =
   let measurements = generate_walker () in
-  print (infer 1000 walker_simulate measurements)
+  print (infer 3 walker_simulate measurements)
