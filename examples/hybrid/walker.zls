@@ -42,7 +42,7 @@ let node motion prob = {vx = vx; vy = vy; st = st; mt = mt} where
 
 let hybrid walker (prob, obs) = (px, py) where
     rec z = horizon h
-    and h = present (init) | z -> sample' (prob, exponential(w.st)) init 0.
+    and h = present (init) | z -> sample' (prob, exponential w.st) init 0.
     and w =
       present z -> motion prob 
       init {vx = 0.; vy = 0.; st = 10.; mt = Stationary}

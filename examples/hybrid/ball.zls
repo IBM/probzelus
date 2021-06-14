@@ -1,0 +1,53 @@
+open Probzelus
+open Infer_pf
+open Distribution
+
+
+let hybrid horizon h = up t where
+    rec der t = 1.0 init -.h reset up t -> -.h
+
+let g = 9.81
+
+let hybrid ball () = h where 
+    rec der v = -. g init 0. reset up (-.h) -> -. phi *. (last v)
+    and der h = v init 10.
+    and phi = 0.85
+
+let hybrid ball_pos (prob, obs) = h where
+    rec z = up (-.h)
+    and der v = -. g init 0. reset z -> -. phi *. (last v)
+    and der h = v init 10.
+    and init phi = sample' (prob, uniform_float (0., 2.))
+    and present obs(x) -> 
+        do () = observe' (prob, (gaussian (h, 0.1), x)) done
+
+
+(* let hybrid ball_dur (prob, obs) = h where
+    rec z = up (-.h)
+    and der v = -. g init 0. reset z -> -. phi *. (last v)
+    and der h = v init 10.
+    and init phi = sample' (prob, uniform_float(0., 2.))
+    and der d_obs = 1.0 reset obs -> 0. init 0.
+    and der d = 1.0 reset z -> 0. init 0.
+    and present obs -> 
+        do () = observe' (prob, (gaussian (d, 0.1), last d_obs)) done *)
+
+
+let hybrid ball_bounce (prob, obs) = h where
+    rec z = up (-.h)
+    and der v = -. g init 0. reset z -> -. phi *. (last v)
+    and der h = v init 10.
+    and init phi = sample' (prob, uniform_float (0., 2.))
+    and d = present z -> last d + 1 init 0
+    and n = present obs -> last n + 1 init  0
+    and present obs -> 
+        do () = observe' (prob, (gaussian(float d, 1.), float n)) done
+
+let hybrid main () = () where
+  rec present (horizon 0.05) -> 
+    do () = 
+      print_int (int_of_float (h *. 10.)); 
+      print_newline ()
+    done
+  and der t = 1.0 init 0.
+  and h = ball ()
