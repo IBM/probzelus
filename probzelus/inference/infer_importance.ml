@@ -20,9 +20,13 @@ open Types
 
 type pstate = Infer_pf.pstate
 
+type prob = pstate
+
 let sample = Infer_pf.sample
+let sample' = Infer_pf.sample'
 let factor = Infer_pf.factor
 let observe = Infer_pf.observe
+let observe' = Infer_pf.observe'
 
 
 let infer_decay n decay (Cnode { alloc; reset; copy; step }) =
@@ -69,4 +73,9 @@ let infer_decay n decay (Cnode { alloc; reset; copy; step }) =
 
 let infer n node =
   infer_decay n 1. node
+
+let infer_hybrid n m (cstate: Ztypes.cstate) = 
+  let Cnode { alloc; step; reset; copy; } = m cstate in
+  let hstep self (prob, (t, x)) = step self (t, (prob, x)) in
+  infer n (Cnode { alloc; step=hstep; reset; copy; })
 
