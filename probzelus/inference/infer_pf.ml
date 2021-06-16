@@ -330,12 +330,56 @@ let infer_depth n k (Cnode model) =
   in
   Cnode { alloc = alloc; reset = reset; copy = copy; step = step }
 
+type 'a infer_hybrid_state = {
+  mutable infer_hybrid_major: bool;
+  infer_hybrid_states : 'a array;
+  infer_hybrid_scores : float array;
+}
 let infer_hybrid n m (cstate: Ztypes.cstate) = 
-  let Cnode { alloc; step; reset; copy; } = 
-    m cstate 
+
+  let Cnode { alloc; step; reset; copy; } = m cstate in
+
+  let alloc () =
+    { infer_hybrid_major = false;
+      infer_hybrid_states = Array.init n (fun _ -> alloc ());
+      infer_hybrid_scores = Array.make n 0.0; }
   in
-  let hstep self (prob, (t, x)) = step self (t, (prob, x)) in
-  infer n (Cnode { alloc; step=hstep; reset; copy; })
+  let reset state =
+    Array.iter reset state.infer_hybrid_states;
+    Array.fill state.infer_hybrid_scores 0 n 0.0
+  in
+  let step ({ 
+    infer_hybrid_major = major; 
+    infer_hybrid_states = states; 
+    infer_hybrid_scores = scores } as state)
+    (time, input) =
+
+    state.infer_hybrid_major <- cstate.major;
+    let values =
+      Array.mapi
+        (fun i state ->
+           let value = 
+            step state (time, ({ idx = i; scores = scores; }, input)) 
+          in
+          value)
+        states
+    in
+    let probabilities, ret = Normalize.normalize_nohist values scores in
+    Normalize.resample copy n probabilities states;
+    Array.fill scores 0 n 0.0;
+    ret
+  in
+  let copy src dst =
+    dst.infer_hybrid_major <- src.infer_hybrid_major;
+    for i = 0 to n - 1 do
+      copy src.infer_hybrid_states.(i) dst.infer_hybrid_states.(i);
+      dst.infer_hybrid_scores.(i) <- src.infer_hybrid_scores.(i)
+    done
+  in
+  Cnode { alloc = alloc; reset = reset; copy = copy; step = step }
+
+  (* let hstep self (prob, (t, x)) = step self (t, (prob, x)) in
+  infer n (Cnode { alloc; step=hstep; reset; copy; }) *)
 
 (** [gen f x] generates a value sampled from the model [f] with input [x] and
     its corresponding score. The score is reseted at each instant and does
