@@ -1,5 +1,5 @@
 open Probzelus
-open Infer_pf
+open Infer_importance
 open Distribution
 
 
@@ -8,12 +8,11 @@ let hybrid horizon h = up t where
 
 let g = 9.81
 
-let hybrid ball () = h where 
+let hybrid ball phi = h where 
     rec der v = -. g init 0. reset up (-.h) -> -. phi *. (last v)
     and der h = v init 10.
-    and phi = 0.85
 
-let hybrid ball_pos (prob, obs) = h where
+let hybrid ball_pos (prob, obs) = phi where
     rec z = up (-.h)
     and der v = -. g init 0. reset z -> -. phi *. (last v)
     and der h = v init 10.
@@ -33,21 +32,20 @@ let hybrid ball_pos (prob, obs) = h where
         do () = observe' (prob, (gaussian (d, 0.1), last d_obs)) done *)
 
 
-let hybrid ball_bounce (prob, obs) = h where
+let hybrid ball_bounce (prob, obs) = phi where
     rec z = up (-.h)
     and der v = -. g init 0. reset z -> -. phi *. (last v)
     and der h = v init 10.
     and init phi = sample' (prob, uniform_float (0., 2.))
     and d = present z -> last d + 1 init 0
-    and n = present obs -> last n + 1 init  0
-    and present obs -> 
-        do () = observe' (prob, (gaussian(float d, 1.), float n)) done
+    and n = present obs(_) -> last n + 1 init  0
+    and present obs(_) -> 
+        do () = observe' (prob, (gaussian (float d, 1.), float n)) done
 
 let hybrid main () = () where
-  rec present (horizon 0.05) -> 
-    do () = 
-      print_int (int_of_float (h *. 10.)); 
-      print_newline ()
-    done
+  rec present (horizon 1.0) -> 
+    do emit obs = h_obs 
+    and () = print_float (mean_float (last d_phi)); print_newline () done
   and der t = 1.0 init 0.
-  and h = ball ()
+  and h_obs = ball (0.65)
+  and d_phi = infer_hybrid 100 ball_bounce obs

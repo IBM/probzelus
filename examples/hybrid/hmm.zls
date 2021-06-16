@@ -1,14 +1,19 @@
 open Probzelus
-open Infer_pf
+open Infer_importance
 open Distribution
 
 let hybrid horizon h = up t where
     rec der t = 1.0 init -.h reset up t -> -.h
+(* 
+let hybrid hmm (prob, obs) = p where
+  rec init p = 0.
+  and present obs(_) -> 
+    do p = sample' (prob, gaussian(last p, 10.0)) done *)
 
-let hybrid hmm(prob, obs) = p where
+let hybrid hmm (prob, obs) = p where
     rec z = horizon h
-    and h = present (init) | z -> sample' (prob, exponential 1.0) init 0.
-    and v = present z -> sample' (prob, gaussian(last v, 1.0)) init 0.
+    and h = present (init) | z -> sample' (prob, exponential 2.0) init 0.
+    and v = present z -> sample' (prob, gaussian(last v, 1.0)) init 0.0
     and der p = v init 0.
     and present obs(x) -> do () = observe' (prob, (gaussian (p, 0.1), x)) done
 
@@ -23,18 +28,33 @@ let hybrid hmm_time(prob, obs) = p where
       do () = observe' (prob, (gaussian (p, 0.1), x)) done
 
 let hybrid main () = () where
-  rec present (init) | (horizon 2.) -> 
+  rec present (init) | (horizon 1.) -> 
     local m in
-    do emit obs = last x
-    and m = mean_float (last d)
+    do m = 0 fby m + 1
+    and emit obs = float m
+    (* and m = mean_float (last d) *)
     and () = 
       print_float t; 
-      print_string ": mean = "; print_float m;
-      print_string " obs = "; print_float (last x);
+      print_string " obs = "; print_int m; print_newline ();
+      print_string ": mean = "; print_float_t (last d);
       print_newline ()
     done
   and der t = 1.0 init 0.
-  and x, _ = gen_hybrid hmm obs
+  (* and x, _ = gen_hybrid hmm obs *)
   and d = infer_hybrid 10 hmm obs 
   and init d = gaussian(4012., 1.)
-  and init x = 0.
+  (* and init x = 0. *)
+
+(* let hybrid main () = () where
+  rec present (init) | (horizon 1.) -> 
+    local m, d in
+    do m = 0 fby m + 1
+    and emit obs = float m
+    (* and m = mean_float (last d) *)
+    and () = 
+      print_float t; 
+      print_string " obs = "; print_int m; print_newline ();
+      print_string ": mean = "; print_float_t (last d);
+      print_newline ()
+    and d = infer 10 hmm obs done
+  and der t = 1.0 init 0. *)
