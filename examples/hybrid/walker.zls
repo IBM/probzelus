@@ -70,7 +70,3 @@ let hybrid main () = () where
   and (x, y), _ = gen_hybrid walker obs
   and d = infer_hybrid 300 walker obs 
   and xd, yd = split d 
-  and init xd = gaussian(4012., 1.)
-  and init yd = gaussian(4012., 1.)
-  and init x = 0.
-  and init y = 0.

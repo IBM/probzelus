@@ -32,18 +32,15 @@ let hybrid main () = () where
     local m in
     do m = 0 fby m + 1
     and emit obs = float m
-    (* and m = mean_float (last d) *)
     and () = 
       print_float t; 
-      print_string " obs = "; print_int m; print_newline ();
-      print_string ": mean = "; print_float_t (last d);
+      print_string " obs = "; print_int m;
+      print_string ": mean = "; print_float (mean_float (last d));
       print_newline ()
     done
   and der t = 1.0 init 0.
   (* and x, _ = gen_hybrid hmm obs *)
   and d = infer_hybrid 10 hmm obs 
-  and init d = gaussian(4012., 1.)
-  (* and init x = 0. *)
 
 (* let hybrid main () = () where
   rec present (init) | (horizon 1.) -> 
