@@ -46,21 +46,10 @@ let infer_decay n decay (Cnode { alloc; reset; copy; step }) =
            value)
         states
     in
-    let weights, norm =
-      let sum = ref 0. in
-      let acc = ref [] in
-      Array.iteri
-        (fun i score ->
-           let w = max (exp score) epsilon_float in
-           acc := (values.(i), w) :: !acc;
-           sum := !sum +. w)
-        scores;
-      (!acc, !sum)
-    in
+    let _, ret = Normalize.normalize_nohist values scores in
     if decay <> 1. then
       Array.iteri (fun i score -> scores.(i) <- decay *. score) scores;
-    Dist_support
-      (List.rev_map (fun (b, w) -> (b, w /. norm)) weights)
+    ret
   in
   let copy src dst =
     for i = 0 to n - 1 do
