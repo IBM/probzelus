@@ -70,6 +70,9 @@ val infer_subresample :
 val infer_hybrid :
   int -S-> (prob * 'a -C-> 'b) -S-> 'a -C-> 'b Distribution.t
 
+val infer_ess_resample_hybrid :
+  int -S-> float -S-> (prob * 'a -C-> 'b) -S-> 'a -C-> 'b Distribution.t
+
 val gen : ('a ~D~> 'b) -S-> 'a -D-> 'b * float
 
 val gen_hybrid :
