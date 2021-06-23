@@ -13,8 +13,7 @@ let hybrid hmm (prob, obs) = p where
 let hybrid hmm (prob, obs) = p where
     rec z = horizon h
     and h = present (init) | z -> sample' (prob, exponential 2.0) init 0.
-    and v = present z -> sample' (prob, gaussian(last v, 1.))
-            | obs(_) -> sample' (prob, gaussian(last v, 0.1)) init 0.0
+    and v = present z -> sample' (prob, gaussian(last v, 0.1)) init 0.0
     and der p = v init 0.
     and present obs(x) -> do () = observe' (prob, (gaussian (p, 0.1), x)) done
 
@@ -23,27 +22,22 @@ let hybrid hmm_time(prob, obs) = p where
     and lambda = sqrt_lambda ** 2.
     and z = horizon h
     and h = present (init) | z -> sample' (prob, exponential lambda) init 0.
-    and v = present z -> sample' (prob, gaussian(last v, 1.0)) init 0.
+    and v = present z -> sample' (prob, gaussian(last v, 0.1)) init 0.
     and der p = v init 0.
     and present obs(x) -> 
       do () = observe' (prob, (gaussian (p, 0.1), x)) done
 
 let hybrid main () = () where
-  rec present (init) | (horizon 0.01) -> 
-    local m in
-    do m = 0. fby m +. 0.1
-    and emit obs = m
+  rec present (horizon 0.01) -> 
+    do emit obs = last p_obs
     and () = 
-      print_float t; 
-      print_string " obs = "; print_float m;
+      print_string " obs = "; print_float (last p_obs);
       print_string ": mean = "; print_float (mean_float (last d));
-      (* print_string " "; print_float_t (last d); *)
       print_newline ()
     done
-  and der t = 1.0 init 0.
-  (* and x, _ = gen_hybrid hmm obs *)
-  and d = infer_hybrid 1000 hmm obs
-  and init d = gaussian(0., 1.)
+  and d = hybrid_infer_subresample 1000 hmm (horizon 0.01, obs)
+  and p_obs, _ = hybrid_gen hmm obs 
+  and init p_obs = 0.
 
 (* let hybrid main () = () where
   rec present (init) | (horizon 1.) -> 

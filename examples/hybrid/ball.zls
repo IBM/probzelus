@@ -46,7 +46,7 @@ let hybrid horizon h = up t where
 let hybrid main () = () where
   rec present (horizon 0.05) -> 
     do emit obs = h_obs 
-    (* and () = print_float (mean_float (last d_phi)); print_newline () done *)
-    and () = print_float h_obs; print_newline () done
-  and h_obs = ball 9.81
-  (* and d_phi = infer_hybrid 1000 ball_pos obs *)
+    and () = print_float (mean_float (last d_phi)); print_newline () done
+    (* and () = print_float h_obs; print_newline () done *)
+  and h_obs = ball 9.8
+  and d_phi = hybrid_infer 1000 ball_pos obs
