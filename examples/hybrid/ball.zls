@@ -3,35 +3,21 @@ open Infer_importance
 open Distribution
 
 
-let hybrid horizon h = up t where
-    rec der t = 1.0 init -.h reset up t -> -.h
-
-let g = 9.81
 let h0 = 10.
+let phi = 0.85
 
-let hybrid ball phi = h where 
-    rec der v = -. g init 0. reset up (-.h) -> -. phi *. (last v)
+let hybrid ball g = h where 
+    rec der v = -. g init 0. reset up (-. h) -> -. phi *. (last v)
     and der h = v init h0
 
-let hybrid ball_pos (prob, obs) = phi where
+let hybrid ball_pos (prob, obs) = g where
     rec z = up (-.h)
     and der v = -. g init 0. reset z -> -. phi *. (last v)
     and der h = v init h0
-    and init phi = sample' (prob, uniform_float (0., 2.))
+    and init g = sample' (prob, gaussian (5., 5.))
     and present obs(x) -> 
         do () = observe' (prob, (gaussian (h, 0.1), x)) done
 
-    (* rec init phi = sample' (prob, uniform_float (0., 2.))
-    and der h = v init h0
-    and init v = 0.
-    and automaton
-    | Run -> local z in
-        do z = up (-.h)
-        and der v = -. g reset z -> -. phi *. (last v)
-        and present obs(x) -> 
-            do () = observe' (prob, (gaussian (h, 0.1), x)) done
-        until z on (v < 0.01) then Stop
-    | Stop -> do v = 0. done *)
 
 (* let hybrid ball_dur (prob, obs) = h where
     rec z = up (-.h)
@@ -44,21 +30,23 @@ let hybrid ball_pos (prob, obs) = phi where
         do () = observe' (prob, (gaussian (d, 0.1), last d_obs)) done *)
 
 
-let hybrid ball_bounce (prob, obs) = phi where
+(* let hybrid ball_bounce (prob, obs) = g where
     rec z = up (-.h)
     and der v = -. g init 0. reset z -> -. phi *. (last v)
     and der h = v init h0
-    and init phi = sample' (prob, uniform_float (0., 2.))
+    and init g = sample' (prob, uniform_float (5., 15.))
     and d = present z -> last d + 1 init 0
     and n = present obs(_) -> last n + 1 init  0
     and present obs(_) -> 
-        do () = observe' (prob, (gaussian (float d, 1.), float n)) done
+        do () = observe' (prob, (gaussian (float d, 1.), float n)) done *)
+
+let hybrid horizon h = up t where
+    rec der t = 1.0 init -.h reset up t -> -.h
 
 let hybrid main () = () where
-  rec present (horizon 0.1) -> 
+  rec present (horizon 0.05) -> 
     do emit obs = h_obs 
-    (* and () = print_int (int_of_float (10. *. h_obs)); print_newline () done *)
-    and () = print_float (mean_float (last d_phi)); print_newline () done
-  and der t = 1.0 init 0.
-  and h_obs = ball (0.85)
-  and d_phi = infer_hybrid 500 ball_pos obs
+    (* and () = print_float (mean_float (last d_phi)); print_newline () done *)
+    and () = print_float h_obs; print_newline () done
+  and h_obs = ball 9.81
+  (* and d_phi = infer_hybrid 1000 ball_pos obs *)

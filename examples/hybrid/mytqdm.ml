@@ -4,6 +4,10 @@ let _ =
   T.with_bar 100 
   ~f:(fun tqdm -> 
         while true do
-          let v = int_of_string (read_line ()) in
-          T.update tqdm v
+          () 
+          |> read_line 
+          |> float_of_string 
+          |> ( *. ) 10. 
+          |> int_of_float 
+          |> T.update tqdm
         done);
