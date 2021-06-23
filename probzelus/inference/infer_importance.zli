@@ -28,6 +28,6 @@ val infer :
 val infer_decay :
   int -S-> float -S-> ('a ~D~> 'b) -S-> 'a -D-> 'b Distribution.t
 
-val infer_hybrid :
+val hybrid_infer :
   int -S-> (prob * 'a -C-> 'b) -S-> 'a -C-> 'b Distribution.t
 

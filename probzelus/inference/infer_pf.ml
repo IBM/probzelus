@@ -330,60 +330,20 @@ let infer_depth n k (Cnode model) =
   in
   Cnode { alloc = alloc; reset = reset; copy = copy; step = step }
 
-type 'a infer_hybrid_state = {
-  mutable infer_hybrid_major: bool;
-  infer_hybrid_states : 'a array;
-  infer_hybrid_scores : float array;
-}
-(* let infer_hybrid n m (cstate: Ztypes.cstate) =  *)
 
-(*   let Cnode { alloc; step; reset; copy; } = m cstate in *)
+let hybrid_infer_subresample n m (cstate: Ztypes.cstate) =
+  let Cnode { alloc; step; reset; copy; } = m cstate in
+  let hstep self (prob, (c, (t, x))) = step self (t, (prob, (c, x))) in
+  let Cnode { alloc; step; reset; copy; } =
+    infer_subresample n (Cnode { alloc; step=hstep; reset; copy; })
+  in
+  Cnode { 
+    alloc; 
+    step = (fun s (t, (c, x)) -> step s (c, (t, x))); 
+    reset; 
+    copy; }
 
-(*   let alloc () = *)
-(*     { infer_hybrid_major = false; *)
-(*       infer_hybrid_states = Array.init n (fun _ -> alloc ()); *)
-(*       infer_hybrid_scores = Array.make n 0.0; } *)
-(*   in *)
-(*   let reset state = *)
-(*     Array.iter reset state.infer_hybrid_states; *)
-(*     Array.fill state.infer_hybrid_scores 0 n 0.0 *)
-(*   in *)
-(*   let step ({  *)
-(*     infer_hybrid_major = major;  *)
-(*     infer_hybrid_states = states;  *)
-(*     infer_hybrid_scores = scores } as state) *)
-(*     (time, input) = *)
-
-(*     state.infer_hybrid_major <- cstate.major; *)
-(*     let values = *)
-(*       Array.mapi *)
-(*         (fun i state -> *)
-(*            let value =  *)
-(*             step state (time, ({ idx = i; scores = scores; }, input))  *)
-(*           in *)
-(*           value) *)
-(*         states *)
-(*     in *)
-(*     let probabilities, ret = Normalize.normalize_nohist values scores in *)
-(*     Normalize.resample copy n probabilities states; *)
-(*     Array.fill scores 0 n 0.0; *)
-(*     ret *)
-(*   in *)
-(*   let copy src dst = *)
-(*     dst.infer_hybrid_major <- src.infer_hybrid_major; *)
-(*     for i = 0 to n - 1 do *)
-(*       copy src.infer_hybrid_states.(i) dst.infer_hybrid_states.(i); *)
-(*       dst.infer_hybrid_scores.(i) <- src.infer_hybrid_scores.(i) *)
-(*     done *)
-(*   in *)
-(*   Cnode { alloc = alloc; reset = reset; copy = copy; step = step } *)
-
-(* let infer_hybrid n m (cstate: Ztypes.cstate) =  *)
-(*   let Cnode { alloc; step; reset; copy; } = m cstate in *)
-(*   let hstep self (prob, (t, x)) = step self (t, (prob, x)) in *)
-(*   infer n (Cnode { alloc; step=hstep; reset; copy; }) *)
-
-let infer_hybrid n m (cstate: Ztypes.cstate) =
+let hybrid_infer n m (cstate: Ztypes.cstate) =
   let Cnode { alloc; step; reset; copy; } = m cstate in
   let hstep self (prob, (t, x)) = step self (t, (prob, x)) in
   let Cnode { alloc; step; reset; copy; } =
@@ -391,7 +351,7 @@ let infer_hybrid n m (cstate: Ztypes.cstate) =
   in
   Cnode { alloc; step = (fun s x -> step s (cstate.major, x)); reset; copy; }
 
-let infer_ess_resample_hybrid n threshold m (cstate: Ztypes.cstate) =
+let hybrid_infer_ess_resample n threshold m (cstate: Ztypes.cstate) =
   let Cnode { alloc; step; reset; copy; } = m cstate in
   let hstep self (prob, (t, x)) = step self (t, (prob, x)) in
   infer_ess_resample n threshold (Cnode { alloc; step=hstep; reset; copy; })
@@ -421,7 +381,7 @@ let gen (Cnode { alloc; reset; copy; step }) =
   in
   Cnode { alloc = alloc; reset = reset; copy = copy; step = step }
 
-let gen_hybrid m (cstate: Ztypes.cstate) = 
+let hybrid_gen m (cstate: Ztypes.cstate) = 
   let Cnode { alloc; step; reset; copy; } = 
     m cstate 
   in

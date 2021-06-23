@@ -63,7 +63,7 @@ let infer_decay n decay (Cnode { alloc; reset; copy; step }) =
 let infer n node =
   infer_decay n 1. node
 
-let infer_hybrid n m (cstate: Ztypes.cstate) = 
+let hybrid_infer n m (cstate: Ztypes.cstate) = 
   let Cnode { alloc; step; reset; copy; } = m cstate in
   let hstep self (prob, (t, x)) = step self (t, (prob, x)) in
   infer n (Cnode { alloc; step=hstep; reset; copy; })
