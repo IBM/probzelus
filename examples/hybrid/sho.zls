@@ -8,14 +8,14 @@ let hybrid sho_sim (theta, y1_0, y2_0) = (y1, y2) where
     rec der y1 = y2 init y1_0
     and der y2 = -. y1 -. theta *. y2 init y2_0
 
-let hybrid sho_noisy (prob, (z, theta, sigma, y1_0, y2_0)) = obs where
+let hybrid sho_noisy (z, theta, sigma, y1_0, y2_0) = obs where
     rec init y1_obs = y1_0
     and init y2_obs = y2_0
     and y1, y2 = sho_sim (theta, y1_0, y2_0)
     and present z -> 
         do emit obs = 
-            (sample' (prob, gaussian (y1, sigma)), 
-             sample' (prob, gaussian (y2, sigma))) done
+            (draw (gaussian (y1, sigma ** 2.)), 
+             draw (gaussian (y2, sigma ** 2.))) done
 
 let hybrid sho_model (prob, (obs, y1_0, y2_0)) = theta, sigma where
     rec init theta = sample' (prob, gaussian (0., 0.5))
@@ -33,15 +33,15 @@ let hybrid main () = () where
     and sigma = 0.1
     and y1_0 = 1.0 
     and y2_0 = 0.0
-    and obs, _ = hybrid_gen sho_noisy (horizon 0.1, theta, sigma, y1_0, y2_0)
+    and obs = sho_noisy (horizon 0.1, theta, sigma, y1_0, y2_0)
     and dist = hybrid_infer 10000 sho_model (obs, y1_0, y2_0)
     and d_theta, d_sigma = split dist
 
     and present obs (_) -> 
         do () = 
-            print_string "theta mean: ";
+            (* print_string "theta mean: "; *)
             print_float (mean_float d_theta);
-            print_string " sigma_mean: ";
+            print_string " ";
             print_float (mean_float d_sigma);
             print_newline () 
         done
@@ -55,4 +55,4 @@ let hybrid main () = () where
         done *)
 
 (* Run with:
-  ./main | feedgnuplot --terminal "qt noraise" --stream 0.05 --domain *)
+  ./main | feedgnuplot --terminal "qt noraise" --stream 0.05 --domain --set 'xrange [-5:5]' --set 'yrange [-5:5]' *)

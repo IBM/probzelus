@@ -12,7 +12,7 @@ let hybrid hmm (prob, obs) = p where
 
 let hybrid hmm (prob, obs) = p where
     rec z = horizon h
-    and h = present (init) | z -> sample' (prob, exponential 2.0) init 0.
+    and h = present (init) | z -> sample' (prob, exponential 1.0) init 0.
     and v = present z -> sample' (prob, gaussian(last v, 0.1)) init 0.0
     and der p = v init 0.
     and present obs(x) -> do () = observe' (prob, (gaussian (p, 0.1), x)) done
@@ -35,7 +35,7 @@ let hybrid main () = () where
       print_string ": mean = "; print_float (mean_float (last d));
       print_newline ()
     done
-  and d = hybrid_infer_subresample 1000 hmm (horizon 0.01, obs)
+  and d = hybrid_infer_subresample 1000 hmm (obs, obs)
   and p_obs, _ = hybrid_gen hmm obs 
   and init p_obs = 0.
 

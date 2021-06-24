@@ -1,0 +1,56 @@
+(* https://mc-stan.org/users/documentation/case-studies/planetary_motion/planetary_motion.html *)
+
+open Probzelus
+open Infer_importance
+open Distribution
+
+let m = 1.0
+let q0x = 1.0
+let q0y =  0.0
+let p0x = 0.0
+let p0y = 1.0
+let sigma = 0.01
+
+let hybrid planet_sim k = qx, qy where
+    rec der qx = px /. m init q0x
+    and der qy = py /. m init q0y
+    and der px = -. k *. qx /. r_cube init p0x
+    and der py = -. k *. qy /. r_cube init p0y
+    and r_cube = (qx ** 2. +. qy ** 2.) ** 1.5
+
+let hybrid planet_noisy (z, k) = obs where
+    rec init qx = q0x
+    and init qy = q0y
+    and qx, qy = planet_sim k
+    and present z -> 
+        do emit obs = 
+            (draw (gaussian (qx, sigma)), 
+             draw (gaussian (qy, sigma))) done
+
+let hybrid planet_model (prob, obs) = k where
+    rec init k = sample' (prob, gaussian (0., 1.))
+    and qx, qy = planet_sim k 
+    and present obs(qx_obs, qy_obs) -> 
+        do  () = observe' (prob, (gaussian (qx, sigma), qx_obs))
+        and () = observe' (prob, (gaussian (qy, sigma), qy_obs)) done
+
+let hybrid horizon h = up t where
+    rec der t = 1.0 init -.h reset up t -> -.h
+
+let hybrid main () = () where
+    rec obs = planet_noisy (horizon 0.1, 1.2)
+    and d = hybrid_infer 10000 planet_model obs
+   
+    (* and present obs (qx, qy) ->
+        do () = 
+            print_float qx; 
+            print_string " "; 
+            print_float qy; 
+            print_newline ()
+        done *)
+
+    and present obs (_) -> 
+        do () = 
+            print_float (mean_float d);
+            print_newline () 
+        done

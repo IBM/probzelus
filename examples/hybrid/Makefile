@@ -16,6 +16,10 @@ sho:
 	probzeluc -deps -s main sho.zls
 	$(OCAMLC) -package probzelus sho.ml main.ml -o main
 
+planet:
+	probzeluc -deps -s main planet.zls
+	$(OCAMLC) -package probzelus planet.ml main.ml -o main
+
 
 clean:
 	rm -rf *.cmo *.cmi *.zci
