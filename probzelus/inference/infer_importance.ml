@@ -68,3 +68,6 @@ let hybrid_infer n m (cstate: Ztypes.cstate) =
   let hstep self (prob, (t, x)) = step self (t, (prob, x)) in
   infer n (Cnode { alloc; step=hstep; reset; copy; })
 
+let hybrid_gen = Infer_pf.hybrid_gen
+
+

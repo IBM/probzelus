@@ -31,3 +31,6 @@ val infer_decay :
 val hybrid_infer :
   int -S-> (prob * 'a -C-> 'b) -S-> 'a -C-> 'b Distribution.t
 
+val hybrid_gen :
+  (prob * 'a -C-> 'b) -S-> 'a -C-> 'b * float
+
