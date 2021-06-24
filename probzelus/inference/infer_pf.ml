@@ -339,7 +339,7 @@ let hybrid_infer_subresample n m (cstate: Ztypes.cstate) =
   in
   Cnode { 
     alloc; 
-    step = (fun s (t, (c, x)) -> step s (c, (t, x))); 
+    step = (fun s (t, ((_, c), x)) -> step s (c, (t, x))); 
     reset; 
     copy; }
 

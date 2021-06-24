@@ -68,7 +68,7 @@ val infer_subresample :
   int -S-> ('a ~D~> 'b) -S-> bool * 'a -D-> 'b Distribution.t
 
 val hybrid_infer_subresample :
-  int -S-> (prob * 'a -C-> 'b) -S-> (zero * 'a) -C-> 'b Distribution.t
+  int -S-> (prob * 'a -C-> 'b) -S-> ('c signal * 'a) -C-> 'b Distribution.t
 
 val hybrid_infer :
   int -S-> (prob * 'a -C-> 'b) -S-> 'a -C-> 'b Distribution.t
