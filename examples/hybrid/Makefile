@@ -12,8 +12,9 @@ ball: ball.zls
 	probzeluc -deps -s main ball.zls
 	$(OCAMLC) -package probzelus ball.ml main.ml -o main
 
-tqdm: mytqdm.ml
-	$(OCAMLC) -package tqdm mytqdm.ml -o tqdm
+sho: 
+	probzeluc -deps -s main sho.zls
+	$(OCAMLC) -package probzelus sho.ml main.ml -o main
 
 
 clean:
