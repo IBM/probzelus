@@ -50,3 +50,6 @@ let hybrid main () = () where
     (* and () = print_float h_obs; print_newline () done *)
   and h_obs = ball 9.8
   and d_phi = hybrid_infer 1000 ball_pos obs
+
+(* Run with:
+  ./main | feedgnuplot --terminal "qt noraise" --stream 0.05 *)
