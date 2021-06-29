@@ -9,7 +9,7 @@ let q0x = 1.0
 let q0y =  0.0
 let p0x = 0.0
 let p0y = 1.0
-let sigma = 0.01
+let sigma = 0.1
 
 let hybrid planet_sim k = qx, qy where
     rec der qx = px /. m init q0x
@@ -49,8 +49,19 @@ let hybrid main () = () where
             print_newline ()
         done *)
 
+    and der t = 1.0 init 0.0
     and present obs (_) -> 
-        do () = 
-            print_float (mean_float d);
+        local m, v in
+        do m, v = stats_float d 
+        and () = 
+            print_float t;
+            print_string " ";
+            print_float m;
+            print_string " ";
+            print_float v;
             print_newline () 
         done
+
+(* Run with 
+./main | feedgnuplot --terminal "qt noraise" --stream 0.05 --domain --tuplesizeall 3 --with "errorbars"
+*)
