@@ -97,6 +97,8 @@ module rec Distribution_rec: DISTRIBUTION = struct
           a
     | Dist_gaussian (mean, sigma2) ->
         Format.fprintf ppf "gaussian (%f, %f)" mean sigma2
+    | Dist_lognormal (mean, sigma) ->
+        Format.fprintf ppf "lognormal (%f, %f)" mean sigma
     | Dist_beta (a, b) ->
         Format.fprintf ppf "beta (%f, %f)" a b
     | Dist_bernoulli p ->
@@ -262,6 +264,25 @@ module rec Distribution_rec: DISTRIBUTION = struct
 
   let gaussian (mu, sigma2) =
     Dist_gaussian (mu, sigma2)
+
+  let normal (mu, sigma) = 
+    Dist_gaussian (mu, sigma ** 2.)
+
+  let lognormal_draw mu sigma = 
+    let y = gaussian_draw mu (sigma ** 2.) in
+    exp y
+
+  let lognormal_score mu sigma x = 
+    gaussian_score mu (sigma ** 2.) (log x)
+
+  let lognormal_mean mu sigma = 
+    exp (mu +. sigma ** 2. /. 2.)
+
+  let lognormal_variance mu sigma = 
+    (exp sigma ** 2. -. 1.) *. exp (2. *. mu +. sigma ** 2.)
+
+  let lognormal (mu, sigma) = 
+    Dist_lognormal (mu, sigma)
 
   (** [mv_gaussian(mu, sigma)] is a multivariate normal distribution of
       mean [mu] and standard deviation [sigma].
@@ -626,6 +647,7 @@ module rec Distribution_rec: DISTRIBUTION = struct
     | (Dist_sampler_float _, _) | (_, Dist_sampler_float _)
     | (Dist_mixture _, _) | (_, Dist_mixture _)
     | (Dist_gaussian (_, _), _) | (_, Dist_gaussian (_, _))
+    | (Dist_lognormal (_, _), _) | (_, Dist_lognormal (_, _))
     | (Dist_beta (_, _), _) | (_, Dist_beta (_, _))
     | (Dist_uniform_float (_, _), _) | (_, Dist_uniform_float (_, _))
     | (Dist_exponential _, _) | (_, Dist_exponential _)
@@ -650,6 +672,7 @@ module rec Distribution_rec: DISTRIBUTION = struct
     | (Dist_sampler_float _, _) | (_, Dist_sampler_float _)
     | (Dist_mixture _, _) | (_, Dist_mixture _)
     | (Dist_gaussian (_, _), _) | (_, Dist_gaussian (_, _))
+    | (Dist_lognormal (_, _), _) | (_, Dist_lognormal (_, _))
     | (Dist_beta (_, _), _) | (_, Dist_beta (_, _))
     | (Dist_uniform_float (_, _), _) | (_, Dist_uniform_float (_, _))
     | (Dist_exponential _, _) | (_, Dist_exponential _)
@@ -681,6 +704,7 @@ module rec Distribution_rec: DISTRIBUTION = struct
     | Dist_list _ -> assert false (* XXX TODO XXX *)
     | Dist_array _ -> assert false (* XXX TODO XXX *)
     | Dist_gaussian (_, _) -> assert false
+    | Dist_lognormal (_, _) -> assert false
     | Dist_mv_gaussian (_, _, _) -> assert false
     | Dist_beta (_, _) -> assert false
     | Dist_bernoulli p ->
@@ -735,6 +759,7 @@ module rec Distribution_rec: DISTRIBUTION = struct
             let d' = draw (Dist_support l) in
             draw d'
         | Dist_gaussian (mu, sigma2) -> gaussian_draw mu sigma2
+        | Dist_lognormal (mu, sigma) -> lognormal_draw mu sigma
         | Dist_mv_gaussian (mu, sigma, ext) ->
             begin match ext with
             | Some { mvg_draw_cache = a; _ } ->
@@ -821,6 +846,7 @@ module rec Distribution_rec: DISTRIBUTION = struct
         in
         log p
     | Dist_gaussian (mu, sigma2) -> gaussian_score mu sigma2 x
+    | Dist_lognormal (mu, sigma) -> lognormal_score mu sigma x
     | Dist_mv_gaussian (mu, sigma, Some { mvg_inv_sigma = sig_inv;
                                           mvg_det_sigma = sig_det; _ }) ->
         mv_gaussian_score' mu sigma sig_inv sig_det x
@@ -912,6 +938,9 @@ module rec Distribution_rec: DISTRIBUTION = struct
         let x = draw dist in
         (x, score (dist, x))
     | Dist_gaussian _ ->
+        let x = draw dist in
+        (x, score (dist, x))
+    | Dist_lognormal _ ->
         let x = draw dist in
         (x, score (dist, x))
     | Dist_mv_gaussian _ ->
@@ -1396,6 +1425,8 @@ module rec Distribution_rec: DISTRIBUTION = struct
         stats ()
     | Dist_gaussian (mu, sigma2) ->
         (gaussian_mean mu sigma2, gaussian_variance mu sigma2)
+    | Dist_lognormal (mu, sigma) ->
+        (lognormal_mean mu sigma, lognormal_variance mu sigma)
     | Dist_beta (a, b) ->
         (beta_mean a b, beta_variance a b)
     | Dist_uniform_float (a, b) ->
@@ -1477,6 +1508,7 @@ module rec Distribution_rec: DISTRIBUTION = struct
     | Dist_support sup ->
         List.fold_left (fun acc (v, w) -> acc +. v *. w) 0. sup
     | Dist_gaussian (a, b) -> gaussian_mean a b
+    | Dist_lognormal (a, b) -> lognormal_mean a b
     | Dist_beta (a, b) -> beta_mean a b
     | Dist_uniform_float (a, b) -> uniform_float_mean a b
     | Dist_exponential a -> exponential_mean a
@@ -1542,6 +1574,8 @@ module rec Distribution_rec: DISTRIBUTION = struct
       | Dist_sampler_float (draw, _ , _) -> sample_mean meanfn draw
       | Dist_gaussian (mu, sigma2) ->
           sample_mean meanfn (fun () -> gaussian_draw mu sigma2)
+      | Dist_lognormal (mu, sigma) ->
+          sample_mean meanfn (fun () -> lognormal_draw mu sigma)
       | Dist_mv_gaussian (mu, sigma, _) ->
           sample_mean meanfn (fun () -> mv_gaussian_draw mu sigma)
       | Dist_beta (a, b) -> beta_draw a b
@@ -1734,6 +1768,7 @@ module rec Distribution_rec: DISTRIBUTION = struct
     | Dist_list _ -> assert false
     | Dist_array _ -> assert false
     | Dist_gaussian _ -> assert false
+    | Dist_lognormal _ -> assert false
     | Dist_beta _ -> assert false
     | Dist_bernoulli _ -> assert false
     | Dist_uniform_int _ -> assert false
@@ -1779,6 +1814,7 @@ module rec Distribution_rec: DISTRIBUTION = struct
     | Dist_list _ -> to_sampler dist
     | Dist_array _ -> to_sampler dist
     | Dist_gaussian (_, _) -> to_sampler dist
+    | Dist_lognormal (_, _) -> to_sampler dist
     | Dist_mv_gaussian (_, _, _) -> to_sampler dist
     | Dist_beta (_, _) -> to_sampler dist
     | Dist_bernoulli _ -> to_sampler dist
