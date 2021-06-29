@@ -23,4 +23,4 @@ planet:
 
 clean:
 	rm -rf *.cmo *.cmi *.zci
-	rm -rf walker.ml hmm.ml ball.ml main.ml main tqdm
+	rm -rf walker.ml hmm.ml ball.ml planet.ml lotka-volterra.ml main.ml main
