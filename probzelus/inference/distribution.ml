@@ -273,7 +273,8 @@ module rec Distribution_rec: DISTRIBUTION = struct
     exp y
 
   let lognormal_score mu sigma x = 
-    gaussian_score mu (sigma ** 2.) (log x)
+    let s = gaussian_score mu (sigma ** 2.) (log x) in
+    s -. log x
 
   let lognormal_mean mu sigma = 
     exp (mu +. sigma ** 2. /. 2.)
