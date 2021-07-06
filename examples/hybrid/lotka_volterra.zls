@@ -1,0 +1,65 @@
+(* https://mc-stan.org/users/documentation/case-studies/lotka-volterra-predator-prey.html 
+
+# Data from http://www.math.tamu.edu/~phoward/m442/modbasics.pdf
+# Downloaded 15 October 2017, 4:59 PM EDT
+Format: Year, Lynx, Hare
+*)
+
+open Probzelus
+open Distribution
+open Infer_pf
+
+let u0 = 34.
+let v0 = 6.
+let sigma = 0.01
+
+
+let node get_data () = year, lynx, hare where
+    rec data = String.split_on_char ',' (read_line ())
+    and year = int_of_string (List.nth data 0)
+    and lynx = float_of_string (List.nth data 1) 
+    and hare = float_of_string (List.nth data 2) 
+
+let hybrid lotka_volterra (alpha, beta, gamma, delta) = u, v where
+    rec der u = (alpha -. beta *. v) *. u init u0
+    and der v = (-. gamma +. delta *. u) *. v init v0
+
+let hybrid lv_model (prob, obs) = [alpha; beta; gamma; delta] where
+    rec init alpha = sample' (prob, normal (1., 0.5))
+    and init beta  = sample' (prob, normal (0.05, 0.05))
+    and init gamma = sample' (prob, normal (1., 0.5))
+    and init delta = sample' (prob, normal (0.05, 0.05))
+    and zu, zv = lotka_volterra (alpha, beta, gamma, delta)
+    and present obs(yu, yv) -> 
+        do  () = observe' (prob, (lognormal(log zu, sigma), yu))
+        and () = observe' (prob, (lognormal(log zv, sigma), yv)) 
+        done
+
+
+let hybrid horizon h = up t where
+    rec der t = 1.0 init -.h reset up t -> -.h
+
+let hybrid main () = () where
+    rec present (horizon 1.0) ->
+        local lynx, hare 
+        do _, lynx, hare = get_data ()
+        and emit obs = lynx, hare 
+        done
+    and d = split_list (hybrid_infer 5 lv_model obs)
+
+    and present (horizon 1.0) ->
+        do () = 
+            print_string " alpha ";
+            print_float (mean_float (List.nth d 0));
+            print_string " beta ";
+            print_float (mean_float (List.nth d 1)); 
+            print_string " gamma ";
+            print_float (mean_float (List.nth d 2)); 
+            print_string " delta ";
+            print_float (mean_float (List.nth d 3)); 
+            print_newline ()
+        done
+
+(* Run with:
+    cat hudson-bay-lynx-hare.csv |  ./lotka_volterra_main.exe
+*)
