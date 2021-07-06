@@ -55,4 +55,4 @@ let hybrid main () = () where
         done *)
 
 (* Run with:
-  ./main | feedgnuplot --terminal "qt noraise" --stream 0.05 --domain --set 'xrange [-5:5]' --set 'yrange [-5:5]' *)
+  ./sho_main.exe | feedgnuplot --stream 0.05 --domain --set 'xrange [-5:5]' --set 'yrange [-5:5]' *)

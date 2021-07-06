@@ -52,4 +52,4 @@ let hybrid main () = () where
   (* and d_phi = hybrid_infer 1000 ball_pos obs *)
 
 (* Run with:
-  ./main | feedgnuplot --terminal "qt noraise" --stream 0.05 *)
+  ./ball_main.exe | feedgnuplot --stream 0.05 *)

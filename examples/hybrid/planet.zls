@@ -40,16 +40,24 @@ let hybrid horizon h = up t where
 let hybrid main () = () where
     rec obs = planet_noisy (horizon 0.1, 1.2)
     and d = hybrid_infer 10000 planet_model obs
+    and m, v = stats_float d
+    and sx, sy = planet_sim 1.2
    
-    (* and present obs (qx, qy) ->
+    and present obs (qx, qy) ->
         do () = 
+            print_string " obs ";
             print_float qx; 
             print_string " "; 
-            print_float qy; 
+            print_float qy;
+            print_string " ";
+            print_string " sim ";
+            print_float sx; 
+            print_string " "; 
+            print_float sy; 
             print_newline ()
-        done *)
+        done
 
-    and der t = 1.0 init 0.0
+    (* and der t = 1.0 init 0.0
     and present obs (_) -> 
         local m, v in
         do m, v = stats_float d 
@@ -60,8 +68,13 @@ let hybrid main () = () where
             print_string " ";
             print_float v;
             print_newline () 
-        done
+        done *)
 
 (* Run with 
-./main | feedgnuplot --terminal "qt noraise" --stream 0.05 --domain --tuplesizeall 3 --with "errorbars"
+./planet_main.exe | feedgnuplot --stream 0.05 --domain --tuplesizeall 3 --with "errorbars"
+
+or
+
+feedgnuplot --stream 0.05 --tuplesizeall 3 --dataid --using sim '2:3' --using obs '2:3'
+
 *)

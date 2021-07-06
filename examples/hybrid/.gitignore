@@ -1,4 +1,4 @@
-walker_cont.ml
-main.ml
+*.ml
 *.cmo
 *.cmi
+*.exe
