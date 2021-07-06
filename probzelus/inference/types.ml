@@ -173,6 +173,7 @@ module type DISTRIBUTION = sig
   val gaussian_mean : 'a -> 'b -> 'a
   val gaussian_variance : 'a -> 'b -> 'b
   val gaussian : float * float -> float t
+  val normal : float * float -> float t
   val lognormal_draw : float -> float -> float
   val lognormal_score : float -> float -> float -> float
   val lognormal_mean : float -> float -> float
