@@ -25,6 +25,7 @@ type prob = pstate
 let sample = Infer_pf.sample
 let sample' = Infer_pf.sample'
 let factor = Infer_pf.factor
+let factor' = Infer_pf.factor'
 let observe = Infer_pf.observe
 let observe' = Infer_pf.observe'
 
