@@ -4,9 +4,9 @@ open Distribution
 
 
 let h0 = 10.
-let phi = 0.85
+let phi = 1.0
 
-let hybrid ball g = h where 
+let hybrid ball g = h, up(-. h) where 
     rec der v = -. g init 0. reset up (-. h) -> -. phi *. (last v)
     and der h = v init h0
 
@@ -30,26 +30,31 @@ let hybrid ball_pos (prob, obs) = g where
         do () = observe' (prob, (gaussian (d, 0.1), last d_obs)) done *)
 
 
-(* let hybrid ball_bounce (prob, obs) = g where
+let hybrid ball_bounce (prob, obs) = g where
     rec z = up (-.h)
     and der v = -. g init 0. reset z -> -. phi *. (last v)
     and der h = v init h0
-    and init g = sample' (prob, uniform_float (5., 15.))
+    and init g = sample' (prob, uniform_float (0., 15.))
     and d = present z -> last d + 1 init 0
     and n = present obs(_) -> last n + 1 init  0
-    and present obs(_) -> 
-        do () = observe' (prob, (gaussian (float d, 1.), float n)) done *)
+    and present obs(_) ->  
+        (* do () = if n = d then factor' (prob, 0.) else factor' (prob, -.2.) done *)
+        do () = observe' (prob, (gaussian (float d, 2.), float n)) done
+
 
 let hybrid horizon h = up t where
     rec der t = 1.0 init -.h reset up t -> -.h
 
 let hybrid main () = () where
-  rec present (horizon 0.05) -> 
+  rec present z -> 
+    do emit obs = ()
+    and () = print_float (mean_float (last d_phi)); print_newline () done
+  (* rec present (horizon 0.05) -> 
     do emit obs = h_obs 
-    (* and () = print_float (mean_float (last d_phi)); print_newline () done *)
-    and () = print_float h_obs; print_newline () done
-  and h_obs = ball 9.8
-  (* and d_phi = hybrid_infer 1000 ball_pos obs *)
+    and () = print_float_t ((last d_phi)); print_newline () done *)
+    (* and () = print_float h_obs; print_newline () done *)
+  and h_obs, z = ball 9.8
+  and d_phi = hybrid_infer 100 ball_bounce obs
 
 (* Run with:
   ./ball_main.exe | feedgnuplot --stream 0.05 *)
