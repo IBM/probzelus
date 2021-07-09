@@ -5,9 +5,11 @@
 Format: Year, Lynx, Hare
 *)
 
+
 open Probzelus
 open Distribution
-open Infer_pf
+open Infer_importance
+open Basics
 
 let u0 = 34.
 let v0 = 6.
@@ -24,40 +26,41 @@ let hybrid lotka_volterra (alpha, beta, gamma, delta) = u, v where
     rec der u = (alpha -. beta *. v) *. u init u0
     and der v = (-. gamma +. delta *. u) *. v init v0
 
+
 let hybrid lv_model (prob, obs) = [alpha; beta; gamma; delta] where
-    rec init alpha = sample' (prob, normal (1., 0.5))
-    and init beta  = sample' (prob, normal (0.05, 0.05))
-    and init gamma = sample' (prob, normal (1., 0.5))
-    and init delta = sample' (prob, normal (0.05, 0.05))
+    rec init alpha = abs_float (sample' (prob, normal (1., 0.5)))
+    and init beta  = abs_float (sample' (prob, normal (0.05, 0.05)))
+    and init gamma = abs_float (sample' (prob, normal (1., 0.5)))
+    and init delta = abs_float (sample' (prob, normal (0.05, 0.05)))
     and zu, zv = lotka_volterra (alpha, beta, gamma, delta)
     and present obs(yu, yv) -> 
         do  () = observe' (prob, (lognormal(log zu, sigma), yu))
         and () = observe' (prob, (lognormal(log zv, sigma), yv)) 
         done
 
-
 let hybrid horizon h = up t where
     rec der t = 1.0 init -.h reset up t -> -.h
 
+let fmt_data year lynx hare = lynx, hare 
+
 let hybrid main () = () where
-    rec present (horizon 1.0) ->
+    rec z = period (1.0)
+
+    and present z ->
         local lynx, hare 
-        do _, lynx, hare = get_data ()
+        do lynx, hare = Scanf.scanf "%d, %f, %f\n" <| fmt_data
         and emit obs = lynx, hare 
         done
-    and d = split_list (hybrid_infer 5 lv_model obs)
+    and d = split_list (hybrid_infer 10000 lv_model obs)
 
+    
     and present (horizon 1.0) ->
         do () = 
-            print_string " alpha ";
-            print_float (mean_float (List.nth d 0));
-            print_string " beta ";
-            print_float (mean_float (List.nth d 1)); 
-            print_string " gamma ";
-            print_float (mean_float (List.nth d 2)); 
-            print_string " delta ";
-            print_float (mean_float (List.nth d 3)); 
-            print_newline ()
+            Format.printf "alpha: %f beta: %f gamma: %f delta %f@." 
+                <| (mean_float (List.nth d 0)) 
+                <| (mean_float (List.nth d 1)) 
+                <| (mean_float (List.nth d 2)) 
+                <| (mean_float (List.nth d 3))
         done
 
 (* Run with:
