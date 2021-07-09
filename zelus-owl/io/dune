@@ -1,0 +1,13 @@
+(rule
+ (deps (:zli format.zli scanf.zli zelus_io.zli))
+ (targets format.zci scanf.zci zelus_io.zci)
+ (action (bash "zeluc %{zli}")))
+
+(library
+ (name zelus_io)
+ (public_name zelus-io))
+
+(install
+ (package zelus-io)
+ (section share)
+ (files format.zci scanf.zci zelus_io.zci))

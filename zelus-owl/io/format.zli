@@ -1,0 +1,4 @@
+val fprintf : 'a -AD-> 'b
+val printf : 'a -AD-> 'b
+val eprintf : 'a -AD-> 'b
+val sprintf : 'a -AD-> 'b

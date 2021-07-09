@@ -1,0 +1,4 @@
+val bscanf : 'a -AD-> 'b
+val fscanf : 'a -AD-> 'b
+val sscanf : 'a -AD-> 'b
+val scanf : 'a -AD-> 'b
