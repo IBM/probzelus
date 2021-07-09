@@ -1,7 +1,7 @@
-OCAMLC = ocamlfind ocamlc -linkpkg -package probzelus
+OCAMLC = ocamlfind ocamlc -linkpkg -package probzelus -package zelus-io
 
 %_main.exe: %.zls
-	probzeluc -deps -noreduce -s main $<
+	probzeluc -I `zeluc -where`-io -deps -noreduce -s main $<
 	$(OCAMLC) $(<:.zls=.ml) main.ml -o $@
 
 clean:

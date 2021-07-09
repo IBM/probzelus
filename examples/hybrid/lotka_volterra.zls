@@ -9,7 +9,7 @@ Format: Year, Lynx, Hare
 open Probzelus
 open Distribution
 open Infer_importance
-open Basics
+open Zelus_io
 
 let u0 = 34.
 let v0 = 6.
@@ -51,7 +51,7 @@ let hybrid main () = () where
         do lynx, hare = Scanf.scanf "%d, %f, %f\n" <| fmt_data
         and emit obs = lynx, hare 
         done
-    and d = split_list (hybrid_infer 10000 lv_model obs)
+    and d = split_list (hybrid_infer 10 lv_model obs)
 
     
     and present (horizon 1.0) ->
