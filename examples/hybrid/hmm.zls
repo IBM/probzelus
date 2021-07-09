@@ -1,6 +1,7 @@
 open Probzelus
 open Infer_pf
 open Distribution
+open Basics
 
 let hybrid horizon h = up t where
     rec der t = 1.0 init -.h reset up t -> -.h
@@ -31,9 +32,8 @@ let hybrid main () = () where
   rec present (horizon 0.01) -> 
     do emit obs = last p_obs
     and () = 
-      print_string " obs = "; print_float (last p_obs);
-      print_string ": mean = "; print_float (mean_float (last d));
-      print_newline ()
+      Format.printf "obs = %f mean = %f@."
+        <| last p_obs <| mean_float (last d)
     done
   and d = hybrid_infer_subresample 1000 hmm (obs, obs)
   and p_obs, _ = hybrid_gen hmm obs 

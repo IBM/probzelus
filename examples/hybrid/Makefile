@@ -1,7 +1,7 @@
 OCAMLC = ocamlfind ocamlc -linkpkg -package probzelus
 
 %_main.exe: %.zls
-	probzeluc -deps -s main $<
+	probzeluc -deps -noreduce -s main $<
 	$(OCAMLC) $(<:.zls=.ml) main.ml -o $@
 
 clean:

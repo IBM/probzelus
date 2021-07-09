@@ -1,6 +1,7 @@
 open Probzelus
 open Infer_importance
 open Distribution
+open Basics
 
 
 let h0 = 10.
@@ -42,17 +43,13 @@ let hybrid ball_bounce (prob, obs) = g where
         do () = observe' (prob, (gaussian (float d, 2.), float n)) done
 
 
-let hybrid horizon h = up t where
-    rec der t = 1.0 init -.h reset up t -> -.h
-
 let hybrid main () = () where
   rec present z -> 
     do emit obs = ()
-    and () = print_float (mean_float (last d_phi)); print_newline () done
-  (* rec present (horizon 0.05) -> 
+    and () = Format.printf "%f@." <| mean_float (last d_phi) done
+  (* rec present (period (0.05)) -> 
     do emit obs = h_obs 
-    and () = print_float_t ((last d_phi)); print_newline () done *)
-    (* and () = print_float h_obs; print_newline () done *)
+    and () = Format.printf "%f@." <| h_obs done *)
   and h_obs, z = ball 9.8
   and d_phi = hybrid_infer 100 ball_bounce obs
 

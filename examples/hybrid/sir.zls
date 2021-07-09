@@ -1,0 +1,5 @@
+(* https://mc-stan.org/users/documentation/case-studies/boarding_school_case_study.html *)
+
+open Probzelus
+open Distribution
+

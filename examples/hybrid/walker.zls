@@ -1,6 +1,7 @@
 open Probzelus
 open Infer_pf
 open Distribution
+open Basics
 
 type motion_type = Stationary | Walking | Running
 
@@ -53,20 +54,19 @@ let hybrid walker (prob, obs) = (px, py) where
           and () = observe' (prob, (gaussian(py, 0.1), y)) done
 
 let hybrid main () = () where
-  rec present (init) | (horizon 10.) -> 
-    local xm, ym in
-    do emit obs = (last x, last y)
-    and xm = mean_float (last xd)
-    and ym = mean_float (last yd)
-    and () = 
-      print_float t; 
-      print_string ": mean = ("; 
-      print_float xm;  print_string ", "; print_float ym;
-      print_string "), obs = (";
-      print_float (last x);  print_string ", "; print_float (last y);
-      print_endline ")"
-    done
-  and der t = 1.0 init 0.
-  and (x, y), _ = gen_hybrid walker obs
-  and d = infer_hybrid 300 walker obs 
+  rec z = horizon 1.
+  and present (init) | z ->
+    do emit obs = last x, last y done
+  and (x, y), _ = hybrid_gen walker obs
+  and init x = 0. and init y = 0.
+  and d = hybrid_infer 300 walker obs 
   and xd, yd = split d 
+
+  and der t = 1.0 init 0.
+  and present z -> 
+    do () = 
+      Format.printf "%f mean = (%f, %f) obs = (%f, %f)@."
+        <| t <| mean_float xd <| mean_float yd <| last x <| last y
+    done
+
+  

@@ -3,6 +3,7 @@
 open Probzelus
 open Infer_importance
 open Distribution
+open Basics
 
 let hybrid sho_sim (theta, y1_0, y2_0) = (y1, y2) where
     rec der y1 = y2 init y1_0
@@ -37,22 +38,16 @@ let hybrid main () = () where
     and dist = hybrid_infer 10000 sho_model (obs, y1_0, y2_0)
     and d_theta, d_sigma = split dist
 
-    and present obs (_) -> 
+    (* and present obs (_) -> 
         do () = 
-            (* print_string "theta mean: "; *)
-            print_float (mean_float d_theta);
-            print_string " ";
-            print_float (mean_float d_sigma);
-            print_newline () 
-        done
-
-    (* and present obs (y1, y2) ->
-        do () = 
-            print_float y1; 
-            print_string " "; 
-            print_float y2; 
-            print_newline ()
+            Format.printf "%f %f@." 
+                <| (mean_float d_theta) <| (mean_float d_sigma)
         done *)
+
+    and present obs (y1, y2) ->
+        do () = 
+            Format.printf "%f %f@." <| y1 <| y2
+        done
 
 (* Run with:
   ./sho_main.exe | feedgnuplot --stream 0.05 --domain --set 'xrange [-5:5]' --set 'yrange [-5:5]' *)
