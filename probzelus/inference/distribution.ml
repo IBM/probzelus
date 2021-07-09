@@ -125,9 +125,84 @@ module rec Distribution_rec: DISTRIBUTION = struct
         Format.fprintf ppf "mv_gaussian (%a, %a)"
           pp_print_any mu
           pp_print_any sigma
-    | Dist_joint _ ->
-        (* XXX TODO XXX *)
-        Format.fprintf ppf "joint distribution"
+    | Dist_joint j ->
+        pp_print_joint pp_v ppf j
+    end
+
+  and pp_print_joint :
+    type a. (Format.formatter -> a -> unit) -> Format.formatter -> a joint_distr -> unit =
+    fun pp_v ppf dist ->
+    begin match dist with
+    | JDist_const x ->
+        pp_v ppf x
+    | JDist_rvar (RV x) ->
+        Format.fprintf ppf "$rv_%d" x.ds_graph_node_id
+    | JDist_add (d1, d2) ->
+        Format.fprintf ppf "(%a +. %a)"
+          (pp_print_joint pp_v) d1
+          (pp_print_joint pp_v) d2
+    | JDist_mult (d1, d2) ->
+        Format.fprintf ppf "(%a *. %a)"
+          (pp_print_joint pp_v) d1
+          (pp_print_joint pp_v) d2
+    | JDist_app (d1, d2) ->
+        Format.fprintf ppf "JDist_app(%a, %a)"
+          (pp_print_joint pp_print_any) d1
+          (pp_print_joint pp_print_any) d2
+    | JDist_pair (d1, d2) ->
+        Format.fprintf ppf "JDist_pair(%a, %a)"
+          (pp_print_joint pp_print_any) d1
+          (pp_print_joint pp_print_any) d2
+    | JDist_list l ->
+        Format.fprintf ppf "[ @[%a@] ]"
+          (Format.pp_print_list
+             ~pp_sep:(fun ppf () -> Format.fprintf ppf ",@ ")
+             (fun ppf d ->
+                Format.fprintf ppf "%a" (pp_print_joint pp_print_any) d))
+          l
+    | JDist_array a ->
+        Format.fprintf ppf "[| @[%a@] |]"
+          (pp_print_array
+             ~pp_sep:(fun ppf () -> Format.fprintf ppf ",@ ")
+             (fun ppf d ->
+                Format.fprintf ppf "%a" (pp_print_joint pp_print_any) d))
+          a
+    | JDist_ite (i,t,e) ->
+        Format.fprintf ppf "(if %a then %a else %a)"
+          (pp_print_joint (fun ppf v -> Format.fprintf ppf "%B" v)) i
+          (pp_print_joint pp_v) t
+          (pp_print_joint pp_v) e
+    | JDist_matrix m ->
+        let pp_line ppf a =
+          Format.fprintf ppf "[| @[%a@] |]"
+            (pp_print_array
+               ~pp_sep:(fun ppf () -> Format.fprintf ppf ",@ ")
+               (fun ppf d ->
+                 Format.fprintf ppf "%a" (pp_print_joint pp_print_any) d))
+            a
+        in
+        Format.fprintf ppf "[| @[%a@] |]"
+          (pp_print_array
+             ~pp_sep:(fun ppf () -> Format.fprintf ppf ",@ ")
+             (fun ppf a ->
+               Format.fprintf ppf "%a" pp_line a))
+          m
+    | JDist_mat_add (e1, e2) ->
+        Format.fprintf ppf "(%a +@~ %a)"
+          (pp_print_joint pp_v) e1
+          (pp_print_joint pp_v) e2
+    | JDist_mat_scalar_mul (e1, e2) ->
+        Format.fprintf ppf "(%a $*~ %a)"
+          (pp_print_joint Format.pp_print_float) e1
+          (pp_print_joint pp_v) e2
+    | JDist_mat_dot (e1, e2) ->
+        Format.fprintf ppf "(%a *@~ %a)"
+          (pp_print_joint pp_v) e1
+          (pp_print_joint pp_v) e2
+    | JDist_vec_get (m, i) ->
+        Format.fprintf ppf "vec_get(%a, %d)"
+          (pp_print_joint pp_print_any) m
+          i
     end
 
   let print_any_t : type a. a t -> unit =
