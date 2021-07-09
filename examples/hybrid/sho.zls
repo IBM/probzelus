@@ -3,7 +3,7 @@
 open Probzelus
 open Infer_importance
 open Distribution
-open Basics
+open Zelus_io
 
 let hybrid sho_sim (theta, y1_0, y2_0) = (y1, y2) where
     rec der y1 = y2 init y1_0

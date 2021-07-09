@@ -1,7 +1,7 @@
 open Probzelus
 open Infer_pf
 open Distribution
-open Basics
+open Zelus_io
 
 let hybrid horizon h = up t where
     rec der t = 1.0 init -.h reset up t -> -.h

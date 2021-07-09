@@ -1,7 +1,7 @@
 open Probzelus
 open Infer_importance
 open Distribution
-open Basics
+open Zelus_io
 
 
 let h0 = 10.

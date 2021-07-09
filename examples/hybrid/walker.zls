@@ -1,7 +1,7 @@
 open Probzelus
 open Infer_pf
 open Distribution
-open Basics
+open Zelus_io
 
 type motion_type = Stationary | Walking | Running
 

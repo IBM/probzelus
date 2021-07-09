@@ -3,7 +3,7 @@
 open Probzelus
 open Infer_importance
 open Distribution
-open Basics
+open Zelus_io
 
 let m = 1.0
 let q0x = 1.0
