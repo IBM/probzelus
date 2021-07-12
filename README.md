@@ -21,7 +21,7 @@ You first need to install [openblas](https://www.openblas.net/).
 
 Then pin the packages defined in this repo to add them to opam.
 ```
-opam pin -k path -n zelus-libs
+opam pin -k path -n zelus-owl
 opam pin -k path -n probzelus
 ```
 
