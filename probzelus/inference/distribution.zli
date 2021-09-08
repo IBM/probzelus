@@ -71,6 +71,13 @@ val gaussian_score : float -> float -> float -> float
 val gaussian_mean : 'a -> 'b -> 'a
 val gaussian_variance : 'a -> float -> float
 val gaussian : float * float -> float t
+val normal : float * float -> float t
+
+val lognormal_draw : float -> float -> float
+val lognormal_score : float -> float -> float -> float
+val lognormal_mean : 'a -> 'b -> 'a
+val lognormal_variance : 'a -> float -> float
+val lognormal : float * float -> float t
 
 val mv_gaussian : Mat.mat * Mat.mat -> Mat.mat t
 val mv_gaussian_curried : Mat.mat -S-> Mat.mat -> Mat.mat t

@@ -1,0 +1,68 @@
+(* https://mc-stan.org/users/documentation/case-studies/lotka-volterra-predator-prey.html 
+
+# Data from http://www.math.tamu.edu/~phoward/m442/modbasics.pdf
+# Downloaded 15 October 2017, 4:59 PM EDT
+Format: Year, Lynx, Hare
+*)
+
+
+open Probzelus
+open Distribution
+open Infer_importance
+open Zelus_io
+
+let u0 = 34.
+let v0 = 6.
+let sigma = 0.01
+
+
+let node get_data () = year, lynx, hare where
+    rec data = String.split_on_char ',' (read_line ())
+    and year = int_of_string (List.nth data 0)
+    and lynx = float_of_string (List.nth data 1) 
+    and hare = float_of_string (List.nth data 2) 
+
+let hybrid lotka_volterra (alpha, beta, gamma, delta) = u, v where
+    rec der u = (alpha -. beta *. v) *. u init u0
+    and der v = (-. gamma +. delta *. u) *. v init v0
+
+
+let hybrid lv_model (prob, obs) = [alpha; beta; gamma; delta] where
+    rec init alpha = abs_float (sample' (prob, normal (1., 0.5)))
+    and init beta  = abs_float (sample' (prob, normal (0.05, 0.05)))
+    and init gamma = abs_float (sample' (prob, normal (1., 0.5)))
+    and init delta = abs_float (sample' (prob, normal (0.05, 0.05)))
+    and zu, zv = lotka_volterra (alpha, beta, gamma, delta)
+    and present obs(yu, yv) -> 
+        do  () = observe' (prob, (lognormal(log zu, sigma), yu))
+        and () = observe' (prob, (lognormal(log zv, sigma), yv)) 
+        done
+
+let hybrid horizon h = up t where
+    rec der t = 1.0 init -.h reset up t -> -.h
+
+let fmt_data year lynx hare = lynx, hare 
+
+let hybrid main () = () where
+    rec z = period (1.0)
+
+    and present z ->
+        local lynx, hare 
+        do lynx, hare = Scanf.scanf "%d, %f, %f\n" <| fmt_data
+        and emit obs = lynx, hare 
+        done
+    and d = split_list (hybrid_infer 10 lv_model obs)
+
+    
+    and present (horizon 1.0) ->
+        do () = 
+            Format.printf "alpha: %f beta: %f gamma: %f delta %f@." 
+                <| (mean_float (List.nth d 0)) 
+                <| (mean_float (List.nth d 1)) 
+                <| (mean_float (List.nth d 2)) 
+                <| (mean_float (List.nth d 3))
+        done
+
+(* Run with:
+    cat hudson-bay-lynx-hare.csv |  ./lotka_volterra_main.exe
+*)

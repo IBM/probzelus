@@ -44,6 +44,7 @@ type _ distr =
   | Dist_list : 'a distr list -> 'a list distr
   | Dist_array : 'a distr array -> 'a array distr
   | Dist_gaussian : float * float -> float distr
+  | Dist_lognormal : float * float -> float distr
   | Dist_beta : float * float -> float distr
   | Dist_bernoulli : float -> bool distr
   | Dist_uniform_int : int * int -> int distr
@@ -172,6 +173,12 @@ module type DISTRIBUTION = sig
   val gaussian_mean : 'a -> 'b -> 'a
   val gaussian_variance : 'a -> 'b -> 'b
   val gaussian : float * float -> float t
+  val normal : float * float -> float t
+  val lognormal_draw : float -> float -> float
+  val lognormal_score : float -> float -> float -> float
+  val lognormal_mean : float -> float -> float
+  val lognormal_variance : float -> float -> float
+  val lognormal : float * float -> float t
   val mv_gaussian_draw :
     Owl.Arr.arr ->
     (float, Bigarray.float64_elt) Owl.Linalg.Generic.t ->

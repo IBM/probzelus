@@ -1,0 +1,57 @@
+open Probzelus
+open Infer_importance
+open Distribution
+open Zelus_io
+
+
+let h0 = 10.
+let phi = 1.0
+
+let hybrid ball g = h, up(-. h) where 
+    rec der v = -. g init 0. reset up (-. h) -> -. phi *. (last v)
+    and der h = v init h0
+
+let hybrid ball_pos (prob, obs) = g where
+    rec z = up (-.h)
+    and der v = -. g init 0. reset z -> -. phi *. (last v)
+    and der h = v init h0
+    and init g = sample' (prob, gaussian (5., 5.))
+    and present obs(x) -> 
+        do () = observe' (prob, (gaussian (h, 0.1), x)) done
+
+
+(* let hybrid ball_dur (prob, obs) = h where
+    rec z = up (-.h)
+    and der v = -. g init 0. reset z -> -. phi *. (last v)
+    and der h = v init 10.
+    and init phi = sample' (prob, uniform_float(0., 2.))
+    and der d_obs = 1.0 reset obs -> 0. init 0.
+    and der d = 1.0 reset z -> 0. init 0.
+    and present obs -> 
+        do () = observe' (prob, (gaussian (d, 0.1), last d_obs)) done *)
+
+
+let hybrid ball_bounce (prob, obs) = g where
+    rec z = up (-.h)
+    and der v = -. g init 0. reset z -> -. phi *. (last v)
+    and der h = v init h0
+    and init g = sample' (prob, uniform_float (0., 15.))
+    and d = present z -> last d + 1 init 0
+    and n = present obs(_) -> last n + 1 init  0
+    and present obs(_) ->  
+        (* do () = if n = d then factor' (prob, 0.) else factor' (prob, -.2.) done *)
+        do () = observe' (prob, (gaussian (float d, 2.), float n)) done
+
+
+let hybrid main () = () where
+  rec present z -> 
+    do emit obs = ()
+    and () = Format.printf "%f@." <| mean_float (last d_phi) done
+  (* rec present (period (0.05)) -> 
+    do emit obs = h_obs 
+    and () = Format.printf "%f@." <| h_obs done *)
+  and h_obs, z = ball 9.8
+  and d_phi = hybrid_infer 100 ball_bounce obs
+
+(* Run with:
+  ./ball_main.exe | feedgnuplot --stream 0.05 *)

@@ -16,13 +16,17 @@
 
 open Ztypes
 open Infer_pf
-open Types
 
 type pstate = Infer_pf.pstate
 
+type prob = pstate
+
 let sample = Infer_pf.sample
+let sample' = Infer_pf.sample'
 let factor = Infer_pf.factor
+let factor' = Infer_pf.factor'
 let observe = Infer_pf.observe
+let observe' = Infer_pf.observe'
 
 let sample' = Infer_pf.sample'
 let factor' = Infer_pf.factor'
@@ -46,21 +50,10 @@ let infer_decay n decay (Cnode { alloc; reset; copy; step }) =
            value)
         states
     in
-    let weights, norm =
-      let sum = ref 0. in
-      let acc = ref [] in
-      Array.iteri
-        (fun i score ->
-           let w = max (exp score) epsilon_float in
-           acc := (values.(i), w) :: !acc;
-           sum := !sum +. w)
-        scores;
-      (!acc, !sum)
-    in
+    let _, ret = Normalize.normalize_nohist values scores in
     if decay <> 1. then
       Array.iteri (fun i score -> scores.(i) <- decay *. score) scores;
-    Dist_support
-      (List.rev_map (fun (b, w) -> (b, w /. norm)) weights)
+    ret
   in
   let copy src dst =
     for i = 0 to n - 1 do
@@ -73,4 +66,12 @@ let infer_decay n decay (Cnode { alloc; reset; copy; step }) =
 
 let infer n node =
   infer_decay n 1. node
+
+let hybrid_infer n m (cstate: Ztypes.cstate) = 
+  let Cnode { alloc; step; reset; copy; } = m cstate in
+  let hstep self (prob, (t, x)) = step self (t, (prob, x)) in
+  infer n (Cnode { alloc; step=hstep; reset; copy; })
+
+let hybrid_gen = Infer_pf.hybrid_gen
+
 

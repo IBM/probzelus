@@ -32,6 +32,8 @@ type pstate = {
   scores : float array; (** score of each particle *)
 }
 
+type prob = pstate
+
 let factor' (pstate, f0) =
   pstate.scores.(pstate.idx) <- pstate.scores.(pstate.idx) +. f0
 
@@ -329,6 +331,31 @@ let infer_depth n k (Cnode model) =
   Cnode { alloc = alloc; reset = reset; copy = copy; step = step }
 
 
+let hybrid_infer_subresample n m (cstate: Ztypes.cstate) =
+  let Cnode { alloc; step; reset; copy; } = m cstate in
+  let hstep self (prob, (c, (t, x))) = step self (t, (prob, (c, x))) in
+  let Cnode { alloc; step; reset; copy; } =
+    infer_subresample n (Cnode { alloc; step=hstep; reset; copy; })
+  in
+  Cnode { 
+    alloc; 
+    step = (fun s (t, ((_, c), x)) -> step s (c, (t, x))); 
+    reset; 
+    copy; }
+
+let hybrid_infer n m (cstate: Ztypes.cstate) =
+  let Cnode { alloc; step; reset; copy; } = m cstate in
+  let hstep self (prob, (t, x)) = step self (t, (prob, x)) in
+  let Cnode { alloc; step; reset; copy; } =
+    infer_subresample n (Cnode { alloc; step=hstep; reset; copy; })
+  in
+  Cnode { alloc; step = (fun s x -> step s (cstate.major, x)); reset; copy; }
+
+let hybrid_infer_ess_resample n threshold m (cstate: Ztypes.cstate) =
+  let Cnode { alloc; step; reset; copy; } = m cstate in
+  let hstep self (prob, (t, x)) = step self (t, (prob, x)) in
+  infer_ess_resample n threshold (Cnode { alloc; step=hstep; reset; copy; })
+
 (** [gen f x] generates a value sampled from the model [f] with input [x] and
     its corresponding score. The score is reseted at each instant and does
     not tack into account the likelihood and samples.
@@ -353,3 +380,10 @@ let gen (Cnode { alloc; reset; copy; step }) =
     dst.infer_scores.(0) <- src.infer_scores.(0)
   in
   Cnode { alloc = alloc; reset = reset; copy = copy; step = step }
+
+let hybrid_gen m (cstate: Ztypes.cstate) = 
+  let Cnode { alloc; step; reset; copy; } = 
+    m cstate 
+  in
+  let hstep self (prob, (t, x)) = step self (t, (prob, x)) in
+  gen (Cnode { alloc; step=hstep; reset; copy; })

@@ -1,0 +1,53 @@
+(* https://www.youtube.com/watch?v=hJ34_xJhYeY *)
+
+open Probzelus
+open Infer_importance
+open Distribution
+open Zelus_io
+
+let hybrid sho_sim (theta, y1_0, y2_0) = (y1, y2) where
+    rec der y1 = y2 init y1_0
+    and der y2 = -. y1 -. theta *. y2 init y2_0
+
+let hybrid sho_noisy (z, theta, sigma, y1_0, y2_0) = obs where
+    rec init y1_obs = y1_0
+    and init y2_obs = y2_0
+    and y1, y2 = sho_sim (theta, y1_0, y2_0)
+    and present z -> 
+        do emit obs = 
+            (draw (gaussian (y1, sigma ** 2.)), 
+             draw (gaussian (y2, sigma ** 2.))) done
+
+let hybrid sho_model (prob, (obs, y1_0, y2_0)) = theta, sigma where
+    rec init theta = sample' (prob, gaussian (0., 0.5))
+    and init sigma = sample' (prob, gaussian (0.5, 0.1))
+    and y1, y2 = sho_sim (theta, y1_0, y2_0)
+    and present obs (y1_obs, y2_obs) -> 
+        do  () = observe' (prob, (gaussian (y1, sigma ** 2.), y1_obs))
+        and () = observe' (prob, (gaussian (y2, sigma ** 2.), y2_obs)) done
+
+let hybrid horizon h = up t where
+    rec der t = 1.0 init -.h reset up t -> -.h
+
+let hybrid main () = () where
+    rec theta = -0.15
+    and sigma = 0.1
+    and y1_0 = 1.0 
+    and y2_0 = 0.0
+    and obs = sho_noisy (horizon 0.1, theta, sigma, y1_0, y2_0)
+    and dist = hybrid_infer 10000 sho_model (obs, y1_0, y2_0)
+    and d_theta, d_sigma = split dist
+
+    (* and present obs (_) -> 
+        do () = 
+            Format.printf "%f %f@." 
+                <| (mean_float d_theta) <| (mean_float d_sigma)
+        done *)
+
+    and present obs (y1, y2) ->
+        do () = 
+            Format.printf "%f %f@." <| y1 <| y2
+        done
+
+(* Run with:
+  ./sho_main.exe | feedgnuplot --stream 0.05 --domain --set 'xrange [-5:5]' --set 'yrange [-5:5]' *)
