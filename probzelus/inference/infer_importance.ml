@@ -15,23 +15,7 @@
  *)
 
 open Ztypes
-open Infer_pf
-
-type pstate = Infer_pf.pstate
-
-type prob = pstate
-
-let sample = Infer_pf.sample
-let sample' = Infer_pf.sample'
-let factor = Infer_pf.factor
-let factor' = Infer_pf.factor'
-let observe = Infer_pf.observe
-let observe' = Infer_pf.observe'
-
-let sample' = Infer_pf.sample'
-let factor' = Infer_pf.factor'
-let observe' = Infer_pf.observe'
-
+include Infer_pf
 
 let infer_decay n decay (Cnode { alloc; reset; copy; step }) =
   let alloc () =
@@ -71,7 +55,5 @@ let hybrid_infer n m (cstate: Ztypes.cstate) =
   let Cnode { alloc; step; reset; copy; } = m cstate in
   let hstep self (prob, (t, x)) = step self (t, (prob, x)) in
   infer n (Cnode { alloc; step=hstep; reset; copy; })
-
-let hybrid_gen = Infer_pf.hybrid_gen
 
 
