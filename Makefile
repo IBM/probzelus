@@ -1,7 +1,7 @@
 all:
 	@echo "To build the probzelus, first install the zelus-owl package using opam:"
 	@echo "    opam pin -n -k path zelus-libs"
-	@echo "    opam install zelus-libs"
+	@echo "    opam install zelus-io zelus-owl zelus-owl-plplot"
 	@echo "Then:"
 	@echo "    make -C probzelus"
 
