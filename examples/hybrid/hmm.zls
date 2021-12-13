@@ -1,58 +1,28 @@
 open Probzelus
-open Infer_importance
+open Infer_pf
 open Distribution
 open Zelus_io
 
 let hybrid horizon h = up t where
     rec der t = 1.0 init -.h reset up t -> -.h
-(* 
-let hybrid hmm (prob, obs) = p where
-  rec init p = 0.
-  and present obs(_) -> 
-    do p = sample' (prob, gaussian(last p, 10.0)) done *)
 
 let hybrid hmm (prob, obs) = p, v where
     rec z = horizon h
-    and present z -> do () = Format.printf "HHH %f @." <| h done
     and h = present z -> sample' (prob, exponential 0.1) init 0.1
     and v = present z -> sample' (prob, gaussian (0.0, 5.0)) init 0.0
     and der p = v init 0.
-    (* and present z -> do () = Format.printf "speed %f@." <| v done *)
     and present obs(x) -> do () = observe' (prob, (gaussian (p, 0.1), x)) done
 
-(* let hybrid hmm_time(prob, obs) = p where
-    rec init sqrt_lambda = sample' (prob, gaussian (0., 1000.))
-    and lambda = sqrt_lambda ** 2.
-    and z = horizon h
-    and h = present (init) | z -> sample' (prob, exponential lambda) init 0.
-    and v = present z -> sample' (prob, gaussian(last v, 0.1)) init 0.
-    and der p = v init 0.
-    and present obs(x) -> 
-      do () = observe' (prob, (gaussian (p, 0.1), x)) done *)
-
 let hybrid main () = () where
-  rec present (horizon 0.01) -> 
+  rec present (horizon 0.1) ->
     do emit obs = last p_obs
-    and () = 
+    and () =
       (* Format.printf "obs_p = %f mean_p = %f@."
         <| last cpt <| mean_float (last dp) *)
-        Format.printf "%f %f @." <| last p_obs <| mean_float (last dp)
+        Format.printf "%f %f (%f %f) @." <| last p_obs <| mean_float (last dp)
+          <| last v_obs <| mean_float (last dv)
     done
-  and d = hybrid_infer 1 hmm (obs)
+  and d = hybrid_infer 1000 hmm (obs)
   and dp, dv = Distribution.split d
-  and (p_obs, v_obs), _ = hybrid_gen hmm obs 
+  and (p_obs, v_obs), _ = hybrid_gen hmm obs
   and init p_obs = 0.
-
-(* let hybrid main () = () where
-  rec present (init) | (horizon 1.) -> 
-    local m, d in
-    do m = 0 fby m + 1
-    and emit obs = float m
-    (* and m = mean_float (last d) *)
-    and () = 
-      print_float t; 
-      print_string " obs = "; print_int m; print_newline ();
-      print_string ": mean = "; print_float_t (last d);
-      print_newline ()
-    and d = infer 10 hmm obs done
-  and der t = 1.0 init 0. *)
