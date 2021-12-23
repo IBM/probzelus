@@ -15,7 +15,7 @@ let eval = Semi_symbolic.eval_sample
 
 type 'a ds_distribution = 'a Semi_symbolic.distribution
 
-let gaussian mu var = Semi_symbolic.gaussian mu (Semi_symbolic.const var)
+let gaussian (mu, var) = Semi_symbolic.gaussian mu (Semi_symbolic.const var)
 
 type pstate = Infer_pf.pstate
 
@@ -24,7 +24,7 @@ let factor' = Infer_pf.factor'
 let factor = Infer_pf.factor
 
 let sample' (_pstate, dist) =
-  Semi_symbolic.sample dist
+  Semi_symbolic.sample "" dist
 
 let sample =
   let alloc () = () in

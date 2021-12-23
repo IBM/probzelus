@@ -55,6 +55,7 @@ val factor : float ~D~> unit
 val sample : 'a ds_distribution ~D~> 'a expr
 val observe : 'a ds_distribution * 'a ~D~> unit
 
+(*
 val infer :
   int -S-> ('a ~D~> 'b expr) -S-> 'a -D-> 'b Distribution.t
 
@@ -72,11 +73,12 @@ val infer_sample :
 
 val infer_sample_ess_resample :
   int -S-> float -S-> ('a ~D~> 'b expr) -S-> 'a -D-> 'b Distribution.t
-
+*)
 val infer_marginal :
   int -S-> ('a ~D~> 'b expr) -S-> 'a -D-> 'b Distribution.t
-
+(*
 val infer_marginal_ess_resample :
   int -S-> float -S-> ('a ~D~> 'b expr) -S-> 'a -D-> 'b Distribution.t
 
 val gen : ('a ~D~> 'b expr) -S-> 'a -D-> 'b * float
+*)
