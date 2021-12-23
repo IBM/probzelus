@@ -4,8 +4,8 @@
  (action (bash "zeluc -I `zeluc -where`-owl %{zli}")))
 
 (rule
- (deps (:zli infer_ds_naive.zli infer_ds_streaming.zli infer_ds_streaming_copy.zli infer_importance.zli infer_pf.zli) distribution.zci)
- (targets infer_ds_naive.zci infer_ds_streaming.zci infer_ds_streaming_copy.zci infer_importance.zci infer_pf.zci)
+ (deps (:zli infer_ds_naive.zli infer_ds_streaming.zli infer_ds_streaming_copy.zli infer_importance.zli infer_pf.zli infer_semi_symbolic.zli) distribution.zci)
+ (targets infer_ds_naive.zci infer_ds_streaming.zci infer_ds_streaming_copy.zci infer_importance.zci infer_pf.zci infer_semi_symbolic.zci)
  (action (bash "zeluc -I `zeluc -where`-owl %{zli}")))
 
 (rule
@@ -21,4 +21,4 @@
 (install
  (package probzelus)
  (section share)
- (files distribution.zci infer_ds_naive.zci infer_ds_streaming.zci infer_ds_streaming_copy.zci infer_importance.zci infer_pf.zci probzelus.zci))
+ (files distribution.zci infer_ds_naive.zci infer_ds_streaming.zci infer_ds_streaming_copy.zci infer_importance.zci infer_pf.zci infer_semi_symbolic.zci probzelus.zci))
