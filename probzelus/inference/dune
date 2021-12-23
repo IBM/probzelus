@@ -16,7 +16,7 @@
 (library
  (name probzelus)
  (public_name probzelus)
- (libraries zelus zelus-owl))
+ (libraries zelus zelus-owl semi_symbolic))
 
 (install
  (package probzelus)
