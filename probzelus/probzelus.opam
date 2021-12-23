@@ -18,6 +18,7 @@ depends: [
   "ocamlfind"
   "zelus"
   "zelus-owl"
+  "semi_symbolic"
 ]
 depopts: [
   "zelus-owl-plplot"
