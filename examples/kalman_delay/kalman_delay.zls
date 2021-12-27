@@ -1,0 +1,38 @@
+(*
+ * Copyright 2018-2020 IBM Corporation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *)
+
+open Probzelus
+open Distribution
+
+let node env () = (xt, obs, obs_cur) where
+  rec xt = draw (Distribution.gaussian ((0., 2500.) -> (pre xt, 1.)))
+  and xt_delayed = 0. -> pre xt 
+  and xt_delayed_delayed = 0. -> pre xt_delayed
+  and obs_val = draw (Distribution.gaussian (xt_delayed_delayed, 1.))
+  and t = 0 -> ((pre t) + 1)
+  and present (t >= 2) -> do emit obs = obs_val done
+  and obs_cur = draw (Distribution.gaussian (xt, 1.))
+
+let node main () = () where
+  rec d_ds = Kalman_delay_ds.main_no_metric 1 (observed, observed_cur)
+  and d_semi_symb = Kalman_delay_semi_symb.main_no_metric 1 (observed, observed_cur)
+  and true_x, observed, observed_cur = env ()
+  and mse_ds = Metrics.mse (true_x, d_ds)
+  and mse_semi_symb = Metrics.mse (true_x, d_semi_symb)
+  and () = print_string ("MSE DS: " ^ (string_of_float mse_ds) ^ ", MSE Semi-Symb: " ^ (string_of_float mse_semi_symb) ^ "\n")
+  and () = print_string ("Mean DS: " ^ (string_of_float (mean_float d_ds)) ^ ", MSE Semi-Symb: " ^ (string_of_float (mean_float d_semi_symb)) ^ "\n")
+  and () = present observed(obs_val) -> print_string ("obs: " ^ (string_of_float obs_val) ^ "\n") else ()
+  and () = print_string ("true_x: " ^ (string_of_float true_x) ^ "\n")
