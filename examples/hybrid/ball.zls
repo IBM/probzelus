@@ -12,9 +12,7 @@ let hybrid ball g = h, up(-. h) where
     and der h = v init h0
 
 let hybrid ball_pos (prob, obs) = g where
-    rec z = up (-.h)
-    and der v = -. g init 0. reset z -> -. phi *. (last v)
-    and der h = v init h0
+    rec h, z = ball g
     and init g = sample' (prob, gaussian (5., 5.))
     and present obs(x) -> 
         do () = observe' (prob, (gaussian (h, 0.1), x)) done
