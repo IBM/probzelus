@@ -7,7 +7,7 @@ cd ~
 git clone https://github.com/openai/gym-http-api
 cd gym-http-api
 cat << EOF > requirements.txt
-Flask==0.11.1
+Flask==0.12.4
 numpy==1.16.3
 gym==0.7.4
 requests==2.12.4
