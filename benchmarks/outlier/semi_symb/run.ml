@@ -14,18 +14,20 @@
  * limitations under the License.
  *)
 
+open Benchlib
 open Probzelus
-open Distribution
-open Infer_semi_symbolic
-open Coinlib
 
-let proba coin yobs = xt where
-  rec init xt = sample (beta (1., 1.))
-  and () = observe (bernoulli xt, yobs)
+module M = struct
+  let name = "Outlier"
+  let algo = "Semi-Symbolic"
+  type input = float * float
+  type output = float Distribution.t
+  let read_input () = Scanf.scanf ("%f, %f\n") (fun t o -> (t, o))
+  let main = Outlier_semi_symb.main
+  let string_of_output o = string_of_float (Distribution.mean_float o)
+end
 
-let node main_no_metric particles observed =
-  infer_marginal particles coin observed
+module H = Harness.Make(M)
 
-let node main particles (true_p, observed) = (d, mse) where
-  rec d = main_no_metric particles observed
-  and mse = Metrics.mse (true_p, d)
+let () =
+  H.run ()

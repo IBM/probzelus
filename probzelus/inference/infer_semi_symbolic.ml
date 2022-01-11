@@ -17,6 +17,9 @@ let eval = Semi_symbolic.eval_sample
 type 'a ds_distribution = 'a Semi_symbolic.distribution
 
 let gaussian (mu, var) = Semi_symbolic.gaussian mu (Semi_symbolic.const var)
+let beta (a, b) =
+  Semi_symbolic.beta (Semi_symbolic.const a) (Semi_symbolic.const b)
+let bernoulli p = Semi_symbolic.bernoulli p
 
 type pstate = Infer_pf.pstate
 
