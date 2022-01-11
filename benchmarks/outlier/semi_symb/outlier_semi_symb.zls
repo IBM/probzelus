@@ -17,15 +17,19 @@
 open Probzelus
 open Distribution
 open Infer_semi_symbolic
-open Coinlib
+open Outlierlib
 
-let proba coin yobs = xt where
-  rec init xt = sample (beta (1., 1.))
-  and () = observe (bernoulli xt, yobs)
+let proba outlier yobs = pair (is_outlier, xt) where
+  rec xt = sample (gaussian ((const 0., 2500.) -> (pre xt, 1.)))
+  and init outlier_prob = sample (beta (100., 1000.))
+  and is_outlier = sample (bernoulli outlier_prob)
+  and () = present (eval is_outlier) -> observe (gaussian (const 0., 10000.), yobs)
+           else observe (gaussian (xt, 1.), yobs)
 
 let node main_no_metric particles observed =
-  infer_marginal particles coin observed
+  let _, x_d = split (infer_marginal particles outlier observed) in
+  x_d
 
-let node main particles (true_p, observed) = (d, mse) where
+let node main particles (true_x, observed) = (d, mse) where
   rec d = main_no_metric particles observed
-  and mse = Metrics.mse (true_p, d)
+  and mse = Metrics.mse (true_x, d)
