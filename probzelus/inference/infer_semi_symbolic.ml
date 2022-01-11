@@ -63,6 +63,8 @@ module Convert_fn_distr : Semi_symbolic.Conversion_fn with type 'a t = 'a Types.
   let ite _ _ _ = assert false (* TODO: what to do here? *)
 
   let gaussian mu var = Dist_gaussian (mu, var)
+  let beta a b = Dist_beta(a, b)
+  let bernoulli p = Dist_bernoulli p
   let delta x = Distribution.dirac x
 end
 
