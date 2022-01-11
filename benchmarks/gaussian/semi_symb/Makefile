@@ -1,5 +1,5 @@
 EX=gaussian
-ALGO=ds
+ALGO=semi_symb
 NAME=gaussian_semi_symb
 
 include ../../Makefile.common-config
