@@ -6,9 +6,10 @@ type 'a expr = 'a Semi_symbolic.expr
 
 let const = Semi_symbolic.const
 let add = Semi_symbolic.add
-let ( +~ ) = add 
-let mult = Semi_symbolic.mul
+let ( +~ ) = add
+let mult (a, b) = Semi_symbolic.mul a b
 let ( *~ ) = mult
+let pair (a, b) = Semi_symbolic.pair a b
 let ite = Semi_symbolic.ite
 
 let eval = Semi_symbolic.eval_sample
@@ -58,6 +59,7 @@ module Convert_fn_distr : Semi_symbolic.Conversion_fn with type 'a t = 'a Types.
   let add d1 d2 = Dist_add(d1, d2)
   let mul d1 d2 = Dist_mult(d1, d2)
   let eq _ _ = assert false (* TODO: what to do here? *)
+  let pair d1 d2 = Dist_pair(d1, d2)
   let ite _ _ _ = assert false (* TODO: what to do here? *)
 
   let gaussian mu var = Dist_gaussian (mu, var)
