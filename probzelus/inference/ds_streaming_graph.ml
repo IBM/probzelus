@@ -182,7 +182,7 @@ module Make(Distribution: DISTRIBUTION) = struct
     | DSgraph_Marginalized (Dist_mult _, _) -> KOthers
     | DSgraph_Marginalized (Dist_app _, _) -> KOthers
     | DSgraph_Marginalized (Dist_joint _, _) -> KOthers (* XXX TODO ? XXX *)
-    | DSgraph_Realized _ -> assert false
+    | DSgraph_Realized _ -> KValue
     end
 
   let shape : type a. ((a, Mat.mat) ds_graph_node) -> int =
