@@ -46,8 +46,13 @@ let factor' = Infer_pf.factor'
 
 let factor = Infer_pf.factor
 
+let samplenum = ref 0
+let get_samplenum _ =
+  samplenum := !samplenum + 1;
+  !samplenum
+
 let sample' (_pstate, dist) =
-  Semi_symbolic.sample "" dist
+  Semi_symbolic.sample ("var" ^ (string_of_int (get_samplenum ())))  dist
 
 let sample =
   let alloc () = () in
