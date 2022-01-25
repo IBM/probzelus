@@ -10,6 +10,8 @@ let ( +~ ) = add
 let mult (a, b) = Semi_symbolic.mul a b
 let ( *~ ) = mult
 let pair (a, b) = Semi_symbolic.pair a b
+let array = Semi_symbolic.array
+let matrix = Semi_symbolic.matrix
 let ite = Semi_symbolic.ite
 
 let eval = Semi_symbolic.eval_sample
@@ -63,6 +65,8 @@ module Convert_fn_distr : Semi_symbolic.Conversion_fn with type 'a t = 'a Types.
   let mul d1 d2 = Dist_mult(d1, d2)
   let eq _ _ = assert false (* TODO: what to do here? *)
   let pair d1 d2 = Dist_pair(d1, d2)
+  let array d = Dist_array d
+  let matrix _ = assert false (* TODO: what to do here? *)
   let ite _ _ _ = assert false (* TODO: what to do here? *)
 
   let gaussian mu var = Dist_gaussian (mu, var)
