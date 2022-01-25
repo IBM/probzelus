@@ -1,0 +1,46 @@
+(*
+ * Copyright 2018-2020 IBM Corporation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *)
+
+open Probzelus
+open Slamlib
+open Infer_semi_symbolic
+open Lib
+
+let proba move (x_init, cmd) = x where
+  rec init x = x_init
+  and x =
+    max 0 (min max_pos (if eval wheel_slip then last x else last x + cmd))
+  and wheel_slip = sample (bernoulli (const wheel_noise))
+
+let proba bernoulli_priors i = sample (bernoulli (const 0.5))
+
+let proba slam (obs, cmd) = pair (array map, const x) where
+  rec init map = Array_misc.ini (max_pos + 1) bernoulli_priors ()
+  and x = move (0, cmd)
+  and o = Array_misc.get map x
+  and () = observe (bernoulli (ite o (const (1. -. sensor_noise))
+                                 (const sensor_noise)),
+                    obs)
+
+let node main_no_metric particles real_map = (x, d) where
+  rec cmd = 1 -> pre (controller x_d)
+  and d = infer_marginal particles slam (obs, cmd)
+  and (obs, x) = slam_obs (real_map, cmd)
+  and _, x_d = Distribution.split d
+
+let node main particles (real_map, ()) = (d, mse) where
+  rec d = main_no_metric particles real_map
+  and mse = Metrics.mse (real_map, d)
