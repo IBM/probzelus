@@ -27,10 +27,10 @@ val ( *~ ) : float expr -> float expr -> float expr
 (* val app : ('a -> 'b) expr * 'a expr -> 'b expr
 val ( @@~ ) : ('a -> 'b) expr -> 'a expr -> 'b expr *)
 val pair : 'a expr * 'b expr -> ('a * 'b) expr
-(* val array : 'a expr array -> 'a array expr
-val lst : 'a expr list -> 'a list expr *)
+val array : 'a expr array -> 'a array expr
+val lst : 'a expr list -> 'a list expr
 val ite : bool expr -> 'a expr -> 'a expr -> 'a expr
-(* val matrix : 'a expr array array -> 'a array array expr *)
+val matrix : 'a expr array array -> 'a array array expr
 
 (* val mat_add : Mat.mat expr * Mat.mat expr -> Mat.mat expr
 val ( +@~ ) : Mat.mat expr -> Mat.mat expr -> Mat.mat expr
