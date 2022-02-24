@@ -1,3 +1,3 @@
 (library
  (name benchlib)
- (libraries probzelus mtime mtime.clock mtime.clock.os csv))
+ (libraries probzelus mtime.clock.os csv))
