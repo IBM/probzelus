@@ -32,13 +32,13 @@ val lst : 'a expr list -> 'a list expr
 val ite : bool expr -> 'a expr -> 'a expr -> 'a expr
 val matrix : 'a expr array array -> 'a array array expr
 
-(* val mat_add : Mat.mat expr * Mat.mat expr -> Mat.mat expr
+val mat_add : Mat.mat expr * Mat.mat expr -> Mat.mat expr
 val ( +@~ ) : Mat.mat expr -> Mat.mat expr -> Mat.mat expr
 val mat_scalar_mult : float expr * Mat.mat expr -> Mat.mat expr
 val ( $*~ ) : float expr -> Mat.mat expr -> Mat.mat expr
 val mat_dot : Mat.mat expr * Mat.mat expr -> Mat.mat expr
 val ( *@~ ) : Mat.mat expr -> Mat.mat expr -> Mat.mat expr
-val vec_get : Mat.mat expr * int -> float expr *)
+val vec_get : Mat.mat expr * int -> float expr
 
 val eval : 'a expr -AD-> 'a
 
@@ -48,8 +48,8 @@ type 'a ds_distribution
 val gaussian : float expr * float -> float ds_distribution
 val beta : float * float -> float ds_distribution
 val bernoulli : float expr -> bool ds_distribution
-(* val mv_gaussian : Mat.mat expr * Mat.mat -> Mat.mat ds_distribution
-val mv_gaussian_curried : Mat.mat -> Mat.mat expr -> Mat.mat ds_distribution *)
+val mv_gaussian : Mat.mat expr * Mat.mat -> Mat.mat ds_distribution
+val mv_gaussian_curried : Mat.mat -> Mat.mat expr -> Mat.mat ds_distribution
 
 val factor : float ~D~> unit
 val sample : 'a ds_distribution ~D~> 'a expr

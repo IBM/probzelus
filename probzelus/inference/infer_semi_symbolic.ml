@@ -14,6 +14,14 @@ let array = Semi_symbolic.array
 let matrix = Semi_symbolic.matrix
 let ite = Semi_symbolic.ite
 
+let mat_add (a, b) = Semi_symbolic.mat_add a b
+let ( +@~) = Semi_symbolic.mat_add
+let mat_scalar_mult (a, b) = Semi_symbolic.mat_scalar_mult a b
+let ( $*~ ) = Semi_symbolic.mat_scalar_mult
+let mat_dot (a, b) = Semi_symbolic.mat_dot a b
+let ( *@~ ) = Semi_symbolic.mat_dot
+let vec_get (a, b) = Semi_symbolic.vec_get a b
+
 let eval = Semi_symbolic.eval_sample
 
 type 'a ds_distribution = 'a Semi_symbolic.distribution
@@ -22,6 +30,9 @@ let gaussian (mu, var) = Semi_symbolic.gaussian mu (Semi_symbolic.const var)
 let beta (a, b) =
   Semi_symbolic.beta (Semi_symbolic.const a) (Semi_symbolic.const b)
 let bernoulli p = Semi_symbolic.bernoulli p
+let mv_gaussian (mu, var) = Semi_symbolic.mv_gaussian mu (Semi_symbolic.const var)
+let mv_gaussian_curried var mu = mv_gaussian (mu, var)
+
 
 type pstate = Infer_pf.pstate
 
