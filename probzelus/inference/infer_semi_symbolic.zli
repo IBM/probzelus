@@ -44,7 +44,7 @@ val eval : 'a expr -AD-> 'a
 
 type 'a ds_distribution
 
-(* val of_distribution : 'a Distribution.t -> 'a ds_distribution *)
+val of_distribution : 'a Distribution.t -> 'a ds_distribution
 val gaussian : float expr * float -> float ds_distribution
 val beta : float * float -> float ds_distribution
 val bernoulli : float expr -> bool ds_distribution
