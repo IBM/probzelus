@@ -80,10 +80,19 @@ module Convert_fn_distr : Semi_symbolic.Conversion_fn with type 'a t = 'a Types.
   let matrix _ = assert false (* TODO: what to do here? *)
   let ite _ _ _ = assert false (* TODO: what to do here? *)
 
+  let mat_add _ _ = assert false (* TODO: what to do here? *)
+  let mat_scalar_mult _ _ = assert false (* TODO: what to do here? *)
+  let mat_dot _ _ = assert false (* TODO: what to do here? *)
+  let vec_get _ _ = assert false (* TODO: what to do here? *)
+  let mat_trans _ = assert false (* TODO: what to do here? *)
+  let mat_inv _ = assert false (* TODO: what to do here? *)
+
   let gaussian mu var = Dist_gaussian (mu, var)
   let beta a b = Dist_beta(a, b)
   let bernoulli p = Dist_bernoulli p
   let delta x = Distribution.dirac x
+  let mv_gaussian mu var = Dist_mv_gaussian (mu, var, None)
+
 end
 
 module Convert_distr = Semi_symbolic.Convert(Convert_fn_distr)
