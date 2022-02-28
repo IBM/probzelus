@@ -8,14 +8,16 @@ all: build
 	$(MAKE) -C ds
 	$(MAKE) -C ds_bounded
 	$(MAKE) -C ds_nogc
+	$(MAKE) -C semi_symb
 
 publish:
 	$(MAKE) -C particles publish
 	$(MAKE) -C ds publish
 	$(MAKE) -C ds_bounded publish
 	$(MAKE) -C ds_nogc publish
+	$(MAKE) -C semi-symb publish
 
-bench: bench_particles bench_ds bench_ds_bounded bench_ds_nogc
+bench: bench_particles bench_ds bench_ds_bounded bench_ds_nogc bench_semi_symb
 
 bench_particles:
 	$(MAKE) -C particles bench
@@ -29,38 +31,46 @@ bench_ds_bounded:
 bench_ds_nogc:
 	$(MAKE) -C ds_nogc bench
 
+bench_semi_symb:
+	$(MAKE) -C semi_symb bench
+
 bench_find_mse:
 	$(MAKE) -C particles bench_find_mse
 	$(MAKE) -C ds bench_find_mse
 	$(MAKE) -C ds_bounded bench_find_mse
 	echo "Skip:" $(MAKE) -C ds_nogc bench_find_mse
+	$(MAKE) -C semi_symb bench_find_mse
 
 bench_per_particles:
 	$(MAKE) -C particles bench_per_particles
 	$(MAKE) -C ds bench_per_particles
 	$(MAKE) -C ds_bounded bench_per_particles
 	echo "Skip:" $(MAKE) -C ds_nogc bench_per_particles
+	$(MAKE) -C semi_symb bench_per_particles
 
 bench_per_steps:
 	$(MAKE) -C particles bench_per_steps
 	$(MAKE) -C ds bench_per_steps
 	$(MAKE) -C ds_bounded bench_per_steps
 	$(MAKE) -C ds_nogc bench_per_steps
+	$(MAKE) -C semi_symb bench_per_steps
 
 bench_mem_ideal:
 	$(MAKE) -C particles bench_mem_ideal
 	$(MAKE) -C ds bench_mem_ideal
 	$(MAKE) -C ds_bounded bench_mem_ideal
 	$(MAKE) -C ds_nogc bench_mem_ideal
+	$(MAKE) -C semi_symb bench_mem_ideal
 
 analyze:
 	$(MAKE) -C particles analyze
 	$(MAKE) -C ds analyze
 	$(MAKE) -C ds_bounded analyze
 	$(MAKE) -C ds_nogc analyze
+	$(MAKE) -C semi_symb analyze
 
 .PHONY: publish bench build build_lib \
-	bench_particles bench_ds bench_ds_bounded bench_ds_nogc
+	bench_particles bench_ds bench_ds_bounded bench_ds_nogc bench_semi_symb
 
 build: build_lib main.ml
 	dune build main.exe
@@ -84,6 +94,7 @@ clean:
 	$(MAKE) -C ds clean
 	$(MAKE) -C ds_bounded clean
 	$(MAKE) -C ds_nogc clean
+	$(MAKE) -C semi_symb clean
 
 cleanall: clean
 	-rm -f *~
@@ -93,3 +104,4 @@ cleanall: clean
 	$(MAKE) -C ds cleanall
 	$(MAKE) -C ds_bounded cleanall
 	$(MAKE) -C ds_nogc cleanall
+	$(MAKE) -C semi_symb cleanall
