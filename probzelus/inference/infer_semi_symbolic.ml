@@ -26,6 +26,11 @@ let eval = Semi_symbolic.eval_sample
 
 type 'a ds_distribution = 'a Semi_symbolic.distribution
 
+let of_distribution d =
+  let draw () = Distribution.draw d in
+  let score x = Distribution.score (d, x) in
+  Semi_symbolic.sampler draw score
+
 let gaussian (mu, var) = Semi_symbolic.gaussian mu (Semi_symbolic.const var)
 let beta (a, b) =
   Semi_symbolic.beta (Semi_symbolic.const a) (Semi_symbolic.const b)
