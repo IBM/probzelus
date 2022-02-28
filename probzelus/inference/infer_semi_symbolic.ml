@@ -12,6 +12,7 @@ let ( *~ ) = mult
 let pair (a, b) = Semi_symbolic.pair a b
 let array = Semi_symbolic.array
 let matrix = Semi_symbolic.matrix
+let lst = Semi_symbolic.lst
 let ite = Semi_symbolic.ite
 let lst = Semi_symbolic.lst
 
@@ -86,6 +87,7 @@ module Convert_fn_distr : Semi_symbolic.Conversion_fn with type 'a t = 'a Types.
   let lst l = Dist_list l
   let matrix _ = assert false (* TODO: what to do here? *)
   let ite _ _ _ = assert false (* TODO: what to do here? *)
+  let lst l = Dist_list l
 
   let mat_add _ _ = assert false (* TODO: what to do here? *)
   let mat_scalar_mult _ _ = assert false (* TODO: what to do here? *)
