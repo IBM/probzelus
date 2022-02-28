@@ -92,7 +92,7 @@ module Convert_fn_distr : Semi_symbolic.Conversion_fn with type 'a t = 'a Types.
   let bernoulli p = Dist_bernoulli p
   let delta x = Distribution.dirac x
   let mv_gaussian mu var = Dist_mv_gaussian (mu, var, None)
-
+  let sampler draw score = Dist_sampler (draw, score)
 end
 
 module Convert_distr = Semi_symbolic.Convert(Convert_fn_distr)
