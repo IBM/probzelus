@@ -13,6 +13,7 @@ let pair (a, b) = Semi_symbolic.pair a b
 let array = Semi_symbolic.array
 let matrix = Semi_symbolic.matrix
 let ite = Semi_symbolic.ite
+let lst = Semi_symbolic.lst
 
 let mat_add (a, b) = Semi_symbolic.mat_add a b
 let ( +@~) = Semi_symbolic.mat_add
@@ -70,7 +71,7 @@ let observe =
   in
   Cnode { alloc; reset; copy; step; }
 
-exception NonMarginal: 'a Semi_symbolic.random_var -> exn 
+exception NonMarginal: 'a Semi_symbolic.random_var -> exn
 
 module Convert_fn_distr : Semi_symbolic.Conversion_fn with type 'a t = 'a Types.mdistr = struct
   open Types
@@ -82,6 +83,7 @@ module Convert_fn_distr : Semi_symbolic.Conversion_fn with type 'a t = 'a Types.
   let eq _ _ = assert false (* TODO: what to do here? *)
   let pair d1 d2 = Dist_pair(d1, d2)
   let array d = Dist_array d
+  let lst l = Dist_list l
   let matrix _ = assert false (* TODO: what to do here? *)
   let ite _ _ _ = assert false (* TODO: what to do here? *)
 
@@ -111,9 +113,9 @@ let infer_marginal n (Cnode { alloc; reset; copy = _; step;}) =
     Convert_distr.convert (step !state (prob, x))
   in
   let copy src dst = dst := Probzelus_utils.copy !src in
-  let Cnode {alloc = infer_alloc; 
+  let Cnode {alloc = infer_alloc;
              reset = infer_reset;
-             copy = infer_copy; 
+             copy = infer_copy;
              step = infer_step} =
     Infer_pf.infer n (Cnode {alloc; reset; copy = copy; step; })
   in
