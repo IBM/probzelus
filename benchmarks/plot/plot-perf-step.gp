@@ -17,4 +17,5 @@ set title ex.': Performance per step'
 plot dir.'particles/perf-step.csv' using 1:3:2:4 every 10 with yerrorbars lt 3 pt 5 title 'PF', \
      dir.'ds_bounded/perf-step.csv' using 1:3:2:4 every 10 with yerrorbars lt 4 pt 7 title 'BDS', \
      dir.'ds/perf-step.csv' using 1:3:2:4 every 10 with yerrorbars lt 1 pt 11 title 'SDS', \
-     dir.'ds_nogc/perf-step.csv' using 1:3:2:4 every 10 with yerrorbars lt 2 pt 9 title 'DS'
+     dir.'ds_nogc/perf-step.csv' using 1:3:2:4 every 10 with yerrorbars lt 2 pt 9 title 'DS', \
+     dir.'semi_symb/perf-step.csv' using 1:3:2:4 every 10 with yerrorbars lt 5 pt 13 title 'SSDS'
