@@ -93,6 +93,7 @@ module Convert_fn_distr : Semi_symbolic.Conversion_fn with type 'a t = 'a Types.
   let vec_get _ _ = assert false (* TODO: what to do here? *)
   let mat_trans _ = assert false (* TODO: what to do here? *)
   let mat_inv _ = assert false (* TODO: what to do here? *)
+  let mat_single _ = assert false (* TODO: what to do here? *)
 
   let gaussian mu var = Dist_gaussian (mu, var)
   let beta a b = Dist_beta(a, b)
@@ -100,6 +101,9 @@ module Convert_fn_distr : Semi_symbolic.Conversion_fn with type 'a t = 'a Types.
   let delta x = Distribution.dirac x
   let mv_gaussian mu var = Dist_mv_gaussian (mu, var, None)
   let sampler draw score = Dist_sampler (draw, score)
+  let categorical ~lower ~upper _ =
+    ignore (lower, upper);
+    assert false (* TODO: what to do here? *)
 end
 
 module Convert_distr = Semi_symbolic.Convert(Convert_fn_distr)
