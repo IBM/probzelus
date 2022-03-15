@@ -1,0 +1,32 @@
+(*
+ * Copyright 2018-2020 IBM Corporation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *)
+
+open Probzelus
+open Distribution
+
+let node env () = (a, b, c_obs, d_obs) where
+  rec init a = draw (Distribution.gaussian (0., 100.))
+  and init b = draw (Distribution.gaussian (0., 100.))
+  and c_obs = draw (Distribution.gaussian (b, 1.))
+  and d_obs = draw (Distribution.gaussian (a, 1.))
+
+let node main () = () where
+  rec ab_ds = Gaussian_tree_ds.main_no_metric 1 (c_obs, d_obs)
+  and ab_semi_symb = Gaussian_tree_semi_symb.main_no_metric 1 (c_obs, d_obs)
+  and true_a, true_b, c_obs, d_obs = env ()
+  and mse_ds = Metrics.mse ((true_a, true_b), ab_ds)
+  and mse_semi_symb = Metrics.mse ((true_a, true_b), ab_semi_symb)
+  and () = print_string ("MSE DS: " ^ (string_of_float mse_ds) ^ ", MSE Semi-Symb: " ^ (string_of_float mse_semi_symb) ^ "\n")
