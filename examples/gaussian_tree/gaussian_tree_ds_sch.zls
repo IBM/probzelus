@@ -20,9 +20,11 @@ open Infer_ds_streaming
 
 let proba gaussian_tree (c_obs, d_obs) = pair (a, b) where
   rec init a = sample (gaussian (const 0., 100.))
-  and init b = sample (gaussian (a, 100.))
+  and b = sample (gaussian (a, 100.))
   and () = observe (gaussian (b, 1.), c_obs)
   and () = observe (gaussian (a, 1.), d_obs)
+
+
 
 let node main_no_metric particles (c_obs, d_obs) =
   infer particles gaussian_tree (c_obs, d_obs)
