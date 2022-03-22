@@ -7,6 +7,7 @@ all:
 	- $(MAKE) ex EX=kalman
 	- $(MAKE) ex EX=outlier
 	- $(MAKE) ex EX=tracker
+	- $(MAKE) ex EX=trackerdelay
 	- $(MAKE) ex EX=slam
 	- $(MAKE) ex EX=mtt
 
