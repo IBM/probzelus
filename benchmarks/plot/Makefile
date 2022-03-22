@@ -3,6 +3,7 @@ EX=coin
 all:
 	- $(MAKE) ex EX=coin
 	- $(MAKE) ex EX=gaussian
+	- $(MAKE) ex EX=gtree
 	- $(MAKE) ex EX=kalman
 	- $(MAKE) ex EX=outlier
 	- $(MAKE) ex EX=tracker
