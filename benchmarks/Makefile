@@ -8,9 +8,10 @@ all:
 	$(MAKE) -C outlier
 	$(MAKE) -C slam
 	$(MAKE) -C tracker
+	$(MAKE) -C trackerdelay
 	$(MAKE) -C mtt
 
-bench: bench-coin bench-gaussian bench-kalman bench-outlier bench-slam bench-tracker bench-mtt
+bench: bench-coin bench-gaussian bench-gtree bench-kalman bench-outlier bench-slam bench-tracker bench-trackerdelay bench-mtt
 bench-coin:
 	$(MAKE) -C coin bench
 bench-gaussian:
@@ -25,6 +26,8 @@ bench-slam:
 	$(MAKE) -C slam bench
 bench-tracker:
 	$(MAKE) -C tracker bench
+bench-trackerdelay:
+	$(MAKE) -C trackerdelay bench
 bench-mtt:
 	$(MAKE) -C mtt bench
 
@@ -37,6 +40,7 @@ bench_find_mse:
 	$(MAKE) -C outlier bench_find_mse
 	$(MAKE) -C slam bench_find_mse
 	$(MAKE) -C tracker bench_find_mse
+	$(MAKE) -C trackerdelay bench_find_mse
 	$(MAKE) -C mtt bench_find_mse
 
 bench_per_particles:
@@ -47,6 +51,7 @@ bench_per_particles:
 	$(MAKE) -C outlier bench_per_particles
 	$(MAKE) -C slam bench_per_particles
 	$(MAKE) -C tracker bench_per_particles
+	$(MAKE) -C trackerdelay bench_per_particles
 	$(MAKE) -C mtt bench_per_particles
 
 bench_per_steps:
@@ -57,6 +62,7 @@ bench_per_steps:
 	$(MAKE) -C outlier bench_per_steps
 	$(MAKE) -C slam bench_per_steps
 	$(MAKE) -C tracker bench_per_steps
+	$(MAKE) -C trackerdelay bench_per_steps
 	$(MAKE) -C mtt bench_per_steps
 
 bench_mem_ideal:
@@ -67,6 +73,7 @@ bench_mem_ideal:
 	$(MAKE) -C outlier bench_mem_ideal
 	$(MAKE) -C slam bench_mem_ideal
 	$(MAKE) -C tracker bench_mem_ideal
+	$(MAKE) -C trackerdelay bench_mem_ideal
 	$(MAKE) -C mtt bench_mem_ideal
 
 analyze:
@@ -77,6 +84,7 @@ analyze:
 	$(MAKE) -C outlier analyze
 	$(MAKE) -C slam analyze
 	$(MAKE) -C tracker analyze
+	$(MAKE) -C trackerdelay analyze
 	$(MAKE) -C mtt analyze
 
 publish:
@@ -87,6 +95,7 @@ publish:
 	$(MAKE) -C outlier publish
 	$(MAKE) -C slam publish
 	$(MAKE) -C tracker publish
+	$(MAKE) -C trackerdelay publish
 	$(MAKE) -C mtt publish
 
 clean:
@@ -99,6 +108,7 @@ clean:
 	$(MAKE) -C outlier clean
 	$(MAKE) -C slam clean
 	$(MAKE) -C tracker clean
+	$(MAKE) -C trackerdelay clean
 	$(MAKE) -C mtt clean
 
 realclean cleanall:
@@ -112,7 +122,7 @@ realclean cleanall:
 	$(MAKE) -C outlier cleanall
 	$(MAKE) -C slam cleanall
 	$(MAKE) -C tracker cleanall
+	$(MAKE) -C trackerdelay cleanall
 	$(MAKE) -C mtt cleanall
 
-.PHONY: bench bench-coin bench-gaussian bench-gtree bench-kalman bench-outlier bench-slam bench-tracker bench-mtt
-
+.PHONY: bench bench-coin bench-gaussian bench-gtree bench-kalman bench-outlier bench-slam bench-tracker bench-trackerdelay bench-mtt
