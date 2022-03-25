@@ -10,6 +10,7 @@ all:
 	- $(MAKE) ex EX=trackerdelay
 	- $(MAKE) ex EX=slam
 	- $(MAKE) ex EX=mtt
+	- $(MAKE) ex EX=wheels
 
 ex: $(EX)-accuracy.png $(EX)-perf.png $(EX)-perf-step.png $(EX)-mem-ideal.png
 
