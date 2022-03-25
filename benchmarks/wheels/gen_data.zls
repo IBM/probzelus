@@ -1,0 +1,38 @@
+(*
+ * Copyright 2018-2020 IBM Corporation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *)
+
+open Probzelus
+open Distribution
+open Wheelslib
+
+let random_init = Random.self_init ()
+
+let dt = 0.01
+let wb = 2.0
+let sensor_err = 1.0
+
+let node main () =
+  let torque = draw (gaussian(0., 1.)) in
+  let acc = draw (gaussian(0., 1.)) in
+  let rec omega = (0. fby omega) +. torque *. dt in
+  let rec velocity = (0. fby velocity) +. acc *. dt in
+  let left_wheel_rate = draw (gaussian (velocity -. wb *. omega, sensor_err)) in
+  let right_wheel_rate = draw (gaussian (velocity -. wb *. omega, sensor_err)) in
+  print_string (
+    (string_of_float velocity) ^ ", " ^
+    (string_of_float omega) ^ ", " ^
+    (string_of_float left_wheel_rate) ^ ", " ^ 
+    (string_of_float right_wheel_rate) ^ "\n")

@@ -1,0 +1,3 @@
+(library
+  (name wheelslib)
+  (libraries probzelus))
