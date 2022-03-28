@@ -17,6 +17,14 @@
 open Zelus_owl
 open Mat
 
+type 'a buffer
+
+val buffer : int * 'a -> 'a buffer
+val push : 'a * 'a buffer -> 'a buffer
+val peek : int * 'a buffer -> 'a
+
+val max_delay : int
+
 val of_lists : float list list -> mat
 val of_list : float list -> int -> int -> mat
 

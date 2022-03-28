@@ -17,6 +17,19 @@
 open Owl
 open Ztypes
 
+type 'a buffer = 'a array
+
+let buffer (n, x) =
+  Array.make (n + 1) x
+
+let push (x, b) =
+  Array.init (Array.length b) (fun i -> if i = 0 then x else b.(i - 1))
+
+let peek (n, b) =
+  Array.get b n
+
+let max_delay = 10
+
 let of_lists l = Mat.of_arrays (Array.of_list (List.map Array.of_list l))
 let of_list l n m = Mat.of_array (Array.of_list l) n m
 
