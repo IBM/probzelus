@@ -25,11 +25,11 @@ open Utils
 let proba kalman (u, acc, gps) = x where
   rec mu = x0 -> (a *@ pre x) +@ (b *@ u)
   and x = sample (mv_gaussian (mu, noise))
-  and pre_x = x0 -> pre x
-  and pre_pre_x = x0 -> pre pre_x
+  and init buf = buffer (max_delay, const x0)
+  and buf = push (x, last buf)
   and () = observe (gaussian (vec_get (x, 2), 0.1), acc)
-  and () = present gps(pos) ->
-             observe (gaussian (vec_get (pre_pre_x, 0), 0.001), pos)
+  and () = present gps(delay, pos) ->
+             observe (gaussian (vec_get (peek (delay, buf), 0), 0.001), pos)
            else ()
 
 let atomic node main_no_metric particles () = (xt, u) where
