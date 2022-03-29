@@ -1,0 +1,37 @@
+(*
+ * Copyright 2018-2020 IBM Corporation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *)
+
+open Probzelus
+open Distribution
+open Infer_ds_streaming_copy_instrumented
+open Kalmangslib
+
+let atomic proba do_kalman1d yobs = xt where
+  rec xt = sample (gaussian ((const 0., 2500.) -> (pre xt, 1.)))
+  and () = observe (gaussian (xt, 1.), yobs)
+
+let proba kalman1d yobs = xt where
+  rec xt = do_kalman1d yobs
+  and null1 = Utils.to_unit xt
+  and null2 = Utils.gc_full_major null1 
+  and () = print_ins null2
+
+let node main_no_metric particles observed =
+  infer particles kalman1d observed
+
+let node main particles (true_x, observed) = (d, mse) where
+  rec d = main_no_metric particles observed
+  and mse = Metrics.mse (true_x, d)
