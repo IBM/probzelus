@@ -53,6 +53,6 @@ let node env cmd = x, acc, gps where
   and x = draw (Distribution.mv_gaussian (mu, noise))
   and init buf = buffer (max_delay, x0)
   and buf = push (x, last buf)
-  and delay = draw (Distribution.uniform_int (5, max_delay))
+  and delay = draw (Distribution.uniform_int (2, max_delay))
   and acc = draw (Distribution.gaussian (acceleration x, 0.1))
   and present call_gps -> do emit gps = (delay, draw (Distribution.gaussian (position (peek (delay, buf)), 0.1))) done
