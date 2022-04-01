@@ -25,14 +25,12 @@ let wb = 2.0
 let sensor_err = 1.0
 
 let node main () =
-  let torque = draw (gaussian(0., 1.)) in
-  let acc = draw (gaussian(0., 1.)) in
-  let rec omega = (0. fby omega) +. torque *. dt in
-  let rec velocity = (0. fby velocity) +. acc *. dt in
+  let rec omega = draw (gaussian (0. fby omega, dt ** 2.)) in
+  let rec velocity = draw (gaussian (0. fby velocity, dt ** 2.)) in
   let left_wheel_rate = draw (gaussian (velocity -. wb *. omega, sensor_err)) in
   let right_wheel_rate = draw (gaussian (velocity -. wb *. omega, sensor_err)) in
   print_string (
     (string_of_float velocity) ^ ", " ^
     (string_of_float omega) ^ ", " ^
-    (string_of_float left_wheel_rate) ^ ", " ^ 
+    (string_of_float left_wheel_rate) ^ ", " ^
     (string_of_float right_wheel_rate) ^ "\n")

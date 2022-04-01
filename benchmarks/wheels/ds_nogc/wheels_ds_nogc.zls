@@ -23,11 +23,9 @@ let dt = 0.01
 let wb = 2.0
 let sensor_err = 1.0
 
-let proba wheels (left_wheel_rate, right_wheel_rate) = pair (velocity, omega) where 
-  rec torque = sample (gaussian(const 0., 1.))
-  and acc = sample (gaussian(const 0., 1.))
-  and omega = (const 0. fby omega) +~ torque *~ (const dt)
-  and velocity = (const 0. fby velocity) +~ acc *~ (const dt)
+let proba wheels (left_wheel_rate, right_wheel_rate) = pair (velocity, omega) where
+  rec omega = sample (gaussian (const 0. fby omega, dt ** 2.))
+  and velocity = sample (gaussian (const 0. fby velocity, dt ** 2.))
   and () = observe(gaussian (velocity +~ (const (-. wb)) *~ omega, sensor_err), left_wheel_rate)
   and () = observe (gaussian (velocity +~ (const (-. wb)) *~ omega, sensor_err), right_wheel_rate)
 
