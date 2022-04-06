@@ -1,0 +1,7 @@
+let wb = 2.0
+let sensor_err_l = 1.0
+let sensor_err_r = 0.95
+let omega_init = 2500.
+let velocity_init = 2500.
+let omega_noise = 1.
+let velocity_noise = 1.

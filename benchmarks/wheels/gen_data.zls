@@ -17,21 +17,15 @@
 open Probzelus
 open Distribution
 open Wheelslib
+open Config
 
 let random_init = Random.self_init ()
-
-let wb = 2.0
-let sensor_err = 1.0
-let omega_init = 2500.
-let velocity_init = 2500.
-let omega_noise = 1.
-let velocity_noise = 1.
 
 let node main () =
   let rec omega = draw (gaussian ((0., omega_init) fby (omega, omega_noise))) in
   let rec velocity = draw (gaussian ((0., velocity_init) fby (velocity, velocity_noise))) in
-  let left_wheel_rate = draw (gaussian (velocity -. wb *. omega, sensor_err)) in
-  let right_wheel_rate = draw (gaussian (velocity +. wb *. omega, sensor_err)) in
+  let left_wheel_rate = draw (gaussian (velocity -. wb *. omega, sensor_err_l)) in
+  let right_wheel_rate = draw (gaussian (velocity +. wb *. omega, sensor_err_r)) in
   print_string (
     (string_of_float velocity) ^ ", " ^
     (string_of_float omega) ^ ", " ^
