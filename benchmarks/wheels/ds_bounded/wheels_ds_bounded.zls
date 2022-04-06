@@ -18,23 +18,16 @@ open Probzelus
 open Distribution
 open Infer_ds_naive
 open Wheelslib
-
-let wb = 2.0
-let sensor_err = 1.0
-let omega_init = 2500.
-let velocity_init = 2500.
-let omega_noise = 1.
-let velocity_noise = 1.
-
+open Config
 
 let proba wheels (left_wheel_rate, right_wheel_rate) = pair (velocity, omega) where
   rec omega = sample (gaussian ((const 0., omega_init) fby (omega, omega_noise)))
   and velocity = sample (gaussian ((const 0., velocity_init) fby (velocity, velocity_noise)))
-  and () = observe(gaussian (velocity +~ (const (-. wb)) *~ omega, sensor_err), left_wheel_rate)
-  and () = observe (gaussian (velocity +~ (const wb) *~ omega, sensor_err), right_wheel_rate)
+  and () = observe(gaussian (velocity +~ (const (-. wb)) *~ omega, sensor_err_l), left_wheel_rate)
+  and () = observe (gaussian (velocity +~ (const wb) *~ omega, sensor_err_r), right_wheel_rate)
 
 let node main_no_metric particles observed =
-  infer_bounded particles wheels observed
+  infer_marginal particles wheels observed
 
 let node main particles (true_lr, observed) = (d, mse) where
   rec d = main_no_metric particles observed

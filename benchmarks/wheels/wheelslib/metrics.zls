@@ -20,9 +20,11 @@ open Distribution
 let node mse ((true_left, true_right), lr_distr) = mse where
   rec l_d, r_d = split lr_distr
   and l = mean_float l_d
-  and r = mean_float l_d
+  and r = mean_float r_d
   and t = 1. fby (t +. 1.)
   and error = (l -. true_left) ** 2. +. (r -. true_right) ** 2.
   and total_error = error -> (pre total_error) +. error
   and mse = total_error /. t
+  (* and () = (print_string ("Metrics => tl: " ^ (string_of_float true_left) ^ ", tr: " ^ (string_of_float true_right) ^ ", l: " ^ (string_of_float l) ^ ", r: " ^ (string_of_float r) ^ ", mse: " ^ (string_of_float mse) ^ ", error: " ^ (string_of_float error) ^ ", total_error: " ^ (string_of_float total_error) ^ "\n")) *)
+
 
