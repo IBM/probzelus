@@ -39,3 +39,7 @@ let node main_no_metric particles observed =
 let node main particles (true_lr, observed) = (d, mse) where
   rec d = main_no_metric particles observed
   and mse = Metrics.mse (true_lr, d)
+  (*and (true_vel, true_omega) = true_lr
+  and (v_d, o_d) = split d
+  and (v_est, o_est) = mean_float v_d, mean_float o_d
+  and () = (print_string ("v_t: " ^ (string_of_float true_vel) ^ ", o_t: " ^ (string_of_float true_omega) ^ ", v_est: " ^ (string_of_float v_est) ^ ", o_est: " ^ (string_of_float o_est) ^ "mse: " ^ (string_of_float mse) ^ "\n"))*)
