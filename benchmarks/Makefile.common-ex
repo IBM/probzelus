@@ -15,7 +15,7 @@ publish:
 	$(MAKE) -C ds publish
 	echo "Skip:" $(MAKE) -C ds_bounded publish
 	echo "Skip:" $(MAKE) -C ds_nogc publish
-	$(MAKE) -C semi-symb publish
+	$(MAKE) -C semi_symb publish
 
 bench: bench_particles bench_ds bench_semi_symb
 #  bench_ds_bounded bench_ds_nogc
