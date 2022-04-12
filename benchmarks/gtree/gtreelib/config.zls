@@ -14,22 +14,7 @@
  * limitations under the License.
  *)
 
-open Probzelus
-open Distribution
-open Infer_ds_naive
-open Gtreelib
-open Config
-
-let proba gtree (c_obs, d_obs) =
-  let init a = sample (gaussian (const 0., a_var)) in
-  let b = sample (gaussian (a, b_var)) in
-  let () = observe (gaussian (b, c_var), c_obs) in
-  let () = observe (gaussian (a, d_var), d_obs) in
-  pair (a, b)
-
-let node main_no_metric particles observed =
-  infer_bounded particles gtree observed
-
-let node main particles (true_ab, observed) = (d, mse) where
-  rec d = main_no_metric particles observed
-  and mse = Metrics.mse (true_ab, d)
+let a_var = 1000.
+let b_var = 1000.
+let c_var = 100.
+let d_var = 100.

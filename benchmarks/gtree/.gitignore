@@ -3,6 +3,8 @@ main.ml
 particles/gtree_particles.ml
 gtreelib/metrics.ml
 gtreelib/metrics.zci
+gtreelib/config.ml
+gtreelib/config.zci
 ds/gtree_ds.ml
 ds_nogc/gtree_ds_nogc.ml
 ds_bounded/gtree_ds_bounded.ml
