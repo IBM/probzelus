@@ -18,13 +18,14 @@ open Probzelus
 open Distribution
 open Infer_semi_symbolic
 open Gtreelib
+open Config
 
-let proba gtree (c_obs, d_obs) = 
-  let init a = sample (gaussian (const 0., 100.)) in
-  let b = sample (gaussian (a, 100.)) in
-  let () = observe (gaussian (b, 1.), c_obs) in
-  let () = observe (gaussian (a, 1.), d_obs) in
-  pair (a, b) 
+let proba gtree (c_obs, d_obs) =
+  let init a = sample (gaussian (const 0., a_var)) in
+  let b = sample (gaussian (a, b_var)) in
+  let () = observe (gaussian (b, c_var), c_obs) in
+  let () = observe (gaussian (a, d_var), d_obs) in
+  pair (a, b)
 
 let node main_no_metric particles observed =
   infer_marginal particles gtree observed
