@@ -4,4 +4,4 @@
 
 (executables
  (names main)
- (libraries probzelus))
+ (libraries probzelus gtreelib))

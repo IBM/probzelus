@@ -16,12 +16,14 @@
 
 open Probzelus
 open Distribution
+open Gtreelib
+open Config
 
 let random_init = Random.self_init ()
 
 let node main () =
-  let init a = draw (Distribution.gaussian (0., 100.)) in
-  let b = draw (Distribution.gaussian (a, 100.)) in
-  let c = draw (Distribution.gaussian (b, 1.)) in
-  let d = draw (Distribution.gaussian (a, 1.)) in
+  let init a = draw (Distribution.gaussian (0., a_var)) in
+  let b = draw (Distribution.gaussian (a, b_var)) in
+  let c = draw (Distribution.gaussian (b, c_var)) in
+  let d = draw (Distribution.gaussian (a, d_var)) in
   print_string ((string_of_float a) ^ ", " ^ (string_of_float b) ^ ", " ^ (string_of_float c) ^ ", " ^ (string_of_float d) ^ "\n")
