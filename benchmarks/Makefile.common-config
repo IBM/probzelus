@@ -8,8 +8,8 @@ ANALYZE_EXE=$(BROOT)/tools/analyze_csv.exe
 MSE_SEARCH_EXE=$(BROOT)/tools/mse_search.exe
 
 MIN=1
-MAX=1500
+MAX=5000
 P=100
 INCR=2
-NUMRUNS=500
+NUMRUNS=1000
 WARMUP=1
