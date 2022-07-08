@@ -12,7 +12,7 @@ all:
 	$(MAKE) -C mtt
 	$(MAKE) -C wheels
 
-bench: bench-coin bench-gaussian bench-gtree bench-kalman bench-outlier bench-slam bench-tracker bench-trackerdelay bench-mtt
+bench: bench-coin bench-gaussian bench-gtree bench-kalman bench-outlier bench-slam bench-tracker bench-trackerdelay bench-wheels bench-mtt
 bench-coin:
 	$(MAKE) -C coin bench
 bench-gaussian:
