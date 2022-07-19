@@ -115,7 +115,7 @@ def to_latex(baseline):
             l = results['lower']
             u = results['upper']
             if t <= 0.0: ft = "\\timeout"
-            else: ft = f"{t:.2f}(\\pm {max(t-l, u-t):.2f})"
+            else: ft = f"{t:.2f}(-{100*(t-l)/t:.1f}+{100*(u-t)/t:.1f})"
             print(f"& {fp} & {ft}", end=" ")
         print("\\\\")
 
