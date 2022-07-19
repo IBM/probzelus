@@ -112,8 +112,10 @@ def to_latex(baseline):
             else: fp = " "
 
             t = results['median']
+            l = results['lower']
+            u = results['upper']
             if t <= 0.0: ft = "\\timeout"
-            else: ft = f"{results['median']:.2f}"
+            else: ft = f"{t:.2f}(\\pm {max(t-l, u-t):.2f})"
             print(f"& {fp} & {ft}", end=" ")
         print("\\\\")
 
