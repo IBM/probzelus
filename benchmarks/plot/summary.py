@@ -57,7 +57,7 @@ def get_baseline(example, algo=Algo.SDS, particles=500):
 def get_crossing_point(example, algo, baseline={}):
     b_acc, b_perf = get_baseline(example, **baseline)
     with Data(example, algo, Kind.Acc) as accuracy, Data(example, algo, Kind.Perf) as perf:
-            cond = lambda x: abs(log10(x) - log10(b_acc)) <= 0.5
+            cond = lambda x: (log10(x) - log10(b_acc)) <= 0.5
             particles = next(row['particles'] for row in accuracy if cond(row['upper quantile']))
             return next(
                 (particles, row['time in ms lower quantile'], row['median'], row['upper quantile'])
