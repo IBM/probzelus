@@ -99,8 +99,7 @@ def to_latex(baseline):
            'DelayedGPS': 'Delayed GPS', }
 
     results = get_results(baseline)
-    print("model & PF particles & PF time & DS particles & DS time & SSI particles & SSI time")
-    print("\\\\")
+    print("\\newcommand{\\qres}[4]{#1 \\textcolor{gray}{\\tiny{(#4)}}}")
     for name, ex  in results.items():
         print(exs[name], end=" ")
         for algo in ["PF", "SDS", "SSDS"]:
@@ -115,7 +114,7 @@ def to_latex(baseline):
             l = results['lower']
             u = results['upper']
             if t <= 0.0: ft = "\\timeout"
-            else: ft = f"{t:.2f}(-{100*(t-l)/t:.1f}+{100*(u-t)/t:.1f})"
+            else: ft = f"\\qres{{{t:.2f}}}{{{l:.2f}}}{{{u:.2f}}}{{{(u-l):.2f}}}"
             print(f"& {fp} & {ft}", end=" ")
         print("\\\\")
 
