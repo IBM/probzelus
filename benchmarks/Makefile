@@ -95,6 +95,19 @@ analyze:
 	$(MAKE) -C mtt analyze
 	$(MAKE) -C wheels analyze
 
+baseline:
+	$(MAKE) -C coin baseline
+	$(MAKE) -C gaussian baseline
+	$(MAKE) -C gtree baseline
+	$(MAKE) -C kalman baseline
+	$(MAKE) -C outlier baseline
+	$(MAKE) -C slam baseline
+	$(MAKE) -C tracker baseline
+	$(MAKE) -C trackerdelay baseline
+	$(MAKE) -C mtt baseline
+	$(MAKE) -C wheels baseline
+
+
 publish:
 	$(MAKE) -C coin publish
 	$(MAKE) -C gaussian publish
