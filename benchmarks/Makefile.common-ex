@@ -70,6 +70,10 @@ analyze:
 	echo "Skip:" $(MAKE) -C ds_nogc analyze
 	$(MAKE) -C semi_symb analyze
 
+baseline:
+	$(MAKE) -C ds baseline
+
+
 .PHONY: publish bench build build_lib \
 	bench_particles bench_ds bench_ds_bounded bench_ds_nogc bench_semi_symb
 
