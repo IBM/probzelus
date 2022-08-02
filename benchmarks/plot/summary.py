@@ -99,7 +99,8 @@ def to_latex(baseline):
            'DelayedGPS': 'Delayed GPS', }
 
     results = get_results(baseline)
-    print("\\newcommand{\\qres}[4]{#1 \\textcolor{gray}{\\tiny{(#4)}}}")
+    print("\\newcommand{\\qres}[4]{#1}")
+    print("\\newcommand{\\qresuncertainty}[4]{\\textcolor{gray}{\\tiny{({#2}-{#3})}}}")
     for name, ex  in results.items():
         print(exs[name], end=" ")
         for algo in ["PF", "SDS", "SSDS"]:
@@ -116,6 +117,16 @@ def to_latex(baseline):
             if t <= 0.0: ft = "\\timeout"
             else: ft = f"\\qres{{{t:.2f}}}{{{l:.2f}}}{{{u:.2f}}}{{{(u-l):.2f}}}"
             print(f"& {fp} & {ft}", end=" ")
+        print("\\\\")
+        for algo in ["PF", "SDS", "SSDS"]:
+            results = ex[algo]
+
+            t = results['median']
+            l = results['lower']
+            u = results['upper']
+            if t <= 0.0: ft = " "
+            else: ft = f"\\qresuncertainty{{{t:.2f}}}{{{l:.2f}}}{{{u:.2f}}}{{{(u-l):.2f}}}"
+            print(f"&   & {ft}", end=" ")
         print("\\\\")
 
 to_latex({'algo': Algo.SDS, 'particles': 1000})
