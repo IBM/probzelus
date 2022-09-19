@@ -1,0 +1,6 @@
+(library
+  (name semi_symbolic)
+  (public_name probzelus.semi_symbolic)
+  (modes native byte)
+  (libraries zelus-owl)
+  (preprocess (pps ppx_deriving.show ppx_deriving.eq)))
