@@ -1,0 +1,84 @@
+(*
+ * Copyright 2018-2020 IBM Corporation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *)
+
+(** Inference with delayed sampling *)
+open Zelus_owl
+
+type 'a expr
+
+val const : 'a -> 'a expr
+val add : float expr * float expr -> float expr
+val ( +~ ) : float expr -> float expr -> float expr
+val mult : float expr * float expr -> float expr
+val ( *~ ) : float expr -> float expr -> float expr
+(* val app : ('a -> 'b) expr * 'a expr -> 'b expr
+val ( @@~ ) : ('a -> 'b) expr -> 'a expr -> 'b expr *)
+val pair : 'a expr * 'b expr -> ('a * 'b) expr
+val array : 'a expr array -> 'a array expr
+val lst : 'a expr list -> 'a list expr
+val ite : bool expr -> 'a expr -> 'a expr -> 'a expr
+val matrix : 'a expr array array -> 'a array array expr
+
+val mat_add : Mat.mat expr * Mat.mat expr -> Mat.mat expr
+val ( +@~ ) : Mat.mat expr -> Mat.mat expr -> Mat.mat expr
+val mat_scalar_mult : float expr * Mat.mat expr -> Mat.mat expr
+val ( $*~ ) : float expr -> Mat.mat expr -> Mat.mat expr
+val mat_dot : Mat.mat expr * Mat.mat expr -> Mat.mat expr
+val ( *@~ ) : Mat.mat expr -> Mat.mat expr -> Mat.mat expr
+val vec_get : Mat.mat expr * int -> float expr
+
+val eval : 'a expr -AD-> 'a
+
+type 'a ds_distribution
+
+val of_distribution : 'a Distribution.t -> 'a ds_distribution
+val gaussian : float expr * float -> float ds_distribution
+val beta : float * float -> float ds_distribution
+val bernoulli : float expr -> bool ds_distribution
+val mv_gaussian : Mat.mat expr * Mat.mat -> Mat.mat ds_distribution
+val mv_gaussian_curried : Mat.mat -> Mat.mat expr -> Mat.mat ds_distribution
+
+val factor : float ~D~> unit
+val sample : 'a ds_distribution ~D~> 'a expr
+val observe : 'a ds_distribution * 'a ~D~> unit
+
+(*
+val infer :
+  int -S-> ('a ~D~> 'b expr) -S-> 'a -D-> 'b Distribution.t
+
+val infer_ess_resample :
+  int -S-> float -S-> ('a ~D~> 'b expr) -S-> 'a -D-> 'b Distribution.t
+
+val infer_bounded :
+  int -S-> ('a ~D~> 'b expr) -S-> 'a -D-> 'b Distribution.t
+
+val infer_bounded_ess_resample :
+  int -S-> float -S-> ('a ~D~> 'b expr) -S-> 'a -D-> 'b Distribution.t
+
+val infer_sample :
+  int -S-> ('a ~D~> 'b expr) -S-> 'a -D-> 'b Distribution.t
+
+val infer_sample_ess_resample :
+  int -S-> float -S-> ('a ~D~> 'b expr) -S-> 'a -D-> 'b Distribution.t
+*)
+val infer_marginal :
+  int -S-> ('a ~D~> 'b expr) -S-> 'a -D-> 'b Distribution.t
+(*
+val infer_marginal_ess_resample :
+  int -S-> float -S-> ('a ~D~> 'b expr) -S-> 'a -D-> 'b Distribution.t
+
+val gen : ('a ~D~> 'b expr) -S-> 'a -D-> 'b * float
+*)

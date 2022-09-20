@@ -1,0 +1,38 @@
+(*
+ * Copyright 2018-2020 IBM Corporation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *)
+
+open Probzelus
+open Distribution
+open Infer_semi_symbolic
+open Wheelslib
+open Config
+
+let proba wheels (left_wheel_rate, right_wheel_rate) = pair (velocity, omega) where
+  rec omega = sample (gaussian ((const 0., omega_init) fby (omega, omega_noise)))
+  and velocity = sample (gaussian ((const 0., velocity_init) fby (velocity, velocity_noise)))
+  and () = observe(gaussian (velocity +~ (const (-. wb)) *~ omega, sensor_err_l), left_wheel_rate)
+  and () = observe (gaussian (velocity +~ (const wb) *~ omega, sensor_err_r), right_wheel_rate)
+
+let node main_no_metric particles observed =
+  infer_marginal particles wheels observed
+
+let node main particles (true_lr, observed) = (d, mse) where
+  rec d = main_no_metric particles observed
+  and mse = Metrics.mse (true_lr, d)
+  (* and (true_vel, true_omega) = true_lr *)
+  (* and (v_d, o_d) = split d *)
+  (* and (v_est, o_est) = mean_float v_d, mean_float o_d *)
+  (* and () = (print_string ("v_t: " ^ (string_of_float true_vel) ^ ", o_t: " ^ (string_of_float true_omega) ^ ", v_est: " ^ (string_of_float v_est) ^ ", o_est: " ^ (string_of_float o_est) ^ "mse: " ^ (string_of_float mse) ^ "\n")) *)

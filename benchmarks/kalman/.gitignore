@@ -6,3 +6,4 @@ kalmanlib/metrics.zci
 ds/kalman_ds.ml
 ds_nogc/kalman_ds_nogc.ml
 ds_bounded/kalman_ds_bounded.ml
+semi_symb/kalman_semi_symb.ml

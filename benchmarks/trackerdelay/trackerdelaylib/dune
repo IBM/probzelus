@@ -1,0 +1,7 @@
+(env
+ (dev
+  (flags (:standard -w -9-27-33 -warn-error -A))))
+
+(library
+ (name trackerdelaylib)
+ (libraries probzelus zelus-owl owl mtime mtime.clock mtime.clock.os))

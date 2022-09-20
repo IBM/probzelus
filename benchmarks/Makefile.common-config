@@ -1,4 +1,4 @@
-PPL-ZELUS=$(HOME)/probabilistic/mit-ibm/ppl-zelus
+PPL-ZELUS=$(HOME)/probabilistic/mit-ibm/semi-symbolic/semi-symbolic
 PROBZELUC=probzeluc
 BROOT=../../_build/default
 RUN=$(BROOT)/$(EX)/$(ALGO)/run.exe
@@ -8,7 +8,7 @@ ANALYZE_EXE=$(BROOT)/tools/analyze_csv.exe
 MSE_SEARCH_EXE=$(BROOT)/tools/mse_search.exe
 
 MIN=1
-MAX=15000
+MAX=5000
 P=100
 INCR=2
 NUMRUNS=1000

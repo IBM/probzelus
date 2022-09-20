@@ -1,0 +1,28 @@
+(*
+ * Copyright 2018-2020 IBM Corporation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *)
+
+open Probzelus
+open Distribution
+
+let node mse ((true_a, true_b), ab_distr) = mse where
+  rec a_d, b_d = split ab_distr
+  and a = mean_float a_d
+  and b = mean_float b_d
+  and t = 1. fby (t +. 1.)
+  and error = (a -. true_a) ** 2. +. (b -. true_b) ** 2.
+  and total_error = error -> (pre total_error) +. error
+  and mse = total_error /. t
+

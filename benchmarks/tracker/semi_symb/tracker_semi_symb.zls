@@ -1,0 +1,40 @@
+(*
+ * Copyright 2018-2020 IBM Corporation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *)
+
+open Probzelus
+open Distribution
+open Infer_semi_symbolic
+open Zelus_owl
+open Trackerlib
+open Lib
+open Utils
+
+let proba kalman (u, acc, gps) = x where
+  rec mu = const x0 -> (const a *@~ pre x) +@~ (const b *@~ const u)
+  and x = sample (mv_gaussian (mu, noise))
+  and () = observe (gaussian (vec_get (x, 2), 0.1), acc)
+  and () = present gps(pos) -> observe (gaussian (vec_get (x, 0), 0.001), pos)
+           else ()
+
+let atomic node main_no_metric particles () = (xt, cmd) where
+  rec xt, acc, gps = env cmd
+  and x_dist = infer_marginal particles kalman (cmd, acc, gps)
+  and cmd = u0 -> controller (pre x_dist)
+
+let node main particles () = ((xt, cmd), e) where
+  rec (xt, cmd) = main_no_metric particles ()
+  and e = Metrics.lqr_err (xt, cmd)
+

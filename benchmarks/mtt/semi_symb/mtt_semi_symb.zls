@@ -1,0 +1,72 @@
+(*
+ * Copyright 2018-2020 IBM Corporation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *)
+
+open Mttlib
+open Probzelus
+open Util
+open Distribution
+open Zelus_owl
+open Infer_semi_symbolic
+
+let observe_distr = mv_gaussian_curried sigma_obs
+let init_distr = mv_gaussian_curried sigma_new
+let update_distr = mv_gaussian_curried sigma_update
+let clutter_distr = mv_gaussian_curried sigma_clutter
+
+let proba death_fn _ =
+  eval (sample (bernoulli (const p_dead)))
+
+let proba new_track_init_fn _ =
+  (new_track_num (), sample (init_distr (const mu_new)))
+
+let proba state_update_fn (tr_num, tr) =
+  (tr_num, sample (update_distr (const a_u *@~ tr +@~ const b_u)))
+
+let observe_fn (_, tr) = observe_distr (const proj_pos *@~ tr)
+
+let proba clutter_init_fn _ =
+  (clutter_distr (const mu_clutter))
+
+let proba obsfn (var, value) =
+  observe (var, value)
+
+let to_expr (tr_num, tr) =
+  pair (const tr_num, tr)
+
+let proba model inp = lst t_expr where
+  rec init t = []  (* lst_iter *)
+  and t_expr = List.map to_expr t
+  and t_survived = ListP.filter death_fn (last t)
+  and n_new = eval (sample (of_distribution (poisson lambda_new)))
+  and t_new = ListP.ini new_track_init_fn n_new
+  and t_tot = List.append t_survived t_new
+  and t = ListP.map state_update_fn t_tot
+  and obs = List.map observe_fn t
+  and n_clutter = (List.length inp) - (List.length obs)
+  (*and () = print_string (string_of_int (List.length t) ^ "\n")*)
+  and () = observe(of_distribution (poisson lambda_clutter), n_clutter)
+  and clutter = ListP.ini clutter_init_fn n_clutter
+  and obs_shuffled = eval (sample (of_distribution (shuffle (List.append obs clutter))))
+  and present (not (n_clutter < 0)) ->
+      do () = (ListP.iter2 obsfn (obs_shuffled, inp)) done
+
+let node main_no_metric particles obs = tr_distr where
+  rec tr_distr = with_retry is_valid (infer_marginal particles model) obs
+  (* and () = print_string ((string_of_vec2_list tr) ^ " : " ^ (string_of_vec2_list obs) ^ "\n") *)
+
+let node main particles (true_tr, obs) = (tr_distr, e) where
+  rec tr_distr = main_no_metric particles obs
+  and e = Metrics.mota (true_tr, tr_distr)
