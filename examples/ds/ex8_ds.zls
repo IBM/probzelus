@@ -15,15 +15,15 @@
  *)
 
 open Probzelus
-open Infer_ds_naive
+open Distribution
+open Infer_ds_streaming
 
-let proba f () = x0 where
-  rec init x0 = sample(gaussian (const 0., 1.))
-  and () = observe(gaussian(x0, 1.), 0.1)
 
-let node main1 () = () where
-  rec x_d = infer 2 f ()
-  and mean = Distribution.mean_float x_d
-  and () =
-    Distribution.print_float_t x_d; print_newline();
-    print_float mean; print_newline()
+let proba p () = pair(x, const 1) where
+  rec x = sample(bernoulli(const 0.5))
+
+let proba q () = fst'(p())
+
+let node main8 () =
+  let d = infer 1 q () in
+  print_bool_t d; print_newline ()

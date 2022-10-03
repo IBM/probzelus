@@ -54,6 +54,8 @@ module Make(DS_ll: DS_ll_S) = struct
     | Emult : float expr * float expr -> float expr_tree
     | Eapp : ('a -> 'b) expr * 'a expr -> 'b expr_tree
     | Epair : 'a expr * 'b expr -> ('a * 'b) expr_tree
+    | Efst : ('a * 'b) expr -> 'a expr_tree
+    | Esnd : ('a * 'b) expr -> 'b expr_tree
     | Earray : 'a expr array -> 'a array expr_tree
     | Ematrix : 'a expr array array -> 'a array array expr_tree
     | Elist : 'a expr list -> 'a list expr_tree
@@ -110,6 +112,12 @@ module Make(DS_ll: DS_ll_S) = struct
 
   let pair (e1, e2) =
     { value = Epair (e1, e2) }
+
+  let fst' e =
+    { value = Efst e }
+
+  let snd' e =
+    { value = Esnd e }
 
   let array a =
     { value = Earray a }
@@ -187,6 +195,14 @@ module Make(DS_ll: DS_ll_S) = struct
           let v = (eval e1, eval e2) in
           e.value <- Econst v;
           v
+      | Efst e' ->
+          let (v1, _) = eval e' in
+          e.value <- Econst v1;
+          v1
+      | Esnd e' ->
+          let (_, v2) = eval e' in
+          e.value <- Econst v2;
+          v2
       | Earray a ->
           Array.map eval a
       | Ematrix a ->
@@ -255,7 +271,10 @@ module Make(DS_ll: DS_ll_S) = struct
         "(" ^ string_of_expr e1 ^ " * " ^ string_of_expr e2 ^ ")"
     | Eapp (_e1, _e2) -> "App"
     | Evec_get _ -> "Get"
-    | Eite (_, t, e) -> "(if ... then " ^ string_of_expr t ^ " else " ^ string_of_expr e ^ ")"
+    | Eite (_, t, e) ->
+        "(if ... then " ^ string_of_expr t ^ " else " ^ string_of_expr e ^ ")"
+    | Efst _ -> "Fst"
+    | Esnd _ -> "Snd"
     | Emat_add (_, _) -> assert false
     | Emat_scalar_mul (_, _) -> assert false
     | Emat_dot (_, _) -> assert false
@@ -268,6 +287,8 @@ module Make(DS_ll: DS_ll_S) = struct
     | Econst _ -> "Econst"
     | Ervar _ -> "Ervar"
     | Eapp _ -> "App"
+    | Efst _ -> "Fst"
+    | Esnd _ -> "Snd"
     | Eite (_, _, _) -> "Ite"
     | Emat_add (_, _) -> assert false
     | Emat_scalar_mul (_, _) -> assert false
@@ -356,6 +377,8 @@ module Make(DS_ll: DS_ll_S) = struct
           | _ -> None
           end
       | Eapp (_, _) -> None
+      | Efst _ -> None
+      | Esnd _ -> None
       | Eite (_, _, _) -> None
       | Emat_add (_, _) -> assert false
       | Emat_scalar_mul (_, _) -> assert false
@@ -629,6 +652,10 @@ module Make(DS_ll: DS_ll_S) = struct
             raise Stop
         | Epair (e1, e2) ->
             is_safe (is_safe acc e1) e2
+        | Efst e ->
+            is_safe acc e
+        | Esnd e ->
+            is_safe acc e
         | Earray a ->
             Array.fold_left (fun acc e -> is_safe acc e) acc a
         | Ematrix m ->
@@ -676,6 +703,20 @@ module Make(DS_ll: DS_ll_S) = struct
     | Epair (e1, e2) ->
         Dist_pair (marginal_distribution_of_expr e1,
                    marginal_distribution_of_expr e2)
+    | Efst e ->
+        begin match marginal_distribution_of_expr e with
+        | Dist_support l ->
+            Dist_support (List.map (fun ((c1, _), w) -> (c1, w)) l)
+        | Dist_pair (d1, _) -> d1
+        | _ -> assert false
+        end
+    | Esnd e ->
+        begin match marginal_distribution_of_expr e with
+        | Dist_support l ->
+            Dist_support (List.map (fun ((_, c2), w) -> (c2, w)) l)
+        | Dist_pair (_, d2) -> d2
+        | _ -> assert false
+        end
     | Earray a ->
         Dist_array (Array.map marginal_distribution_of_expr a)
     | Ematrix a ->
@@ -718,6 +759,26 @@ module Make(DS_ll: DS_ll_S) = struct
     | Epair (e1, e2) ->
         JDist_pair (joint_distribution_of_expr tbl e1,
                     joint_distribution_of_expr tbl e2)
+    | Efst e ->
+        let rec jd_fst jdist =
+          begin match jdist with
+          | JDist_const (c1, _) -> JDist_const c1
+          | JDist_pair (d1, _) -> d1
+          | JDist_ite (d, d1, d2) -> JDist_ite (d, jd_fst d1, jd_fst d2)
+          | _ -> assert false
+          end
+        in
+        jd_fst (joint_distribution_of_expr tbl e)
+    | Esnd e ->
+        let rec jd_snd jdist =
+          begin match jdist with
+          | JDist_const (_, c2) -> JDist_const c2
+          | JDist_pair (_, d2) -> d2
+          | JDist_ite (d, d1, d2) -> JDist_ite (d, jd_snd d1, jd_snd d2)
+          | _ -> assert false
+          end
+        in
+        jd_snd (joint_distribution_of_expr tbl e)
     | Earray a ->
         JDist_array (Array.map (joint_distribution_of_expr tbl) a)
     | Ematrix a ->

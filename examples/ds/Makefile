@@ -1,6 +1,6 @@
 PROBZELUC=probzeluc
 
-NUMS=1 2 3 4 5 6 7
+NUMS=1 2 3 4 5 6 7 8
 SRCS=$(patsubst %, ex%_ds.zls,$(NUMS))
 MLS=$(patsubst %, ex%_ds.ml,$(NUMS))
 MAINS=$(patsubst %, main%,$(NUMS))
@@ -23,7 +23,7 @@ clean:
 .phony: build exec exec_ds
 
 exec: main1.ml
-	dune exec ./main1.exe
+	dune exec ./main8.exe
 
 build: $(MAINS)
 	dune build $(EXECS)
