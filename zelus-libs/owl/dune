@@ -33,7 +33,7 @@
 (library
  (name zelus_owl)
  (public_name zelus-owl)
- (libraries owl))
+ (libraries unix owl))
 
 (install
  (package zelus-owl)
