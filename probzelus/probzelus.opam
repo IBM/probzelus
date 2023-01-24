@@ -16,6 +16,7 @@ depends: [
   "ocaml" {>= "4.10"}
   "dune" {>= "2.6"}
   "ocamlfind"
+  "ppx_deriving"
   "zelus"
   "zelus-owl"
 ]
