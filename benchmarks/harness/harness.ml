@@ -144,7 +144,9 @@ module Make(M: sig
   let time f x =
     let t_counter = Mtime_clock.counter () in
     let o = f x in
-    let t =  Mtime.Span.to_ms (Mtime_clock.count t_counter) in
+    (* Broken with MTime 2.0.0 *)
+    (* let t =  Mtime.Span.to_ms (Mtime_clock.count t_counter) in *)
+    let t = (Mtime.Span.to_float_ns (Mtime_clock.count t_counter)) *. 1e-6 in
     (o, t)
 
   let get_step () =
