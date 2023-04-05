@@ -13,6 +13,7 @@ type cmp_op =
 type unary_op =
   | Squared
   | SquareRoot
+  | Exp
 
 type category = int
 type domain = { lower: category; upper: category }
@@ -45,12 +46,15 @@ type 'a expr =
   | ExIte : bool expr * 'a expr * 'a expr -> 'a expr
   | ExList : 'a expr list -> 'a list expr
   | ExUnop : unary_op * float expr -> float expr
+  | ExIntToFloat : int expr -> float expr
 and 'a distribution =
   | Normal : float expr * float expr -> float distribution
   | MvNormal : Mat.mat expr * Mat.mat expr -> Mat.mat distribution
   | Categorical : domain * float factor expr -> category distribution
   | Beta : float expr * float expr -> float distribution
   | Bernoulli : float expr -> bool distribution
+  | Binomial : int expr * float expr -> int distribution
+  | BetaBinomial : int expr * float expr * float expr -> int distribution
   | Delta : 'a expr -> 'a distribution
   | Sampler : ((unit -> 'a) * ('a -> float)) -> 'a distribution
 and 'a random_var = {
@@ -83,7 +87,13 @@ let ex_unop ope =
   match ope with
   | Squared, ExConst c -> ExConst (c ** 2.)
   | SquareRoot, ExConst c -> ExConst (Float.sqrt c)
+  | Exp, ExConst c -> ExConst (Float.exp c)
   | (op, e) -> ExUnop (op, e)
+
+let ex_int_to_float e =
+  match e with
+  | ExConst c -> ExConst (float_of_int c)
+  | e -> ExIntToFloat e
 
 let ex_mat_add e1e2 =
   match e1e2 with
@@ -140,6 +150,7 @@ fun string_of_const e ->
   | ExIte (_, _, _) -> "ite"
   | ExUnop(Squared, e_inner) -> "(" ^ string_of_expr e_inner ^ ")^2"
   | ExUnop(SquareRoot, e_inner) -> "sqrt(" ^ string_of_expr e_inner ^ ")"
+  | ExUnop(Exp, e_inner) -> "expp(" ^ string_of_expr e_inner ^ ")"
   | _ -> assert false
   end
 
@@ -188,6 +199,7 @@ let rec size_expr:  type a. a expr -> int =
     | ExIte (e, e1, e2) -> size_expr e + size_expr e1 + size_expr e2
     | ExList l -> List.fold_left (fun acc e -> acc + size_expr e) 1 l
     | ExUnop (_, e) -> 1 + size_expr e
+    | ExIntToFloat e -> 1 + size_expr e
 
 and size_distr: type a. a distribution -> int =
   fun d ->
@@ -197,6 +209,8 @@ and size_distr: type a. a distribution -> int =
     | Categorical (_, e) -> 1 + size_expr e
     | Beta (e1, e2) -> 1 + size_expr e1 + size_expr e2
     | Bernoulli e -> 1 + size_expr e
+    | Binomial (e1, e2) -> 1 + size_expr e1 + size_expr e2
+    | BetaBinomial (e1, e2, e3) -> 1 + size_expr e1 + size_expr e2 + size_expr e3
     | Delta e -> 1 + size_expr e
     | Sampler _ -> 1
 
@@ -229,6 +243,7 @@ let rec subst : type a b. a expr -> b var -> b expr -> a expr =
   | ExIte (e1, e2, e3) -> ExIte (subst e1 v e', subst e2 v e', subst e3 v e')
   | ExList e -> ExList (List.map (fun e -> subst e v e') e)
   | ExUnop (op, e) -> ex_unop (op, subst e v e')
+  | ExIntToFloat e -> ex_int_to_float (subst e v e')
 
 let rec subst_rv : type a b. a expr -> b random_var -> b expr -> a expr =
   fun e v e' ->
@@ -258,6 +273,7 @@ let rec subst_rv : type a b. a expr -> b random_var -> b expr -> a expr =
   | ExIte (e1, e2, e3) -> ExIte (subst_rv e1 v e', subst_rv e2 v e', subst_rv e3 v e')
   | ExList e -> ExList (List.map (fun e -> subst_rv e v e') e)
   | ExUnop (op, e) -> ex_unop (op, subst_rv e v e')
+  | ExIntToFloat e -> ex_int_to_float (subst_rv e v e')
 
 exception InternalError of string
 exception NonConjugate : 'a random_var -> exn
@@ -375,6 +391,8 @@ fun expr ->
     end
   | ExUnop(Squared, e_inner) -> ex_unop(Squared, eval e_inner)
   | ExUnop(SquareRoot, e_inner) -> ex_unop(SquareRoot, eval e_inner)
+  | ExUnop(Exp, e_inner) -> ex_unop(Exp, eval e_inner)
+  | ExIntToFloat(e_inner) -> ex_int_to_float(eval e_inner)
 
 and eval_distr : type a. a distribution -> a distribution =
 fun distr ->
@@ -384,6 +402,8 @@ fun distr ->
   | Categorical (d, e) -> Categorical (d, eval e)
   | Beta (a, b) -> Beta (eval a, eval b)
   | Bernoulli(p) -> Bernoulli(eval p)
+  | Binomial(n, p) -> Binomial(eval n, eval p)
+  | BetaBinomial(n, a, b) -> BetaBinomial(eval n, eval a, eval b)
   | Delta e -> Delta (eval e)
   | Sampler e -> Sampler e
 
@@ -435,6 +455,8 @@ fun e rv_in ->
       end
     | _ -> None
     end
+  (* TODO: What to do if not constant? If a RV? *)
+  | ExIntToFloat _ -> None
   | ExMatAdd _ | ExMatSub _ | ExMatMul _
   | ExMatTrans _ | ExMatInv _ | ExMatScalarMul _ | ExMatGet _
   | ExMatSingle _
@@ -471,7 +493,7 @@ fun e ->
   | ExMatSingle (_) -> (1, 1)
   | ExMatScalarMul (_, m_inner) -> mat_shape m_inner
   | ExAdd _  | ExMul _ | ExDiv _ | ExArray _ | ExMatrix _ | ExList _
-  | ExPair _ | ExUnop _ | ExCmp _ | ExMatGet _
+  | ExPair _ | ExUnop _ | ExCmp _ | ExMatGet _ | ExIntToFloat _
   | ExFactor _ | ExLet _ | ExVar _ | ExSum _ | ExGet _ -> raise (MatrixShapeError ())
   end
 
@@ -518,6 +540,10 @@ fun e rv_in transitive ->
         | Normal (mu, var) -> (depends_on mu rv_in transitive) || (depends_on var rv_in transitive)
         | Beta (a, b) -> (depends_on a rv_in transitive) || (depends_on b rv_in transitive)
         | Bernoulli (p) -> (depends_on p rv_in transitive)
+        | Binomial (n, p) -> (depends_on n rv_in transitive) || (depends_on p rv_in transitive)
+        | BetaBinomial (n, a, b) -> (depends_on n rv_in transitive) || 
+                                    (depends_on a rv_in transitive) || 
+                                    (depends_on b rv_in transitive)
         | Categorical (_, e) -> depends_on e rv_in transitive
         | Delta e -> (depends_on e rv_in transitive)
         | MvNormal (mu, var) -> (depends_on mu rv_in transitive) || (depends_on var rv_in transitive)
@@ -539,6 +565,7 @@ fun e rv_in transitive ->
   | ExList l -> List.exists (fun e -> depends_on e rv_in transitive) l
   | ExIte (i, t, e) -> (depends_on i rv_in transitive) || (depends_on t rv_in transitive) || (depends_on e rv_in transitive)
   | ExUnop (_, e_inner) -> depends_on e_inner rv_in transitive
+  | ExIntToFloat e -> depends_on e rv_in transitive
   | ExMatAdd (e1, e2) | ExMatSub (e1, e2) | ExMatMul (e1, e2) ->
       (depends_on e1 rv_in transitive) || (depends_on e2 rv_in transitive)
   | ExMatScalarMul (s, e) -> (depends_on s rv_in transitive) || (depends_on e rv_in transitive)
@@ -607,6 +634,7 @@ fun e ->
   | ExCmp (_, e1, e2) -> (has_parents e1) || (has_parents e2)
   | ExIte (i, t, e) -> (has_parents i) || (has_parents t) || (has_parents e)
   | ExUnop (_, e_inner) -> has_parents e_inner
+  | ExIntToFloat e -> has_parents e
   | ExMatAdd (e1, e2) | ExMatSub (e1, e2) | ExMatMul (e1, e2) ->
       (has_parents e1) || (has_parents e2)
   | ExMatScalarMul (s, e) -> (has_parents s) || (has_parents e)
@@ -623,6 +651,8 @@ let has_parents_rv : type a. a random_var -> bool = fun rv' ->
   | Beta (a, b) -> (has_parents a) || (has_parents b)
   | Categorical (_, e) -> has_parents e
   | Bernoulli (p) -> has_parents p
+  | Binomial (n, p) -> (has_parents n) || (has_parents p)
+  | BetaBinomial (n, a, b) -> (has_parents n) || (has_parents a) || (has_parents b)
   | Delta e -> has_parents e
   | MvNormal (mu, var) -> (has_parents mu) || (has_parents var)
   | Sampler _ -> false
@@ -640,6 +670,10 @@ fun e rv_child ->
       | Beta (a, b) -> (depends_on a rv false) || (depends_on b rv false)
       | Categorical (_, e) -> (depends_on e rv false)
       | Bernoulli (p) -> depends_on p rv false
+      | Binomial (n, p) -> (depends_on n rv false) || (depends_on p rv false)
+      | BetaBinomial (n, a, b) -> (depends_on n rv false) || 
+                                  (depends_on a rv false) || 
+                                  (depends_on b rv false)
       | Delta e_inner -> depends_on e_inner rv false
       | MvNormal (mu, var) -> (depends_on mu rv false) || (depends_on var rv false)
       | Sampler _ -> false
@@ -661,6 +695,7 @@ fun e rv_child ->
                        (has_parents_except t rv_child) ||
                        (has_parents_except e rv_child)
   | ExUnop (_, e_inner) -> has_parents_except e_inner rv_child
+  | ExIntToFloat e -> has_parents_except e rv_child
   | ExMatAdd (e1, e2) | ExMatSub (e1, e2) | ExMatMul (e1, e2) ->
       (has_parents_except e1 rv_child) || (has_parents_except e2 rv_child)
   | ExMatScalarMul (s, e) -> (has_parents_except s rv_child) || (has_parents_except e rv_child)
@@ -680,6 +715,10 @@ fun rv_parent rv_child ->
   | Beta (a, b) -> (has_parents_except a rv_child) || (has_parents_except b rv_child)
   | Categorical (_, e) -> has_parents_except e rv_child
   | Bernoulli (p) -> has_parents_except p rv_child
+  | Binomial (n, p) -> (has_parents_except n rv_child) || (has_parents_except p rv_child)
+  | BetaBinomial (n, a, b) -> (has_parents_except n rv_child) || 
+                              (has_parents_except a rv_child) || 
+                              (has_parents_except b rv_child)
   | Delta e_inner -> has_parents_except e_inner rv_child
   | MvNormal (mu, var) -> (has_parents_except mu rv_child) || (has_parents_except var rv_child)
   | Sampler _ -> false
@@ -820,6 +859,39 @@ fun rv1 rv2 ->
       None
   | _ -> None
 
+(* Assumes rv1 and rv2 have a Beta and Binomial distribution, resp.
+ * Returns the marginal distribution of rv2*)
+ let beta_binomial_marginal : float random_var -> int random_var -> int distribution option =
+  fun rv1 rv2 ->
+    let prior, likelihood = rv1.distr, rv2.distr in
+    match (prior, likelihood) with
+    | (Beta(a, b), Binomial(ExConst(n), ExRand(rv))) ->
+      if rv == rv1 &&
+         (not (depends_on a rv2 true)) &&
+         (not (depends_on b rv2 true)) then
+        (* let beta_binomial_p = { name = (rv2.name ^ "_beta"); distr = Beta(a, b) } in *)
+        (* Some(Binomial(ExConst(n), ExRand(beta_binomial_p))) *)
+        Some(BetaBinomial(ExConst(n), a, b))
+      else
+        None
+    | _ -> None
+
+(* Assumes rv1 and rv2 have a Beta and Binomial distribution, resp.
+ * Returns the conditional distribution of rv1 conditioned on rv2*)
+let beta_binomial_posterior : float random_var -> int random_var -> float distribution option =
+fun rv1 rv2 ->
+  let prior, likelihood = rv1.distr, rv2.distr in
+  match (prior, likelihood) with
+  | (Beta(a, b), Binomial(ExConst(n), ExRand(rv))) ->
+    if rv == rv1 &&
+        (not (depends_on a rv2 true)) &&
+        (not (depends_on b rv2 true)) then
+      Some(Beta(ex_add(a, ex_int_to_float(ExRand(rv2))),
+        ex_add(b, ex_add(ex_int_to_float(ExConst(n)), ex_mul(ExConst(-1.), ex_int_to_float(ExRand(rv2)))))))
+    else
+      None
+  | _ -> None
+
 (* Assumes rv1 and rv2 have Categorical distributions.
  * Returns the marginal distribution of rv2 *)
 let categorical_marginal : category random_var -> category random_var -> category distribution option =
@@ -885,6 +957,14 @@ fun rv1 rv2 ->
     end
   | (Beta (_, _), Bernoulli (_)) ->
     begin match (beta_bernoulli_marginal rv1 rv2, beta_bernoulli_posterior rv1 rv2) with
+    | Some(dist_marg), Some(dist_post) ->
+      rv2.distr <- dist_marg;
+      rv1.distr <- dist_post;
+      true
+    | _ -> false
+    end
+  | (Beta (_, _), Binomial (_)) ->
+    begin match (beta_binomial_marginal rv1 rv2, beta_binomial_posterior rv1 rv2) with
     | Some(dist_marg), Some(dist_post) ->
       rv2.distr <- dist_marg;
       rv1.distr <- dist_post;
@@ -984,6 +1064,11 @@ fun rv_parent rv_child ->
                          (depends_on b rv_parent true)
         | Categorical(_, e) -> depends_on e rv_parent true
         | Bernoulli (p) -> depends_on p rv_parent true
+        | Binomial (n, p) -> (depends_on n rv_parent true) || 
+                             (depends_on p rv_parent true)
+        | BetaBinomial (n, a, b) -> (depends_on n rv_parent true) ||
+                                    (depends_on a rv_parent true) ||
+                                    (depends_on b rv_parent true)
         | Delta e_inner -> depends_on e_inner rv_parent true
         | MvNormal (mu, var) ->
             (depends_on mu rv_parent true) || (depends_on var rv_parent true)
@@ -1000,6 +1085,7 @@ fun rv_parent rv_child ->
     | ExList l -> List.exists has_other_deps l
     | ExIte (i, t, e) -> (has_other_deps i) || (has_other_deps t) || (has_other_deps e)
     | ExUnop(_, e_inner) -> has_other_deps e_inner
+    | ExIntToFloat e_inner -> has_other_deps e_inner
     | ExMatAdd (e1, e2) | ExMatSub (e1, e2) | ExMatMul (e1, e2) ->
         (has_other_deps e1) || (has_other_deps e2)
     | ExMatScalarMul (s, e) -> (has_other_deps s) || (has_other_deps e)
@@ -1023,6 +1109,16 @@ fun rv_parent rv_child ->
   | Categorical(_, e) -> (depends_on e rv_parent false) && (not (has_other_deps e))
   | Bernoulli (p) -> (depends_on p rv_parent false) &&
                      (not (has_other_deps p))
+  | Binomial (n, p) -> ((depends_on n rv_parent false) ||
+                        (depends_on p rv_parent false)) &&
+                      (not (has_other_deps n)) &&
+                      (not (has_other_deps p))
+  | BetaBinomial (n, a, b) -> ((depends_on n rv_parent false) ||
+                               (depends_on a rv_parent false) ||
+                               (depends_on b rv_parent false)) &&
+                             (not (has_other_deps n)) &&
+                             (not (has_other_deps a)) &&
+                             (not (has_other_deps b))
   | Delta e_inner -> (depends_on e_inner rv_parent false) &&
                      (not (has_other_deps e_inner))
   | MvNormal (mu, var) ->
@@ -1076,6 +1172,7 @@ let get_parents : type a. a random_var -> rvset =
         | ExIte(i, t, e) -> List.append (List.append (get_parents_expr i) (get_parents_expr t)) (get_parents_expr e)
         | ExList (e_inner) -> List.fold_left (fun lst e -> List.append lst (get_parents_expr e)) [] e_inner
         | ExUnop (_, e_inner) -> get_parents_expr e_inner
+        | ExIntToFloat e_inner -> get_parents_expr e_inner
         end
     in
 
@@ -1087,6 +1184,9 @@ let get_parents : type a. a random_var -> rvset =
         | Categorical(_, expr) -> get_parents_expr expr
         | Beta(a, b) -> List.append (get_parents_expr a) (get_parents_expr b)
         | Bernoulli(p) -> get_parents_expr p
+        | Binomial(n, p) -> List.append (get_parents_expr n) (get_parents_expr p)
+        | BetaBinomial(n, a, b) -> 
+          List.append (List.append (get_parents_expr n) (get_parents_expr a)) (get_parents_expr b)
         | Delta(e) -> get_parents_expr e
         | Sampler(_, _) -> []
         end
@@ -1198,6 +1298,8 @@ fun rv ->
 let const v = ExConst v
 let add a b = ex_add(a, b)
 let mul a b = ex_mul(a, b)
+let div a b = ex_div(a, b)
+let exp a = ex_unop(Exp, a)
 let eq a b = ExCmp (Eq, a, b)
 let pair a b = ExPair(a, b)
 let array a = ExArray a
@@ -1213,6 +1315,8 @@ let gaussian mu var = Normal(mu, var)
 let beta a b = Beta(a, b)
 let categorical ~lower ~upper f = Categorical ({ lower; upper }, ExConst (Array.init (upper - lower + 1) (fun i -> f (i + lower)), { lower; upper }))
 let bernoulli p = Bernoulli(p)
+let binomial n p = Binomial(n, p)
+let beta_binomial n a b = BetaBinomial(n, a, b)
 let mv_gaussian mu var = MvNormal(mu, var)
 let sampler f g = Sampler (f, g)
 
@@ -1236,6 +1340,8 @@ fun rv ->
       (List.combine (List.init (d.upper - d.lower + 1) (fun i -> i + d.lower))
       (Array.to_list (fst a))) x
     | Bernoulli(ExConst(p)) -> Distr_operations.bernoulli_score p x
+    | Binomial(ExConst(n), ExConst(p)) -> Distr_operations.binomial_score n p x
+    | BetaBinomial(ExConst(n), ExConst(a), ExConst(b)) -> Distr_operations.beta_binomial_score n a b x
     | Delta _ -> raise (InternalError ("Not implemented"))
     | Sampler (_, g) -> g x
     | MvNormal (ExConst mu, ExConst var) -> Distr_operations.mv_gaussian_score mu var x
@@ -1253,10 +1359,12 @@ fun rv ->
       (List.combine (List.init (d.upper - d.lower + 1) (fun i -> i + d.lower))
       (Array.to_list (fst a)))
     | Bernoulli(ExConst(p)) -> Distr_operations.bernoulli_draw p
+    | Binomial(ExConst(n), ExConst(p)) -> Distr_operations.binomial_draw n p
+    | BetaBinomial(ExConst(n), ExConst(a), ExConst(b)) -> Distr_operations.beta_binomial_draw n a b
     | Delta (ExConst v) -> v
     | Sampler (f, _) -> f ()
     | MvNormal (ExConst mu, ExConst var) -> Distr_operations.mv_gaussian_draw mu var
-    | _ -> raise (InternalError ("Score did not properly hoist and evaluate random variable"))
+    | _ -> raise (InternalError ("Draw did not properly hoist and evaluate random variable"))
 
 let intervene : type a. a random_var -> a -> unit =
 fun rv x ->
@@ -1321,6 +1429,8 @@ fun e ->
   | ExIte (i, t, e) -> if (eval_sample i) then (eval_sample t) else (eval_sample e)
   | ExUnop (Squared, e_inner) -> (eval_sample e_inner) ** 2.
   | ExUnop (SquareRoot, e_inner) -> Float.sqrt (eval_sample e_inner)
+  | ExUnop (Exp, e_inner) -> Float.exp (eval_sample e_inner)
+  | ExIntToFloat e_inner -> float_of_int (eval_sample e_inner)
   | ExMatAdd (e1, e2) -> Mat.add (eval_sample e1) (eval_sample e2)
   | ExMatSub (e1, e2) -> Mat.sub (eval_sample e1) (eval_sample e2)
   | ExMatMul (e1, e2) -> Mat.mul (eval_sample e1) (eval_sample e2)

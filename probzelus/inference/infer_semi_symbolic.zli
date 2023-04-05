@@ -22,8 +22,13 @@ type 'a expr
 val const : 'a -> 'a expr
 val add : float expr * float expr -> float expr
 val ( +~ ) : float expr -> float expr -> float expr
+val subtract : float expr * float expr -> float expr
+val ( -~ ) : float expr -> float expr -> float expr
 val mult : float expr * float expr -> float expr
 val ( *~ ) : float expr -> float expr -> float expr
+val div : float expr * float expr -> float expr
+val ( /~ ) : float expr -> float expr -> float expr
+val expp : float expr -> float expr
 (* val app : ('a -> 'b) expr * 'a expr -> 'b expr
 val ( @@~ ) : ('a -> 'b) expr -> 'a expr -> 'b expr *)
 val pair : 'a expr * 'b expr -> ('a * 'b) expr
@@ -48,6 +53,8 @@ val of_distribution : 'a Distribution.t -> 'a ds_distribution
 val gaussian : float expr * float -> float ds_distribution
 val beta : float * float -> float ds_distribution
 val bernoulli : float expr -> bool ds_distribution
+val binomial : int * float expr -> int ds_distribution
+val beta_binomial : int * float expr * float expr -> int ds_distribution
 val mv_gaussian : Mat.mat expr * Mat.mat -> Mat.mat ds_distribution
 val mv_gaussian_curried : Mat.mat -> Mat.mat expr -> Mat.mat ds_distribution
 

@@ -5,10 +5,16 @@ exception EvalExn of string
 type 'a expr = 'a Semi_symbolic.expr
 
 let const = Semi_symbolic.const
-let add = Semi_symbolic.add
-let ( +~ ) = add
+let add (a, b) = Semi_symbolic.add a b
+let ( +~ ) = Semi_symbolic.add
+let subtract (a, b) = 
+  Semi_symbolic.add a (Semi_symbolic.mul (Semi_symbolic.const (-1.)) b)
+let ( -~ ) = (fun a b -> subtract (a, b))
 let mult (a, b) = Semi_symbolic.mul a b
 let ( *~ ) = Semi_symbolic.mul
+let div (a, b) = Semi_symbolic.div a b
+let ( /~ ) = Semi_symbolic.div
+let expp = Semi_symbolic.exp
 let pair (a, b) = Semi_symbolic.pair a b
 let array = Semi_symbolic.array
 let matrix = Semi_symbolic.matrix
@@ -36,6 +42,9 @@ let gaussian (mu, var) = Semi_symbolic.gaussian mu (Semi_symbolic.const var)
 let beta (a, b) =
   Semi_symbolic.beta (Semi_symbolic.const a) (Semi_symbolic.const b)
 let bernoulli p = Semi_symbolic.bernoulli p
+let binomial (n, p) = Semi_symbolic.binomial (Semi_symbolic.const n) p
+let beta_binomial (n, a, b) =
+  Semi_symbolic.beta_binomial (Semi_symbolic.const n) a b
 let mv_gaussian (mu, var) = Semi_symbolic.mv_gaussian mu (Semi_symbolic.const var)
 let mv_gaussian_curried var mu = mv_gaussian (mu, var)
 
@@ -85,6 +94,8 @@ module Convert_fn_distr : Semi_symbolic.Conversion_fn with type 'a t = 'a Types.
   let const v = Dist_support [v, 1.]
   let add d1 d2 = Dist_add(d1, d2)
   let mul d1 d2 = Dist_mult(d1, d2)
+  let div _ _ = assert false
+  let exp _ = assert false
   let eq _ _ = assert false (* TODO: what to do here? *)
   let pair d1 d2 = Dist_pair(d1, d2)
   let array d = Dist_array d
@@ -103,6 +114,8 @@ module Convert_fn_distr : Semi_symbolic.Conversion_fn with type 'a t = 'a Types.
   let gaussian mu var = Dist_gaussian (mu, var)
   let beta a b = Dist_beta(a, b)
   let bernoulli p = Dist_bernoulli p
+  let binomial _ _ = assert false
+  let beta_binomial _ _ _ = assert false
   let delta x = Distribution.dirac x
   let mv_gaussian mu var = Dist_mv_gaussian (mu, var, None)
   let sampler draw score = Dist_sampler (draw, score)

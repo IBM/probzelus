@@ -47,6 +47,8 @@ type _ distr =
   | Dist_lognormal : float * float -> float distr
   | Dist_beta : float * float -> float distr
   | Dist_bernoulli : float -> bool distr
+  | Dist_binomial : int * float -> int distr
+  | Dist_beta_binomial : int * float * float -> int distr
   | Dist_uniform_int : int * int -> int distr
   | Dist_uniform_float : float * float -> float distr
   | Dist_exponential : float -> float distr
@@ -168,6 +170,16 @@ module type DISTRIBUTION = sig
   val bernoulli_mean : 'a -> 'a
   val bernoulli_variance : float -> float
   val bernoulli : float -> bool t
+  val binomial_draw : int -> float -> int
+  val binomial_score : int -> float -> int -> float
+  val binomial_mean : int -> float -> float
+  val binomial_variance : int -> float -> float
+  val binomial : int * float -> int t
+  val beta_binomial_draw : int -> float -> float -> int
+  val beta_binomial_score : int -> float -> float -> int -> float
+  val beta_binomial_mean : int -> float -> float -> float
+  val beta_binomial_variance : int -> float -> float -> float
+  val beta_binomial : int * float * float -> int t
   val gaussian_draw : float -> float -> float
   val gaussian_score : float -> float -> float -> float
   val gaussian_mean : 'a -> 'b -> 'a

@@ -4,6 +4,13 @@ let pi = 4. *. atan 1.
 let two_pi = 2.0 *. pi
 let sqrt_two_pi = sqrt two_pi
 
+let log_combination n k =
+  let rec comb acc n k =
+    if k = 0 then acc
+    else comb (acc +. log (float_of_int n) -. log (float_of_int k)) (n - 1) (k - 1)
+  in
+  comb 0. n k
+
 let gamma =
   let g = 7. in
   let c =
@@ -78,6 +85,28 @@ let bernoulli_mean p = p
 
 let bernoulli_variance p = p *. (1. -. p)
 
+let binomial_draw n p =
+  let rec run_trials n n_success =
+    if n = 0 then n_success
+    else begin
+      if Random.float 1.0 < p then
+        run_trials (n - 1) (n_success + 1)
+      else
+        run_trials (n - 1) n_success
+    end
+  in
+  run_trials n 0
+
+let binomial_score n p k =
+  log_combination n k +.
+    float_of_int k *. (log p) +. float_of_int (n - k) *. log (1. -. p)
+
+let binomial_mean n p =
+  float_of_int n *. p
+
+let binomial_variance n p =
+  float_of_int n *. p *. (1. -. p)
+
 let beta_draw =
   let rec exp_gamma_sample shape scale =
     if (shape < 1.) then
@@ -125,10 +154,10 @@ let beta_draw =
       1. -. epsilon_float /. 2.
     else v
 
+let log_beta a b =
+  log_gamma a +. log_gamma b -. log_gamma (a +. b)
+
 let beta_score =
-  let log_beta a b =
-    log_gamma a +. log_gamma b -. log_gamma (a +. b)
-  in
   fun a b x ->
     if x > 0. && x < 1. then
       (a -. 1.) *. log x +. (b -. 1.) *. log (1. -. x) -. log_beta a b
@@ -140,6 +169,24 @@ let beta_mean a b =
 
 let beta_variance a b =
   a *. b /. ((a +. b) *. (a +. b) *. (a +. b +. 1.))
+
+(* Beta-Binomial distribution is a compound distribution where
+   the p parameter of the binomial distribution is drawn from a beta *)
+let beta_binomial_draw n a b =
+  let p = beta_draw a b in
+  binomial_draw n p
+
+let beta_binomial_score n a b k =
+  log_combination n k +. 
+    log_beta (float_of_int k +. a) (float_of_int (n - k) +. b) -. 
+    log_beta a b
+
+let beta_binomial_mean n a b =
+  float_of_int n *. a /. (a +. b)
+
+let beta_binomial_variance n a b =
+  let n = float_of_int n in
+  n *. a *. b *. (a +. b +. n) /. ((a +. b) ** 2. *. (a +. b +. 1.))
 
 let categorical_draw sup =
   let sample = Random.float 1.0 in

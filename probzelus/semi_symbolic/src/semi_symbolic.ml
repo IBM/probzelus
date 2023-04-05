@@ -10,6 +10,8 @@ type 'a random_var = 'a Semi_symbolic_impl.random_var
 let const = Semi_symbolic_impl.const
 let add = Semi_symbolic_impl.add
 let mul = Semi_symbolic_impl.mul
+let div = Semi_symbolic_impl.div
+let exp = Semi_symbolic_impl.exp
 let eq = Semi_symbolic_impl.eq
 let pair = Semi_symbolic_impl.pair
 let array = Semi_symbolic_impl.array
@@ -25,6 +27,8 @@ let vec_get = Semi_symbolic_impl.vec_get
 let gaussian = Semi_symbolic_impl.gaussian
 let beta = Semi_symbolic_impl.beta
 let bernoulli = Semi_symbolic_impl.bernoulli
+let binomial = Semi_symbolic_impl.binomial
+let beta_binomial = Semi_symbolic_impl.beta_binomial
 let mv_gaussian = Semi_symbolic_impl.mv_gaussian
 let sampler = Semi_symbolic_impl.sampler
 let categorical = Semi_symbolic_impl.categorical
@@ -46,6 +50,8 @@ module type Conversion_fn = sig
   val const : 'a -> 'a t
   val add : float t -> float t -> float t
   val mul : float t -> float t -> float t
+  val div : float t -> float t -> float t
+  val exp : float t -> float t
   val eq : 'a t -> 'a t -> bool t
   val pair : 'a t -> 'b t -> ('a * 'b) t
   val array : 'a t array -> 'a array t
@@ -64,6 +70,8 @@ module type Conversion_fn = sig
   val gaussian : float -> float -> float t
   val beta : float -> float -> float t
   val bernoulli : float -> bool t
+  val binomial : int -> float -> int t
+  val beta_binomial : int -> float -> float -> int t
   val mv_gaussian : Mat.mat -> Mat.mat -> Mat.mat t
   val delta : 'a -> 'a t
   val sampler : (unit -> 'a) -> ('a -> float) -> 'a t
@@ -95,6 +103,16 @@ module Convert(Fn : Conversion_fn) = struct
         | (ExConst p_v) -> Fn.bernoulli p_v
         | _ -> raise (NonMarginal ())
         end
+      | Binomial (n, p) ->
+        begin match (Semi_symbolic_impl.eval n, Semi_symbolic_impl.eval p) with
+        | (ExConst n_v, ExConst p_v) -> Fn.binomial n_v p_v
+        | _ -> raise (NonMarginal ())
+        end
+      | BetaBinomial (n, a, b) ->
+        begin match (Semi_symbolic_impl.eval n, Semi_symbolic_impl.eval a, Semi_symbolic_impl.eval b) with
+        | (ExConst n_v, ExConst a_v, ExConst b_v) -> Fn.beta_binomial n_v a_v b_v
+        | _ -> raise (NonMarginal ())
+        end
       | Delta e ->
           begin match Semi_symbolic_impl.eval e with
           | ExConst v -> Fn.delta v
@@ -116,6 +134,7 @@ module Convert(Fn : Conversion_fn) = struct
     | ExMul (e1, e2) -> Fn.mul (convert e1) (convert e2)
     | ExDiv (_, _) -> raise (NonMarginal ())
     | ExUnop (_, _) -> raise (NonMarginal ())
+    | ExIntToFloat _ -> raise (NonMarginal ())
     | ExPair (e1, e2) -> Fn.pair (convert e1) (convert e2)
     | ExArray a -> Fn.array (Array.map convert a)
     | ExMatrix m -> Fn.matrix (Array.map (Array.map convert) m)

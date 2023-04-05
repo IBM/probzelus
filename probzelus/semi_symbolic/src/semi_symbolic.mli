@@ -10,6 +10,8 @@ type 'a random_var;;
 val const : 'a -> 'a expr;;
 val add : float expr -> float expr -> float expr;;
 val mul : float expr -> float expr -> float expr;;
+val div : float expr -> float expr -> float expr;;
+val exp : float expr -> float expr;;
 val eq : 'a expr -> 'a expr -> bool expr;;
 val pair : 'a expr -> 'b expr -> ('a * 'b) expr;;
 val array : 'a expr array -> 'a array expr;;
@@ -26,6 +28,8 @@ val vec_get : Mat.mat expr -> int -> float expr;;
 val gaussian : float expr -> float expr -> float distribution;;
 val beta : float expr -> float expr -> float distribution;;
 val bernoulli : float expr -> bool distribution;;
+val binomial : int expr -> float expr -> int distribution;;
+val beta_binomial : int expr -> float expr -> float expr -> int distribution;;
 val mv_gaussian : Mat.mat expr -> Mat.mat expr -> Mat.mat distribution;;
 val sampler : (unit -> 'a) -> ('a -> float) -> 'a distribution;;
 val categorical : lower:int -> upper:int -> (int -> float) -> int distribution;;
@@ -48,6 +52,8 @@ module type Conversion_fn = sig
   val const : 'a -> 'a t
   val add : float t -> float t -> float t
   val mul : float t -> float t -> float t
+  val div : float t -> float t -> float t
+  val exp : float t -> float t
   val eq : 'a t -> 'a t -> bool t
   val pair : 'a t -> 'b t -> ('a * 'b) t
   val array : 'a t array -> 'a array t
@@ -66,6 +72,8 @@ module type Conversion_fn = sig
   val gaussian : float -> float -> float t
   val beta : float -> float -> float t
   val bernoulli : float -> bool t
+  val binomial : int -> float -> int t
+  val beta_binomial : int -> float -> float -> int t
   val mv_gaussian : Mat.mat -> Mat.mat -> Mat.mat t
   val delta : 'a -> 'a t
   val sampler : (unit -> 'a) -> ('a -> float) -> 'a t
