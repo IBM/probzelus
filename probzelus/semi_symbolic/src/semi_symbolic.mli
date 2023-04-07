@@ -46,6 +46,8 @@ val observe : float -> 'a distribution -> 'a -> float;;
 
 val eval_sample : 'a expr -> 'a;;
 
+val pp_approx_status : bool -> unit;;
+
 module type Conversion_fn = sig
   type 'a t
 

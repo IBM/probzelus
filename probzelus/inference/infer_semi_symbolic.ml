@@ -31,6 +31,8 @@ let vec_get (a, b) = Semi_symbolic.vec_get a b
 
 let eval = Semi_symbolic.eval_sample
 
+let pp_approx_status = Semi_symbolic.pp_approx_status
+
 type 'a ds_distribution = 'a Semi_symbolic.distribution
 
 let of_distribution d =
@@ -55,13 +57,9 @@ let factor' = Infer_pf.factor'
 
 let factor = Infer_pf.factor
 
-let samplenum = ref 0
-let get_samplenum _ =
-  samplenum := !samplenum + 1;
-  !samplenum
-
-let sample' (_pstate, dist) =
-  Semi_symbolic.sample ("var" ^ (string_of_int (get_samplenum ())))  dist
+let sample' (_pstate, (name, dist)) =
+  let name = match name with | "" -> "var" | _ -> name in
+  Semi_symbolic.sample name dist
 
 let sample =
   let alloc () = () in

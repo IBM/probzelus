@@ -47,6 +47,8 @@ val vec_get : Mat.mat expr * int -> float expr
 
 val eval : 'a expr -AD-> 'a
 
+val pp_approx_status : bool -> unit
+
 type 'a ds_distribution
 
 val of_distribution : 'a Distribution.t -> 'a ds_distribution
@@ -59,7 +61,7 @@ val mv_gaussian : Mat.mat expr * Mat.mat -> Mat.mat ds_distribution
 val mv_gaussian_curried : Mat.mat -> Mat.mat expr -> Mat.mat ds_distribution
 
 val factor : float ~D~> unit
-val sample : 'a ds_distribution ~D~> 'a expr
+val sample : string option -> 'a ds_distribution ~D~> 'a expr
 val observe : 'a ds_distribution * 'a ~D~> unit
 
 (*

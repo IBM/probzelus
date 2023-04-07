@@ -296,8 +296,46 @@ let is_const_array a =
 
 let is_const_list a =
   List.for_all (function ExConst _ -> true | _ -> false) a
+  
+(* let samplenum = ref 0
+let get_samplenum _ =
+  samplenum := !samplenum + 1;
+  !samplenum *)
 
+type approx_status = 
+| Exact of int
+| Approx of int
 
+let rv_approx_status : (string, approx_status * approx_status) Hashtbl.t= Hashtbl.create 100
+
+let record_new_rv var =
+  match Hashtbl.find_opt rv_approx_status var with
+  | None -> Hashtbl.add rv_approx_status var (Exact 0, Approx 0)
+  | Some _ -> ()
+
+let record_approx_status var status =
+  match Hashtbl.find_opt rv_approx_status var with
+  | None -> 
+    begin match status with
+    | Exact _ -> Hashtbl.add rv_approx_status var (Exact 1, Approx 0)
+    | Approx _ -> Hashtbl.add rv_approx_status var (Exact 0, Approx 1)
+    end
+  | Some (Exact(e), Approx(a)) ->
+    begin match status with
+    | Exact _ -> 
+      Hashtbl.replace rv_approx_status var (Exact (e + 1), Approx(a))
+    | Approx _ -> 
+      Hashtbl.replace rv_approx_status var (Exact(e), Approx (a + 1))
+    end
+  | _ -> failwith "Approx status error"
+    
+let pp_approx_status no_zeros =
+  Hashtbl.iter (fun var status ->
+    match status with
+    | Exact(e), Approx(a) ->
+      if no_zeros && e + a = 0 then ()
+      else Printf.printf "%s: %d exact, %d approx\n" var e a
+    | _ -> failwith "Approx status error") rv_approx_status
 
 (* Partially evaluates expressions *)
 let rec eval : type a. a expr -> a expr =
@@ -944,7 +982,7 @@ fun rv1 rv2 ->
  * Returns: true if successful, false if swap failed due to no conjugacy *)
 let swap : type a b. a random_var -> b random_var -> bool =
 fun rv1 rv2 ->
-  (*(Printf.printf "Swapping: parent %s, child %s\n" (rv1.name) (rv2.name));*)
+  (* (Printf.printf "Swapping: parent %s, child %s\n" (rv1.name) (rv2.name)); *)
   match (rv1.distr, rv2.distr) with
   | (Normal(_, _), Normal(_, _)) ->
     (* Try to swap as gaussians *)
@@ -1248,12 +1286,12 @@ fun rv ->
   let rec hoist_inner : type a. a random_var -> rvset -> unit =
     fun rv_current ghost_roots ->
       let parents = List.rev (topo_sort (get_parents rv_current)) in
-      (*(Printf.printf "Hoisting %s with ghost roots [%s] and parents [%s]\n" rv_current.name (string_of_rvset ghost_roots) (string_of_rvset parents));*)
+      (* (Printf.printf "Hoisting %s with ghost roots [%s] and parents [%s]\n" rv_current.name (string_of_rvset ghost_roots) (string_of_rvset parents)); *)
       let rec hoist_parents parents ghost_roots = 
         begin match parents with
         | [] -> ()
         | (RandomVar rv_par) :: rest ->
-          (*(Printf.printf "Got rv_par: %s\n" rv_par.name);*)
+          (* (Printf.printf "Got rv_par: %s\n" rv_par.name); *)
           ((if (not (member ghost_roots rv_par)) then
             ((*(Printf.printf "Recursing into %s\n" rv_par.name);*)
             hoist_inner rv_par ghost_roots)
@@ -1263,32 +1301,36 @@ fun rv ->
         end
       in
       hoist_parents parents ghost_roots;
+
+      (* Printf.printf "Done hoisting parents for %s\n" rv_current.name;
+      Printf.printf "Begin swapping child %s with parents [%s]\n" rv_current.name (string_of_rvset (List.rev parents)); *)
       
       let rec swap_with_parents parents =
         begin match parents with
         | [] -> ()
         | (RandomVar rv_par) :: rest ->
           (if (not (member ghost_roots rv_par)) then (
-            (*(Printf.printf "Swapping %s with %s\n" rv_par.name rv_current.name);*)
+            (* (Printf.printf "Swapping %s with %s\n" rv_par.name rv_current.name); *)
             (if (not (can_swap rv_par rv_current)) then 
               ((Printf.printf "Cannot swap!\n");
               (*(Printf.printf "rv_par: %s, rv_par's parents: %s\n" rv_par.name (string_of_rvset (get_parents rv_par)));*)
               (*(Printf.printf "rv_current: %s, rv_current's parents: %s\n" rv_current.name (string_of_rvset (get_parents rv_current)));*)
               assert (0 = 1))
             );
-            (if swap rv_par rv_current then () else raise (NonConjugate rv_par));
+            (if swap rv_par rv_current then record_approx_status rv_par.name (Exact 1)
+            else raise (NonConjugate rv_par));
             swap_with_parents rest
           ) else ())
         end
       in
       swap_with_parents (List.rev parents);
-      (*(Printf.printf "Done hoisting %s\n" rv_current.name)*)
+      (* (Printf.printf "Done hoisting %s\n" rv_current.name) *)
   in
   hoist_inner rv []
 
 let hoist_and_eval : type a. a random_var -> unit =
 fun rv ->
-  (*(Printf.printf "hoist_and_eval %s\n" rv.name);*)
+  (* (Printf.printf "hoist_and_eval %s\n" rv.name); *)
   rv.distr <- (eval_distr rv.distr);
   hoist rv;
   rv.distr <- (eval_distr rv.distr)
@@ -1321,6 +1363,8 @@ let mv_gaussian mu var = MvNormal(mu, var)
 let sampler f g = Sampler (f, g)
 
 let sample n d =
+    record_new_rv n;
+    
     let rv = {
       name = n;
       distr = d
@@ -1349,6 +1393,7 @@ fun rv ->
 
 let draw : type a. a random_var -> unit -> a =
 fun rv ->
+  record_approx_status rv.name (Approx 1);
   hoist_and_eval rv;
   fun _ ->
     match rv.distr with
@@ -1376,9 +1421,11 @@ fun rv -> hoist_and_eval rv
 
 let rec value : type a. a random_var -> a =
 fun rv ->
+  (* (Printf.printf "approxing %s\n" rv.name); *)
   let rec do_value _ =
     try draw rv ()
     with NonConjugate rv_nc ->
+      (* (Printf.printf "NonConjugate %s\n" rv_nc.name); *)
       let _ = value rv_nc in
       do_value ()
   in
@@ -1388,9 +1435,11 @@ fun rv ->
 
 let observe_inner : type a. float -> a random_var -> a -> float =
 fun w rv x ->
+  (* (Printf.printf "observing %s\n" rv.name); *)
   let rec do_observe _ =
     try score rv x
     with NonConjugate rv_nc ->
+      (* (Printf.printf "NonConjugate %s\n" rv_nc.name); *)
       let _ = value rv_nc in
       do_observe ()
   in
