@@ -296,11 +296,6 @@ let is_const_array a =
 
 let is_const_list a =
   List.for_all (function ExConst _ -> true | _ -> false) a
-  
-(* let samplenum = ref 0
-let get_samplenum _ =
-  samplenum := !samplenum + 1;
-  !samplenum *)
 
 type approx_status = 
 | Exact of int

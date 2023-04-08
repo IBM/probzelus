@@ -57,8 +57,13 @@ let factor' = Infer_pf.factor'
 
 let factor = Infer_pf.factor
 
+let samplenum = ref 0
+let get_samplenum _ =
+  samplenum := !samplenum + 1;
+  !samplenum
+
 let sample' (_pstate, (name, dist)) =
-  let name = match name with | "" -> "var" | _ -> name in
+  let name = match name with | "" -> "var" ^ (string_of_int (get_samplenum())) | _ -> name in
   Semi_symbolic.sample name dist
 
 let sample =
