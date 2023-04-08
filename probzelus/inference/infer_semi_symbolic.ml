@@ -20,6 +20,7 @@ let array = Semi_symbolic.array
 let matrix = Semi_symbolic.matrix
 let lst = Semi_symbolic.lst
 let ite = Semi_symbolic.ite
+let lt (a, b) = (Semi_symbolic.eval_sample a) < (Semi_symbolic.eval_sample b)
 
 let mat_add (a, b) = Semi_symbolic.mat_add a b
 let ( +@~) = Semi_symbolic.mat_add
