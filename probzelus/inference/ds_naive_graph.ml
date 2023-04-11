@@ -212,6 +212,7 @@ let get_distr_kind : type a b.
   | DSnaive_Marginalized (Dist_beta _, _) -> KBeta
   | DSnaive_Marginalized (Dist_binomial _, _) -> KOthers
   | DSnaive_Marginalized (Dist_beta_binomial _, _) -> KOthers
+  | DSnaive_Marginalized (Dist_negative_binomial _, _) -> KOthers
   | DSnaive_Marginalized (( Dist_sampler _
                           | Dist_support _), _) -> KOthers
   | DSnaive_Marginalized (Dist_sampler_float _, _) -> KOthers
@@ -222,6 +223,7 @@ let get_distr_kind : type a b.
   | DSnaive_Marginalized (Dist_uniform_int _, _) -> KOthers
   | DSnaive_Marginalized (Dist_uniform_float _, _) -> KOthers
   | DSnaive_Marginalized (Dist_exponential _, _) -> KOthers
+  | DSnaive_Marginalized (Dist_gamma _, _) -> KOthers
   | DSnaive_Marginalized (Dist_poisson _, _) -> KOthers
   | DSnaive_Marginalized (Dist_lognormal _, _) -> KOthers
   | DSnaive_Marginalized (Dist_add _, _) -> KOthers

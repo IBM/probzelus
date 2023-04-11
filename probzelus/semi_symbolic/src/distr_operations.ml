@@ -188,6 +188,28 @@ let beta_binomial_variance n a b =
   let n = float_of_int n in
   n *. a *. b *. (a +. b +. n) /. ((a +. b) ** 2. *. (a +. b +. 1.))
 
+let negative_binomial_draw n p =
+  let rec run_trials n_success n_failure =
+    if n_success = 0 then n_failure
+    else begin
+      if Random.float 1.0 < p then
+        run_trials (n_success - 1) n_failure
+      else
+        run_trials n_success (n_failure + 1)
+    end
+  in
+  run_trials n 0
+
+let negative_binomial_score n p k =
+  log_combination (n + k - 1) k +.
+    float_of_int k *. log (1. -. p) +. float_of_int n *. log p
+
+let negative_binomial_mean n p =
+  float_of_int n *. (1. -. p) /. p
+
+let negative_binomial_variance n p =
+  float_of_int n *. (1. -. p) /. (p *. p)  
+
 let categorical_draw sup =
   let sample = Random.float 1.0 in
   let rec draw sum r =
@@ -207,3 +229,91 @@ let categorical_score sup x =
       0. sup
   in
   log p
+
+let gamma =
+  let g = 7. in
+  let c =
+    [|0.99999999999980993; 676.5203681218851; -1259.1392167224028;
+      771.32342877765313; -176.61502916214059; 12.507343278686905;
+      -0.13857109526572012; 9.9843695780195716e-6; 1.5056327351493116e-7|]
+  in
+  let rec ag z d =
+    if d = 0 then c.(0) +. ag z 1
+    else if d < 8 then c.(d) /. (z +. float d) +. ag z (succ d)
+    else c.(d) /. (z +. float d)
+  in
+  fun z ->
+    let z = z -. 1. in
+    let p = z +. g +. 0.5 in
+    sqrt_two_pi *. p ** (z +. 0.5) *. exp (-. p) *. ag z 0
+
+let log_gamma x =
+  (* XXX TODO: better implementation XXX *)
+  log (gamma x)
+
+let exponential_draw lambda =
+  let u = Random.float 1. in
+  -. log u /. lambda
+
+let exponential_score lambda x =
+  if x >= 0. then log lambda -. lambda *. x
+  else neg_infinity
+
+let exponential_mean lambda =
+  1. /. lambda
+
+let exponential_variance lambda =
+  1. /. (lambda ** 2.)
+
+let rec gamma_draw a b =
+  if a < 1. then
+    let u = Random.float 1. in
+    gamma_draw (1. +. a) b *. (u ** (1. /. a))
+  else
+    let d = a -. 1. /. 3. in
+    let c = 1. /. sqrt (9. *. d) in
+    let rec loop () =
+      let x = gaussian_draw 0. 1. in
+      let v = 1. +. c *. x in
+      let v = v *. v *. v in
+      if v <= 0. then loop ()
+      else
+        let u = Random.float 1. in
+        if log (u) < 0.5 *. x *. x +. d -. d *. v +. d *. log v then
+          d *. v /. b
+        else
+          loop ()
+    in
+    loop ()
+
+let gamma_score a b x =
+  if x >= 0. then
+    (a -. 1.) *. log x -. b *. x +. a *. log b -. log_gamma a
+  else
+    neg_infinity
+
+let gamma_mean a b =
+  a /. b
+
+let gamma_variance a b =
+  a /. (b *. b)
+
+let poisson_draw lambda =
+  let rec draw t k =
+    let t = t +. exponential_draw lambda in
+    if t > 1. then k
+    else draw t (k+1)
+  in
+  draw 0. 0
+
+let poisson_score lambda x =
+  if x < 0 then
+    neg_infinity
+  else
+    float_of_int x *. log lambda -. lambda -. log_gamma (float_of_int (x + 1))
+
+let poisson_mean lambda =
+  lambda
+
+let poisson_variance lambda =
+  lambda

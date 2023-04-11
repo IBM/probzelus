@@ -20,7 +20,7 @@ let array = Semi_symbolic.array
 let matrix = Semi_symbolic.matrix
 let lst = Semi_symbolic.lst
 let ite = Semi_symbolic.ite
-let lt (a, b) = (Semi_symbolic.eval_sample a) < (Semi_symbolic.eval_sample b)
+let lt (a, b) = Semi_symbolic.lt a b  
 
 let mat_add (a, b) = Semi_symbolic.mat_add a b
 let ( +@~) = Semi_symbolic.mat_add
@@ -48,6 +48,11 @@ let bernoulli p = Semi_symbolic.bernoulli p
 let binomial (n, p) = Semi_symbolic.binomial (Semi_symbolic.const n) p
 let beta_binomial (n, a, b) =
   Semi_symbolic.beta_binomial (Semi_symbolic.const n) a b
+let negative_binomial (n, p) = Semi_symbolic.negative_binomial (Semi_symbolic.const n) p
+let exponential lambda = Semi_symbolic.exponential lambda
+let gamma (a, b) = Semi_symbolic.gamma a b
+let poisson lambda = Semi_symbolic.poisson lambda
+let uniform_int (a, b) = Semi_symbolic.categorical ~lower:a ~upper:b (fun _ -> 1./.(float_of_int (b-a+1)))
 let mv_gaussian (mu, var) = Semi_symbolic.mv_gaussian mu (Semi_symbolic.const var)
 let mv_gaussian_curried var mu = mv_gaussian (mu, var)
 
@@ -91,6 +96,10 @@ let observe =
 
 exception NonMarginal: 'a Semi_symbolic.random_var -> exn
 
+let force_marginalize e =
+  let v = eval e in
+  v
+
 module Convert_fn_distr : Semi_symbolic.Conversion_fn with type 'a t = 'a Types.mdistr = struct
   open Types
   type 'a t = 'a mdistr
@@ -101,6 +110,7 @@ module Convert_fn_distr : Semi_symbolic.Conversion_fn with type 'a t = 'a Types.
   let div _ _ = assert false
   let exp _ = assert false
   let eq _ _ = assert false (* TODO: what to do here? *)
+  let lt _ _ = assert false (* TODO: what to do here? *)
   let pair d1 d2 = Dist_pair(d1, d2)
   let array d = Dist_array d
   let lst l = Dist_list l
@@ -118,8 +128,12 @@ module Convert_fn_distr : Semi_symbolic.Conversion_fn with type 'a t = 'a Types.
   let gaussian mu var = Dist_gaussian (mu, var)
   let beta a b = Dist_beta(a, b)
   let bernoulli p = Dist_bernoulli p
-  let binomial _ _ = assert false
-  let beta_binomial _ _ _ = assert false
+  let binomial n p = Dist_binomial (n, p)
+  let beta_binomial n a b = Dist_beta_binomial (n, a, b)
+  let negative_binomial n p = Dist_negative_binomial (n, p)
+  let exponential lambda = Dist_exponential lambda
+  let gamma a b = Dist_gamma (a, b)
+  let poisson lambda = Dist_poisson lambda
   let delta x = Distribution.dirac x
   let mv_gaussian mu var = Dist_mv_gaussian (mu, var, None)
   let sampler draw score = Dist_sampler (draw, score)

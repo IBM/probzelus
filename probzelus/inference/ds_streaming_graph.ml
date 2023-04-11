@@ -167,6 +167,7 @@ module Make(Distribution: DISTRIBUTION) = struct
     | DSgraph_Marginalized (Dist_bernoulli _, _) -> KBernoulli
     | DSgraph_Marginalized (Dist_binomial _, _) -> KOthers
     | DSgraph_Marginalized (Dist_beta_binomial _, _) -> KOthers
+    | DSgraph_Marginalized (Dist_negative_binomial _, _) -> KOthers
     | DSgraph_Marginalized (Dist_beta _, _) -> KBeta
     | DSgraph_Marginalized (( Dist_sampler _
                             | Dist_support _), _) -> KOthers
@@ -178,6 +179,7 @@ module Make(Distribution: DISTRIBUTION) = struct
     | DSgraph_Marginalized (Dist_uniform_int _, _) -> KOthers
     | DSgraph_Marginalized (Dist_uniform_float _, _) -> KOthers
     | DSgraph_Marginalized (Dist_exponential _, _) -> KOthers
+    | DSgraph_Marginalized (Dist_gamma _, _) -> KOthers
     | DSgraph_Marginalized (Dist_poisson _, _) -> KOthers
     | DSgraph_Marginalized (Dist_lognormal _, _) -> KOthers
     | DSgraph_Marginalized (Dist_add _, _) -> KOthers

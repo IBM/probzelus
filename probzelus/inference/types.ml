@@ -49,9 +49,11 @@ type _ distr =
   | Dist_bernoulli : float -> bool distr
   | Dist_binomial : int * float -> int distr
   | Dist_beta_binomial : int * float * float -> int distr
+  | Dist_negative_binomial : int * float -> int distr
   | Dist_uniform_int : int * int -> int distr
   | Dist_uniform_float : float * float -> float distr
   | Dist_exponential : float -> float distr
+  | Dist_gamma : float * float -> float distr
   | Dist_poisson : float -> int distr
   | Dist_add : float distr * float distr -> float distr
   | Dist_mult : float distr * float distr -> float distr
@@ -162,7 +164,7 @@ module type DISTRIBUTION = sig
   val print_t : ('a -> string) -> 'a t -> unit
 
   val sampler : (unit -> 'a) * ('a -> float) -> 'a t
-  val gamma : float -> float
+  val gamma_f : float -> float
   val log_gamma : float -> float
   val dirac : 'a -> 'a t
   val bernoulli_draw : float -> bool
@@ -175,6 +177,11 @@ module type DISTRIBUTION = sig
   val binomial_mean : int -> float -> float
   val binomial_variance : int -> float -> float
   val binomial : int * float -> int t
+  val negative_binomial_draw : int -> float -> int
+  val negative_binomial_score : int -> float -> int -> float
+  val negative_binomial_mean : int -> float -> float
+  val negative_binomial_variance : int -> float -> float
+  val negative_binomial : int * float -> int t
   val beta_binomial_draw : int -> float -> float -> int
   val beta_binomial_score : int -> float -> float -> int -> float
   val beta_binomial_mean : int -> float -> float -> float
@@ -225,6 +232,11 @@ module type DISTRIBUTION = sig
   val exponential_mean : float -> float
   val exponential_variance : float -> float
   val exponential : float -> float t
+  val gamma_draw : float -> float -> float
+  val gamma_score : float -> float -> float -> float
+  val gamma_mean : float -> float -> float
+  val gamma_variance : float -> float -> float
+  val gamma : float * float -> float t
   val poisson_draw : float -> int
   val poisson_score : float -> int -> float
   val poisson_mean : 'a -> 'a

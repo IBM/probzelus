@@ -13,6 +13,7 @@ val mul : float expr -> float expr -> float expr;;
 val div : float expr -> float expr -> float expr;;
 val exp : float expr -> float expr;;
 val eq : 'a expr -> 'a expr -> bool expr;;
+val lt : 'a expr -> 'a expr -> bool expr;;
 val pair : 'a expr -> 'b expr -> ('a * 'b) expr;;
 val array : 'a expr array -> 'a array expr;;
 val matrix : 'a expr array array -> 'a array array expr
@@ -30,6 +31,10 @@ val beta : float expr -> float expr -> float distribution;;
 val bernoulli : float expr -> bool distribution;;
 val binomial : int expr -> float expr -> int distribution;;
 val beta_binomial : int expr -> float expr -> float expr -> int distribution;;
+val negative_binomial : int expr -> float expr -> int distribution;;
+val exponential : float expr -> float distribution;;
+val gamma : float expr -> float expr -> float distribution;;
+val poisson : float expr -> int distribution;;
 val mv_gaussian : Mat.mat expr -> Mat.mat expr -> Mat.mat distribution;;
 val sampler : (unit -> 'a) -> ('a -> float) -> 'a distribution;;
 val categorical : lower:int -> upper:int -> (int -> float) -> int distribution;;
@@ -57,6 +62,7 @@ module type Conversion_fn = sig
   val div : float t -> float t -> float t
   val exp : float t -> float t
   val eq : 'a t -> 'a t -> bool t
+  val lt : 'a t -> 'a t -> bool t
   val pair : 'a t -> 'b t -> ('a * 'b) t
   val array : 'a t array -> 'a array t
   val matrix : 'a t array array -> 'a array array t
@@ -76,6 +82,10 @@ module type Conversion_fn = sig
   val bernoulli : float -> bool t
   val binomial : int -> float -> int t
   val beta_binomial : int -> float -> float -> int t
+  val negative_binomial : int -> float -> int t
+  val exponential : float -> float t
+  val gamma : float -> float -> float t
+  val poisson : float -> int t
   val mv_gaussian : Mat.mat -> Mat.mat -> Mat.mat t
   val delta : 'a -> 'a t
   val sampler : (unit -> 'a) -> ('a -> float) -> 'a t

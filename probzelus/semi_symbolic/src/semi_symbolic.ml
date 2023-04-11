@@ -13,6 +13,7 @@ let mul = Semi_symbolic_impl.mul
 let div = Semi_symbolic_impl.div
 let exp = Semi_symbolic_impl.exp
 let eq = Semi_symbolic_impl.eq
+let lt = Semi_symbolic_impl.lt
 let pair = Semi_symbolic_impl.pair
 let array = Semi_symbolic_impl.array
 let matrix = Semi_symbolic_impl.matrix
@@ -29,6 +30,10 @@ let beta = Semi_symbolic_impl.beta
 let bernoulli = Semi_symbolic_impl.bernoulli
 let binomial = Semi_symbolic_impl.binomial
 let beta_binomial = Semi_symbolic_impl.beta_binomial
+let negative_binomial = Semi_symbolic_impl.negative_binomial
+let exponential = Semi_symbolic_impl.exponential
+let gamma = Semi_symbolic_impl.gamma
+let poisson = Semi_symbolic_impl.poisson
 let mv_gaussian = Semi_symbolic_impl.mv_gaussian
 let sampler = Semi_symbolic_impl.sampler
 let categorical = Semi_symbolic_impl.categorical
@@ -55,6 +60,7 @@ module type Conversion_fn = sig
   val div : float t -> float t -> float t
   val exp : float t -> float t
   val eq : 'a t -> 'a t -> bool t
+  val lt : 'a t -> 'a t -> bool t
   val pair : 'a t -> 'b t -> ('a * 'b) t
   val array : 'a t array -> 'a array t
   val matrix : 'a t array array -> 'a array array t
@@ -74,6 +80,10 @@ module type Conversion_fn = sig
   val bernoulli : float -> bool t
   val binomial : int -> float -> int t
   val beta_binomial : int -> float -> float -> int t
+  val negative_binomial : int -> float -> int t
+  val exponential : float -> float t
+  val gamma : float -> float -> float t
+  val poisson : float -> int t
   val mv_gaussian : Mat.mat -> Mat.mat -> Mat.mat t
   val delta : 'a -> 'a t
   val sampler : (unit -> 'a) -> ('a -> float) -> 'a t
@@ -110,6 +120,21 @@ module Convert(Fn : Conversion_fn) = struct
         | (ExConst n_v, ExConst p_v) -> Fn.binomial n_v p_v
         | _ -> raise (NonMarginal ())
         end
+      | NegativeBinomial (n, p) ->
+        begin match (Semi_symbolic_impl.eval n, Semi_symbolic_impl.eval p) with
+        | (ExConst n_v, ExConst p_v) -> Fn.negative_binomial n_v p_v
+        | _ -> raise (NonMarginal ())
+        end
+      | Gamma (a, b) ->
+        begin match (Semi_symbolic_impl.eval a, Semi_symbolic_impl.eval b) with
+        | (ExConst a_v, ExConst b_v) -> Fn.gamma a_v b_v
+        | _ -> raise (NonMarginal ())
+        end
+      | Poisson (lambda) ->
+        begin match (Semi_symbolic_impl.eval lambda) with
+        | (ExConst lambda_v) -> Fn.poisson lambda_v
+        | _ -> raise (NonMarginal ())
+        end
       | BetaBinomial (n, a, b) ->
         begin match (Semi_symbolic_impl.eval n, Semi_symbolic_impl.eval a, Semi_symbolic_impl.eval b) with
         | (ExConst n_v, ExConst a_v, ExConst b_v) -> Fn.beta_binomial n_v a_v b_v
@@ -142,6 +167,7 @@ module Convert(Fn : Conversion_fn) = struct
     | ExMatrix m -> Fn.matrix (Array.map (Array.map convert) m)
     | ExList l -> Fn.lst (List.map convert l)
     | ExCmp (Eq, e1, e2) -> Fn.eq (convert e1) (convert e2)
+    | ExCmp (Lt, e1, e2) -> Fn.lt (convert e1) (convert e2)
     | ExIte (i, t, e) -> Fn.ite (convert i) (convert t) (convert e)
     | ExMatAdd (e1, e2) -> Fn.mat_add (convert e1) (convert e2)
     | ExMatSub (e1, e2) -> Fn.mat_add (convert e1) (Fn.mat_scalar_mult (Fn.delta (-1.)) (convert e2))

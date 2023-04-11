@@ -4,8 +4,8 @@ open Owl
 
 type cmp_op =
   | Eq
-(*  | Neq
   | Lt
+(*  | Neq
   | Gt
   | Le
   | Ge*)
@@ -55,6 +55,9 @@ and 'a distribution =
   | Bernoulli : float expr -> bool distribution
   | Binomial : int expr * float expr -> int distribution
   | BetaBinomial : int expr * float expr * float expr -> int distribution
+  | NegativeBinomial : int expr * float expr -> int distribution
+  | Gamma : float expr * float expr -> float distribution
+  | Poisson : float expr -> int distribution
   | Delta : 'a expr -> 'a distribution
   | Sampler : ((unit -> 'a) * ('a -> float)) -> 'a distribution
 and 'a random_var = {
@@ -89,6 +92,12 @@ let ex_unop ope =
   | SquareRoot, ExConst c -> ExConst (Float.sqrt c)
   | Exp, ExConst c -> ExConst (Float.exp c)
   | (op, e) -> ExUnop (op, e)
+
+let ex_cmp ope1e2 =
+  match ope1e2 with
+  | Eq, ExConst c1, ExConst c2 -> ExConst (c1 = c2)
+  | Lt, ExConst c1, ExConst c2 -> ExConst (c1 < c2)
+  | (op, e1 , e2) -> ExCmp (op, e1, e2)
 
 let ex_int_to_float e =
   match e with
@@ -211,6 +220,9 @@ and size_distr: type a. a distribution -> int =
     | Bernoulli e -> 1 + size_expr e
     | Binomial (e1, e2) -> 1 + size_expr e1 + size_expr e2
     | BetaBinomial (e1, e2, e3) -> 1 + size_expr e1 + size_expr e2 + size_expr e3
+    | NegativeBinomial (e1, e2) -> 1 + size_expr e1 + size_expr e2
+    | Gamma (e1, e2) -> 1 + size_expr e1 + size_expr e2
+    | Poisson e -> 1 + size_expr e
     | Delta e -> 1 + size_expr e
     | Sampler _ -> 1
 
@@ -236,7 +248,7 @@ let rec subst : type a b. a expr -> b var -> b expr -> a expr =
   | ExMatScalarMul (e1, e2) -> ex_mat_scalar_mul (subst e1 v e', subst e2 v e')
   | ExMatGet (e, i) -> ex_mat_get (subst e v e', i)
   | ExMatSingle (e) -> ex_mat_single(subst e v e')
-  | ExCmp (op, e1, e2) -> ExCmp (op, subst e1 v e', subst e2 v e')
+  | ExCmp (op, e1, e2) -> ex_cmp (op, subst e1 v e', subst e2 v e')
   | ExPair (e1, e2) -> ExPair (subst e1 v e', subst e2 v e')
   | ExArray e -> ExArray (Array.map (fun e -> subst e v e') e)
   | ExMatrix e -> ExMatrix (Array.map (Array.map (fun e -> subst e v e')) e)
@@ -266,7 +278,7 @@ let rec subst_rv : type a b. a expr -> b random_var -> b expr -> a expr =
   | ExMatScalarMul (e1, e2) -> ex_mat_scalar_mul (subst_rv e1 v e', subst_rv e2 v e')
   | ExMatGet (e, i) -> ex_mat_get (subst_rv e v e', i)
   | ExMatSingle (e) -> ex_mat_single (subst_rv e v e')
-  | ExCmp (op, e1, e2) -> ExCmp (op, subst_rv e1 v e', subst_rv e2 v e')
+  | ExCmp (op, e1, e2) -> ex_cmp (op, subst_rv e1 v e', subst_rv e2 v e')
   | ExPair (e1, e2) -> ExPair (subst_rv e1 v e', subst_rv e2 v e')
   | ExArray e -> ExArray (Array.map (fun e -> subst_rv e v e') e)
   | ExMatrix e -> ExMatrix (Array.map (Array.map (fun e -> subst_rv e v e')) e)
@@ -383,14 +395,7 @@ fun expr ->
   | ExMatScalarMul (s, e_inner) -> ex_mat_scalar_mul (s, eval e_inner)
   | ExMatGet (e_inner, i) -> ex_mat_get (eval e_inner, i)
   | ExMatSingle(e_inner) -> ex_mat_single(eval e_inner)
-  | ExCmp (op, e1, e2) ->
-    begin match (eval e1, eval e2) with
-    | (ExConst c1, ExConst c2) ->
-      begin match op with
-      | Eq -> (ExConst (c1 = c2))
-      end
-    | (e1', e2') -> ExCmp(op, e1', e2')
-    end
+  | ExCmp (op, e1, e2) -> ex_cmp(op, eval e1, eval e2)
   | ExPair (e1, e2) ->
     begin match (eval e1, eval e2) with
     | (ExConst c1, ExConst c2) -> ExConst (c1, c2)
@@ -429,6 +434,7 @@ fun expr ->
 
 and eval_distr : type a. a distribution -> a distribution =
 fun distr ->
+  (* (Printf.printf "eval_distr\n"); *)
   match distr with
   | Normal (mu, var) -> Normal (eval mu, eval var)
   | MvNormal (mu, var) -> MvNormal (eval mu, eval var)
@@ -437,6 +443,9 @@ fun distr ->
   | Bernoulli(p) -> Bernoulli(eval p)
   | Binomial(n, p) -> Binomial(eval n, eval p)
   | BetaBinomial(n, a, b) -> BetaBinomial(eval n, eval a, eval b)
+  | NegativeBinomial(n, p) -> NegativeBinomial(eval n, eval p)
+  | Gamma(a, b) -> Gamma(eval a, eval b)
+  | Poisson(l) -> Poisson(eval l)
   | Delta e -> Delta (eval e)
   | Sampler e -> Sampler e
 
@@ -577,6 +586,10 @@ fun e rv_in transitive ->
         | BetaBinomial (n, a, b) -> (depends_on n rv_in transitive) || 
                                     (depends_on a rv_in transitive) || 
                                     (depends_on b rv_in transitive)
+        | NegativeBinomial(n, p) -> (depends_on n rv_in transitive) || 
+                                    (depends_on p rv_in transitive)
+        | Gamma (a, b) -> (depends_on a rv_in transitive) || (depends_on b rv_in transitive)
+        | Poisson (lambda) -> (depends_on lambda rv_in transitive)
         | Categorical (_, e) -> depends_on e rv_in transitive
         | Delta e -> (depends_on e rv_in transitive)
         | MvNormal (mu, var) -> (depends_on mu rv_in transitive) || (depends_on var rv_in transitive)
@@ -686,6 +699,9 @@ let has_parents_rv : type a. a random_var -> bool = fun rv' ->
   | Bernoulli (p) -> has_parents p
   | Binomial (n, p) -> (has_parents n) || (has_parents p)
   | BetaBinomial (n, a, b) -> (has_parents n) || (has_parents a) || (has_parents b)
+  | NegativeBinomial (n, p) -> (has_parents n) || (has_parents p)
+  | Gamma (a, b) -> (has_parents a) || (has_parents b)
+  | Poisson (lambda) -> has_parents lambda
   | Delta e -> has_parents e
   | MvNormal (mu, var) -> (has_parents mu) || (has_parents var)
   | Sampler _ -> false
@@ -707,6 +723,9 @@ fun e rv_child ->
       | BetaBinomial (n, a, b) -> (depends_on n rv false) || 
                                   (depends_on a rv false) || 
                                   (depends_on b rv false)
+      | NegativeBinomial (n, p) -> (depends_on n rv false) || (depends_on p rv false)
+      | Gamma (a, b) -> (depends_on a rv false) || (depends_on b rv false)
+      | Poisson (lambda) -> depends_on lambda rv false
       | Delta e_inner -> depends_on e_inner rv false
       | MvNormal (mu, var) -> (depends_on mu rv false) || (depends_on var rv false)
       | Sampler _ -> false
@@ -752,6 +771,9 @@ fun rv_parent rv_child ->
   | BetaBinomial (n, a, b) -> (has_parents_except n rv_child) || 
                               (has_parents_except a rv_child) || 
                               (has_parents_except b rv_child)
+  | NegativeBinomial (n, p) -> (has_parents_except n rv_child) || (has_parents_except p rv_child)
+  | Gamma (a, b) -> (has_parents_except a rv_child) || (has_parents_except b rv_child)
+  | Poisson (lambda) -> has_parents_except lambda rv_child
   | Delta e_inner -> has_parents_except e_inner rv_child
   | MvNormal (mu, var) -> (has_parents_except mu rv_child) || (has_parents_except var rv_child)
   | Sampler _ -> false
@@ -925,6 +947,38 @@ fun rv1 rv2 ->
       None
   | _ -> None
 
+(* Assumes rv1 and rv2 have a Gamma and Poisson distribution, resp.
+ * Returns the marginal distribution of rv2*)
+let gamma_poisson_marginal : float random_var -> int random_var -> int distribution option =
+fun rv1 rv2 ->
+  let prior, likelihood = rv1.distr, rv2.distr in
+  match (prior, likelihood) with
+  | (Gamma(ExConst(a), b), Poisson(ExRand(rv))) ->
+    if rv == rv1 && 
+      classify_float (fst(modf a)) = FP_zero && (* a is an int *)
+      (not (depends_on b rv2 true)) then
+     Some(NegativeBinomial(ExConst(int_of_float(a)), ex_div(b, ex_add(ExConst(1.), b))))
+   else
+     None
+ | _ -> None
+
+(* Assumes rv1 and rv2 have a Gamma and Poisson distribution, resp.
+ * Returns the conditional distribution of rv1 conditioned on rv2*)
+let gamma_poisson_posterior : float random_var -> int random_var -> float distribution option =
+fun rv1 rv2 ->
+  let prior, likelihood = rv1.distr, rv2.distr in
+  match (prior, likelihood) with
+  | (Gamma(ExConst(a), b), Poisson(ExRand(rv))) ->
+    if rv == rv1 && 
+      classify_float (fst(modf a)) = FP_zero && (* a is an int *)
+      (not (depends_on b rv2 true)) then
+      (* Assume n = 1 (i.e. time unit is 1). Is this always the case? *)
+      (* Some(Delta(ExConst(a))) *)
+     Some(Gamma(ex_add(ExConst(a), ExIntToFloat(ExRand(rv2))), ex_add(b, ExConst(1.))))
+   else
+     None
+  | _ -> None
+
 (* Assumes rv1 and rv2 have Categorical distributions.
  * Returns the marginal distribution of rv2 *)
 let categorical_marginal : category random_var -> category random_var -> category distribution option =
@@ -1004,6 +1058,14 @@ fun rv1 rv2 ->
       true
     | _ -> false
     end
+  | (Gamma (_), Poisson (_)) ->
+    begin match (gamma_poisson_marginal rv1 rv2, gamma_poisson_posterior rv1 rv2) with
+    | Some(dist_marg), Some(dist_post) ->
+      rv2.distr <- dist_marg;
+      rv1.distr <- dist_post;
+      true
+    | _ -> false
+    end
   | (MvNormal _, MvNormal _) ->
     begin match (mv_gaussian_marginal rv1 rv2, mv_gaussian_posterior rv1 rv2) with
     | Some dist_marg, Some dist_post ->
@@ -1051,7 +1113,7 @@ fun rv1 rv2 ->
   | (Bernoulli p1, Bernoulli p2) ->
     let d = { lower = 0; upper = 1 } in
     let cat_of_bool e = ExIte (e, ExConst 1, ExConst 0) in
-    let bool_of_cat e = ExCmp (Eq, e, ExConst 1) in
+    let bool_of_cat e = ex_cmp (Eq, e, ExConst 1) in
     let factor_of_prob p =
       let v = gensym_semi_symbolic () in
       ExFactor (v, d, ExIte (bool_of_cat (ExVar v), p, ex_add (ExConst 1., ex_mul (ExConst (-1.), p)))) in
@@ -1102,6 +1164,11 @@ fun rv_parent rv_child ->
         | BetaBinomial (n, a, b) -> (depends_on n rv_parent true) ||
                                     (depends_on a rv_parent true) ||
                                     (depends_on b rv_parent true)
+        | NegativeBinomial (n, p) -> (depends_on n rv_parent true) ||
+                                     (depends_on p rv_parent true)
+        | Gamma (a, b) -> (depends_on a rv_parent true) ||
+                          (depends_on b rv_parent true)
+        | Poisson (lambda) -> depends_on lambda rv_parent true
         | Delta e_inner -> depends_on e_inner rv_parent true
         | MvNormal (mu, var) ->
             (depends_on mu rv_parent true) || (depends_on var rv_parent true)
@@ -1152,6 +1219,16 @@ fun rv_parent rv_child ->
                              (not (has_other_deps n)) &&
                              (not (has_other_deps a)) &&
                              (not (has_other_deps b))
+  | NegativeBinomial (n, p) -> ((depends_on n rv_parent false) ||
+                                (depends_on p rv_parent false)) &&
+                              (not (has_other_deps n)) &&
+                              (not (has_other_deps p))
+  | Gamma (a, b) -> ((depends_on a rv_parent false) ||
+                     (depends_on b rv_parent false)) &&
+                    (not (has_other_deps a)) &&
+                    (not (has_other_deps b))
+  | Poisson (lambda) -> (depends_on lambda rv_parent false) &&
+                        (not (has_other_deps lambda))
   | Delta e_inner -> (depends_on e_inner rv_parent false) &&
                      (not (has_other_deps e_inner))
   | MvNormal (mu, var) ->
@@ -1220,6 +1297,9 @@ let get_parents : type a. a random_var -> rvset =
         | Binomial(n, p) -> List.append (get_parents_expr n) (get_parents_expr p)
         | BetaBinomial(n, a, b) -> 
           List.append (List.append (get_parents_expr n) (get_parents_expr a)) (get_parents_expr b)
+        | NegativeBinomial(n, p) -> List.append (get_parents_expr n) (get_parents_expr p)
+        | Gamma(a, b) -> List.append (get_parents_expr a) (get_parents_expr b)
+        | Poisson(lambda) -> get_parents_expr lambda
         | Delta(e) -> get_parents_expr e
         | Sampler(_, _) -> []
         end
@@ -1337,7 +1417,8 @@ let add a b = ex_add(a, b)
 let mul a b = ex_mul(a, b)
 let div a b = ex_div(a, b)
 let exp a = ex_unop(Exp, a)
-let eq a b = ExCmp (Eq, a, b)
+let eq a b = ex_cmp (Eq, a, b)
+let lt a b = ex_cmp(Lt, a, b)
 let pair a b = ExPair(a, b)
 let array a = ExArray a
 let matrix m = ExMatrix m
@@ -1354,6 +1435,10 @@ let categorical ~lower ~upper f = Categorical ({ lower; upper }, ExConst (Array.
 let bernoulli p = Bernoulli(p)
 let binomial n p = Binomial(n, p)
 let beta_binomial n a b = BetaBinomial(n, a, b)
+let negative_binomial n p = NegativeBinomial(n, p)
+let exponential l = Gamma(ExConst(1.), l)
+let gamma a b = Gamma(a, b)
+let poisson l = Poisson(l)
 let mv_gaussian mu var = MvNormal(mu, var)
 let sampler f g = Sampler (f, g)
 
@@ -1381,6 +1466,11 @@ fun rv ->
     | Bernoulli(ExConst(p)) -> Distr_operations.bernoulli_score p x
     | Binomial(ExConst(n), ExConst(p)) -> Distr_operations.binomial_score n p x
     | BetaBinomial(ExConst(n), ExConst(a), ExConst(b)) -> Distr_operations.beta_binomial_score n a b x
+    | NegativeBinomial(ExConst(n), ExConst(p)) -> Distr_operations.negative_binomial_score n p x
+    | Gamma(ExConst(a), ExConst(b)) -> 
+      if a = 1. then Distr_operations.exponential_score b x
+      else Distr_operations.gamma_score a b x
+    | Poisson(ExConst(l)) -> Distr_operations.poisson_score l x
     | Delta _ -> raise (InternalError ("Not implemented"))
     | Sampler (_, g) -> g x
     | MvNormal (ExConst mu, ExConst var) -> Distr_operations.mv_gaussian_score mu var x
@@ -1401,6 +1491,11 @@ fun rv ->
     | Bernoulli(ExConst(p)) -> Distr_operations.bernoulli_draw p
     | Binomial(ExConst(n), ExConst(p)) -> Distr_operations.binomial_draw n p
     | BetaBinomial(ExConst(n), ExConst(a), ExConst(b)) -> Distr_operations.beta_binomial_draw n a b
+    | NegativeBinomial(ExConst(n), ExConst(p)) -> Distr_operations.negative_binomial_draw n p
+    | Gamma(ExConst(a), ExConst(b)) -> 
+      if a = 1. then Distr_operations.exponential_draw b
+      else Distr_operations.gamma_draw a b
+    | Poisson(ExConst(l)) -> Distr_operations.poisson_draw l
     | Delta (ExConst v) -> v
     | Sampler (f, _) -> f ()
     | MvNormal (ExConst mu, ExConst var) -> Distr_operations.mv_gaussian_draw mu var
@@ -1466,6 +1561,7 @@ fun e ->
   | ExMul (e1, e2) -> eval_sample e1 *. eval_sample e2
   | ExDiv (e1, e2) -> eval_sample e1 /. eval_sample e2
   | ExCmp (Eq, e1, e2) -> eval_sample e1 = eval_sample e2
+  | ExCmp (Lt, e1, e2) -> eval_sample e1 < eval_sample e2
   | ExPair (e1, e2) -> (eval_sample e1, eval_sample e2)
   | ExArray a -> Array.map eval_sample a
   | ExMatrix m -> Array.map (Array.map eval_sample) m
