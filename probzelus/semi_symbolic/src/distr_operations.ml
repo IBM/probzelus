@@ -11,26 +11,8 @@ let log_combination n k =
   in
   comb 0. n k
 
-let gamma =
-  let g = 7. in
-  let c =
-    [|0.99999999999980993; 676.5203681218851; -1259.1392167224028;
-      771.32342877765313; -176.61502916214059; 12.507343278686905;
-      -0.13857109526572012; 9.9843695780195716e-6; 1.5056327351493116e-7|]
-  in
-  let rec ag z d =
-    if d = 0 then c.(0) +. ag z 1
-    else if d < 8 then c.(d) /. (z +. float d) +. ag z (succ d)
-    else c.(d) /. (z +. float d)
-  in
-  fun z ->
-    let z = z -. 1. in
-    let p = z +. g +. 0.5 in
-    sqrt_two_pi *. p ** (z +. 0.5) *. exp (-. p) *. ag z 0
-
 let log_gamma x =
-  (* XXX TODO: better implementation XXX *)
-  log (gamma x)
+  Owl_maths.loggamma x
 
 let gaussian_draw =
   let rec rand_pair () =
@@ -229,27 +211,6 @@ let categorical_score sup x =
       0. sup
   in
   log p
-
-let gamma =
-  let g = 7. in
-  let c =
-    [|0.99999999999980993; 676.5203681218851; -1259.1392167224028;
-      771.32342877765313; -176.61502916214059; 12.507343278686905;
-      -0.13857109526572012; 9.9843695780195716e-6; 1.5056327351493116e-7|]
-  in
-  let rec ag z d =
-    if d = 0 then c.(0) +. ag z 1
-    else if d < 8 then c.(d) /. (z +. float d) +. ag z (succ d)
-    else c.(d) /. (z +. float d)
-  in
-  fun z ->
-    let z = z -. 1. in
-    let p = z +. g +. 0.5 in
-    sqrt_two_pi *. p ** (z +. 0.5) *. exp (-. p) *. ag z 0
-
-let log_gamma x =
-  (* XXX TODO: better implementation XXX *)
-  log (gamma x)
 
 let exponential_draw lambda =
   let u = Random.float 1. in
