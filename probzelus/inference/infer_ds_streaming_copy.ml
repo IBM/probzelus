@@ -14,6 +14,8 @@
  * limitations under the License.
  *)
 
+(* !!! Not working with new ephemeron API for OCaml 5.0.0  
+
 (** Inference with delayed sampling *)
 open Ztypes
 open Types
@@ -661,3 +663,5 @@ let infer_bounded n (Cnode { alloc; reset; copy; step; }) =
     Gnodes.copy src.node_graph dst.node_graph
   in
   Infer_pf.infer n (Cnode { alloc; reset; copy; step; })
+
+*)
