@@ -109,7 +109,9 @@ let time n =
       let prev_time = Mtime_clock.now () in
       let ret = n_step x a in
       let new_time = Mtime_clock.now () in
-      let elapsed_ms = Mtime.Span.to_ms (Mtime.span prev_time new_time) in
+      (* Broken with MTime 2.0.0 *)
+      (* let elapsed_ms = Mtime.Span.to_ms (Mtime.span prev_time new_time) in *)
+      let elapsed_ms = (Mtime.Span.to_float_ns (Mtime.span prev_time new_time)) *. 1e-6 in
       (ret, elapsed_ms)
     );
     copy = n_copy
