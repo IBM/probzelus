@@ -62,9 +62,9 @@ let node pendulum (obs0, action) = obs, reward, stop where
               pole_angle = theta;
               pole_velocity = theta_dot; }
   and stop = (x < -. x_threshold)
-      or (x > x_threshold)
-      or (theta < -. theta_threshold_radians)
-      or (theta > theta_threshold_radians)
+      || (x > x_threshold)
+      || (theta < -. theta_threshold_radians)
+      || (theta > theta_threshold_radians)
   and reward = if not stop then 1. else 0.
 
 
