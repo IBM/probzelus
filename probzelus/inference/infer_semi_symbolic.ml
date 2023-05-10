@@ -5,8 +5,8 @@ exception EvalExn of string
 type 'a expr = 'a Semi_symbolic.expr
 
 let const = Semi_symbolic.const
-let add = Semi_symbolic.add
-let ( +~ ) = add
+let add (a, b) = Semi_symbolic.add a b
+let ( +~ ) = Semi_symbolic.add
 let mult (a, b) = Semi_symbolic.mul a b
 let ( *~ ) = Semi_symbolic.mul
 let pair (a, b) = Semi_symbolic.pair a b
