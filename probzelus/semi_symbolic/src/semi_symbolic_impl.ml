@@ -343,10 +343,10 @@ let pp_approx_status no_zeros =
       if no_zeros && e + a = 0 then ()
       else if not (e = 0) && not (a = 0) then
         Printf.printf "%s: DYNAMIC (e-%d,a-%d)\n" var e a
-      else if not (e = 0) then
-        Printf.printf "%s: EXACT (%d)\n" var e
-      else
+      else if not (a = 0) then
         Printf.printf "%s: APPROX (%d)\n" var a
+      else
+        Printf.printf "%s: EXACT (%d)\n" var e
     | _ -> failwith "Approx status error") rv_approx_status
 
 (* Partially evaluates expressions *)
