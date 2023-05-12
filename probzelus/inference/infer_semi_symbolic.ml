@@ -96,10 +96,6 @@ let observe =
 
 exception NonMarginal: 'a Semi_symbolic.random_var -> exn
 
-let force_marginalize e =
-  let v = eval e in
-  v
-
 module Convert_fn_distr : Semi_symbolic.Conversion_fn with type 'a t = 'a Types.mdistr = struct
   open Types
   type 'a t = 'a mdistr
