@@ -336,18 +336,21 @@ let record_approx_status var status =
     end
   | _ -> failwith "Approx status error"
     
-let pp_approx_status no_zeros =
-  Hashtbl.iter (fun var status ->
+let pp_approx_status : bool -> string =
+fun obs ->
+  Hashtbl.fold (fun key value acc -> (key, value)::acc) rv_approx_status []
+  |> List.sort compare
+  |> List.fold_left (fun acc (var, status) ->
     match status with
     | Exact(e), Approx(a) ->
-      if no_zeros && e + a = 0 then ()
+      if not obs && String.starts_with ~prefix: "obs" var then acc
       else if not (e = 0) && not (a = 0) then
-        Printf.printf "%s: DYNAMIC (e-%d,a-%d)\n" var e a
+        Format.sprintf "%s%s: DYNAMIC (e-%d,a-%d)\n" acc var e a
       else if not (a = 0) then
-        Printf.printf "%s: APPROX (%d)\n" var a
+        Format.sprintf "%s%s: APPROX (%d)\n" acc var a
       else
-        Printf.printf "%s: EXACT (%d)\n" var e
-    | _ -> failwith "Approx status error") rv_approx_status
+        Format.sprintf "%s%s: EXACT (%d)\n" acc var e
+    | _ -> failwith "Approx status error") ""
 
 (* Partially evaluates expressions *)
 let rec eval : type a. a expr -> a expr =
@@ -1418,6 +1421,10 @@ fun rv ->
 (* Operations *)
 
 let const v = ExConst v
+let get_const e =
+  match e with
+  | ExConst v -> v
+  | _ -> raise (InternalError "not a constant")
 let add a b = ex_add(a, b)
 let mul a b = ex_mul(a, b)
 let div a b = ex_div(a, b)
@@ -1425,14 +1432,31 @@ let exp a = ex_unop(Exp, a)
 let eq a b = ex_cmp (Eq, a, b)
 let lt a b = ex_cmp(Lt, a, b)
 let pair a b = ExPair(a, b)
+let split p = 
+  match p with
+  | ExPair(a, b) -> (a, b)
+  | _ -> raise (InternalError "not a pair")
+
 let array a = ExArray a
+let get_array a =
+  match a with
+  | ExArray a -> a
+  | ExConst l -> Array.map ((fun x -> ExConst x)) l
+  | _ -> raise (InternalError "not an array")
 let matrix m = ExMatrix m
 let ite i t e = ExIte(i, t, e)
 let lst l = ExList l
+let get_lst l =
+  match l with
+  | ExList l -> l
+  | ExConst l -> List.map ((fun x -> ExConst x)) l
+  | _ -> raise (InternalError "not a list")
+
 let mat_add a b = ex_mat_add(a, b)
 let mat_scalar_mult s e = ex_mat_scalar_mul (s, e)
 let mat_dot a b = ex_mat_mul(a, b)
 let vec_get e i = ex_mat_get (e, i)
+let int_to_float i = ex_int_to_float i
 
 let gaussian mu var = Normal(mu, var)
 let beta a b = Beta(a, b)
@@ -1593,3 +1617,135 @@ fun e ->
   | ExGet (e1, e2) -> let e, d = eval_sample e1 in e.(eval_sample e2 - d.lower)
   | ExLet (v, e1, e2) -> let c = eval_sample e1 in eval_sample (subst e2 v (ExConst c))
   end
+
+(* TODO: 
+  Similar to how SSI expr are converted to Types.distr,
+  constants are converted to a distribution with single point
+  of support, except here we use Delta to achieve the same results.
+  If the expression is already a random variable, we can
+  return the distribution of the random variable exactly.
+  Everything else can't be marginalized into an
+  exact distribution so they are sampled.
+
+  Some other expressions can probably be evaluated more exactly *)
+let rec get_marginal_expr : type a. a expr -> a expr =
+fun e ->
+  let e = eval e in
+  match e with
+  | ExConst c -> ExConst c
+  | ExRand rv -> 
+    hoist_and_eval rv;
+    (* rv should now be marginal *)
+    ExRand rv
+  | ExAdd (e1, e2) -> ExAdd (get_marginal_expr e1, get_marginal_expr e2)
+  | ExMul (e1, e2) -> ExMul (get_marginal_expr e1, get_marginal_expr e2)
+  | ExDiv (e1, e2) -> ExDiv (get_marginal_expr e1, get_marginal_expr e2)
+  | ExList l -> ExList (List.map get_marginal_expr l)
+  | ExPair (e1, e2) -> ExPair (get_marginal_expr e1, get_marginal_expr e2)
+  | ExArray a -> ExArray (Array.map get_marginal_expr a)
+  | _ -> ExConst (eval_sample e)
+
+(* Takes only marginal distributions *)
+let pp_distribution : type a. a distribution -> string =
+fun d ->
+  match d with
+  | Normal (ExConst(mu), ExConst(var)) ->
+    Format.sprintf "Gaussian(%f, %f)" mu var
+  | Beta (ExConst(a), ExConst(b)) ->
+    Format.sprintf "Beta(%f, %f)" a b
+  | Bernoulli (ExConst(p)) ->
+    Format.sprintf "Bernoulli(%f)" p
+  | Binomial (ExConst(n), ExConst(p)) ->
+    Format.sprintf "Binomial(%d, %f)" n p
+  | BetaBinomial (ExConst(n), ExConst(a), ExConst(b)) ->
+    Format.sprintf "BetaBinomial(%d, %f, %f)" n a b
+  | NegativeBinomial (ExConst(n), ExConst(p)) ->
+    Format.sprintf "NegativeBinomial(%d, %f)" n p
+  | Gamma (ExConst(a), ExConst(b)) ->
+    Format.sprintf "Gamma(%f, %f)" a b
+  | Poisson (ExConst(p)) ->
+    Format.sprintf "Poisson(%f)" p
+  | Delta (ExConst(_)) ->
+    (* TODO: any way to print the value? *)
+    Format.sprintf "Delta (_)" 
+  | Sampler _ | MvNormal _ | Categorical _ -> 
+    raise (InternalError "not implemented")
+  | _ -> raise (InternalError "not marginal")
+
+let mean_float_d : float distribution -> float =
+fun d ->
+  begin match d with
+  | Normal (ExConst(mu), ExConst(_)) -> mu
+  | Beta (ExConst(a), ExConst(b)) -> Distr_operations.beta_mean a b
+  | Gamma (ExConst(a), ExConst(b)) -> Distr_operations.gamma_mean a b
+  | Delta (ExConst v) -> v
+  | Sampler _ -> raise (InternalError "not implemented")
+  | _ -> raise (InternalError "not marginal")
+  end
+  
+let mean_int_d : int distribution -> float =
+fun d ->
+  match d with
+  | Binomial (ExConst(n), ExConst(p)) -> Distr_operations.binomial_mean n p
+  | BetaBinomial (ExConst(n), ExConst(a), ExConst(b)) ->
+    Distr_operations.beta_binomial_mean n a b
+  | NegativeBinomial (ExConst(n), ExConst(p)) ->
+    Distr_operations.negative_binomial_mean n p
+  | Poisson (ExConst(l)) -> Distr_operations.poisson_mean l
+  | Delta (ExConst v) -> float_of_int v
+  | Sampler _ | Categorical _ -> raise (InternalError "not implemented")
+  | _ -> raise (InternalError "not marginal")
+
+let mean_bool_d : bool distribution -> float =
+fun d ->
+  match d with
+  | Bernoulli (ExConst p) -> Distr_operations.bernoulli_mean p
+  | Delta (ExConst v) -> if v then 1. else 0.
+  | Sampler _ -> raise (InternalError "not implemented")
+  | _ -> raise (InternalError "not marginal")
+
+let mean_int : int expr -> float expr =
+  fun e ->
+    let e = eval e in
+    let rec mean_int' : int expr -> float =
+    fun e ->
+      match e with
+      | ExConst c -> float_of_int c
+      | ExRand rv -> mean_int_d rv.distr
+      | ExIte (i, t, e) -> if (eval_sample i) then (mean_int' t) else (mean_int' e)
+      | _ -> raise (InternalError "not marginal")
+    in
+    ExConst (mean_int' e)
+
+let mean_float : float expr -> float expr =
+  fun e ->
+    let e = eval e in
+    let rec mean_float' : float expr -> float =
+    fun e ->
+      match e with
+      | ExConst c -> c
+      | ExRand rv -> mean_float_d rv.distr
+      | ExAdd (e1, e2) -> mean_float' e1 +. mean_float' e2
+      | ExMul (e1, e2) -> mean_float' e1 *. mean_float' e2
+      | ExDiv (e1, e2) -> mean_float' e1 /. mean_float' e2
+      | ExIte (i, t, e) -> if (eval_sample i) then (mean_float' t) else (mean_float' e)
+      | ExUnop (Squared, e_inner) -> (mean_float' e_inner) ** 2.
+      | ExUnop (SquareRoot, e_inner) -> Float.sqrt (mean_float' e_inner)
+      | ExUnop (Exp, e_inner) -> Float.exp (mean_float' e_inner)
+      | ExIntToFloat e_inner -> get_const (mean_int e_inner)
+      | _ -> raise (InternalError "not marginal")
+    in 
+    ExConst (mean_float' e)
+
+let mean_bool : bool expr -> float expr =
+  fun e ->
+    let e = eval e in
+    let rec mean_bool' : bool expr -> float =
+    fun e ->
+      match e with
+      | ExConst c -> if c then 1. else 0.
+      | ExRand rv -> mean_bool_d rv.distr
+      | ExIte (i, t, e) -> if (eval_sample i) then (mean_bool' t) else (mean_bool' e)
+      | _ -> raise (InternalError "not marginal")
+    in
+    ExConst (mean_bool' e)

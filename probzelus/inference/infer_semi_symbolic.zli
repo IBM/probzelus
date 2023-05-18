@@ -48,7 +48,7 @@ val vec_get : Mat.mat expr * int -> float expr
 
 val eval : 'a expr -AD-> 'a
 
-val pp_approx_status : bool -> unit
+val pp_approx_status : bool -> string
 
 type 'a ds_distribution
 

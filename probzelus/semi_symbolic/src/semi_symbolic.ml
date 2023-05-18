@@ -8,6 +8,7 @@ type 'a distribution = 'a Semi_symbolic_impl.distribution
 type 'a random_var = 'a Semi_symbolic_impl.random_var
 
 let const = Semi_symbolic_impl.const
+let get_const = Semi_symbolic_impl.get_const
 let add = Semi_symbolic_impl.add
 let mul = Semi_symbolic_impl.mul
 let div = Semi_symbolic_impl.div
@@ -15,15 +16,19 @@ let exp = Semi_symbolic_impl.exp
 let eq = Semi_symbolic_impl.eq
 let lt = Semi_symbolic_impl.lt
 let pair = Semi_symbolic_impl.pair
+let split = Semi_symbolic_impl.split
 let array = Semi_symbolic_impl.array
+let get_array = Semi_symbolic_impl.get_array
 let matrix = Semi_symbolic_impl.matrix
 let ite = Semi_symbolic_impl.ite
 let lst = Semi_symbolic_impl.lst
+let get_lst = Semi_symbolic_impl.get_lst
 
 let mat_add = Semi_symbolic_impl.mat_add
 let mat_scalar_mult = Semi_symbolic_impl.mat_scalar_mult
 let mat_dot = Semi_symbolic_impl.mat_dot
 let vec_get = Semi_symbolic_impl.vec_get
+let int_to_float = Semi_symbolic_impl.int_to_float
 
 let gaussian = Semi_symbolic_impl.gaussian
 let beta = Semi_symbolic_impl.beta
@@ -50,6 +55,14 @@ let observe = Semi_symbolic_impl.observe
 let eval_sample = Semi_symbolic_impl.eval_sample
 
 let pp_approx_status = Semi_symbolic_impl.pp_approx_status
+
+let get_marginal_expr = Semi_symbolic_impl.get_marginal_expr
+
+let pp_distribution = Semi_symbolic_impl.pp_distribution
+let mean_float = Semi_symbolic_impl.mean_float
+let mean_int = Semi_symbolic_impl.mean_int
+let mean_bool = Semi_symbolic_impl.mean_bool
+
 
 module type Conversion_fn = sig
   type 'a t

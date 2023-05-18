@@ -8,6 +8,7 @@ type 'a distribution;;
 type 'a random_var;;
 
 val const : 'a -> 'a expr;;
+val get_const : 'a expr -> 'a;;
 val add : float expr -> float expr -> float expr;;
 val mul : float expr -> float expr -> float expr;;
 val div : float expr -> float expr -> float expr;;
@@ -15,16 +16,19 @@ val exp : float expr -> float expr;;
 val eq : 'a expr -> 'a expr -> bool expr;;
 val lt : 'a expr -> 'a expr -> bool expr;;
 val pair : 'a expr -> 'b expr -> ('a * 'b) expr;;
+val split : ('a * 'b) expr -> 'a expr * 'b expr;;
 val array : 'a expr array -> 'a array expr;;
+val get_array : 'a array expr -> 'a expr array;;
 val matrix : 'a expr array array -> 'a array array expr
 val ite : bool expr -> 'a expr -> 'a expr -> 'a expr;;
 val lst : 'a expr list -> 'a list expr;;
+val get_lst : 'a list expr -> 'a expr list;;
 
 val mat_add : Mat.mat expr -> Mat.mat expr -> Mat.mat expr;;
 val mat_scalar_mult : float expr -> Mat.mat expr -> Mat.mat expr;;
 val mat_dot : Mat.mat expr -> Mat.mat expr -> Mat.mat expr;;
 val vec_get : Mat.mat expr -> int -> float expr;;
-
+val int_to_float : int expr -> float expr;;
 
 val gaussian : float expr -> float expr -> float distribution;;
 val beta : float expr -> float expr -> float distribution;;
@@ -51,7 +55,13 @@ val observe : float -> 'a distribution -> 'a -> float;;
 
 val eval_sample : 'a expr -> 'a;;
 
-val pp_approx_status : bool -> unit;;
+val pp_approx_status : bool -> string;;
+
+val get_marginal_expr : 'a expr -> 'a expr;;
+val pp_distribution : 'a distribution -> string;;
+val mean_float : float expr -> float expr;;
+val mean_int : int expr -> float expr;;
+val mean_bool : bool expr -> float expr;;
 
 module type Conversion_fn = sig
   type 'a t
