@@ -8,7 +8,6 @@ type 'a distribution = 'a Semi_symbolic_impl.distribution
 type 'a random_var = 'a Semi_symbolic_impl.random_var
 
 let const = Semi_symbolic_impl.const
-let get_const = Semi_symbolic_impl.get_const
 let add = Semi_symbolic_impl.add
 let mul = Semi_symbolic_impl.mul
 let div = Semi_symbolic_impl.div
@@ -16,13 +15,10 @@ let exp = Semi_symbolic_impl.exp
 let eq = Semi_symbolic_impl.eq
 let lt = Semi_symbolic_impl.lt
 let pair = Semi_symbolic_impl.pair
-let split = Semi_symbolic_impl.split
 let array = Semi_symbolic_impl.array
-let get_array = Semi_symbolic_impl.get_array
 let matrix = Semi_symbolic_impl.matrix
 let ite = Semi_symbolic_impl.ite
 let lst = Semi_symbolic_impl.lst
-let get_lst = Semi_symbolic_impl.get_lst
 
 let mat_add = Semi_symbolic_impl.mat_add
 let mat_scalar_mult = Semi_symbolic_impl.mat_scalar_mult
@@ -30,6 +26,7 @@ let mat_dot = Semi_symbolic_impl.mat_dot
 let vec_get = Semi_symbolic_impl.vec_get
 let int_to_float = Semi_symbolic_impl.int_to_float
 
+let delta = Semi_symbolic_impl.delta
 let gaussian = Semi_symbolic_impl.gaussian
 let beta = Semi_symbolic_impl.beta
 let bernoulli = Semi_symbolic_impl.bernoulli
@@ -40,6 +37,7 @@ let exponential = Semi_symbolic_impl.exponential
 let gamma = Semi_symbolic_impl.gamma
 let poisson = Semi_symbolic_impl.poisson
 let mv_gaussian = Semi_symbolic_impl.mv_gaussian
+let mixture = Semi_symbolic_impl.mixture
 let sampler = Semi_symbolic_impl.sampler
 let categorical = Semi_symbolic_impl.categorical
 
@@ -52,16 +50,10 @@ let make_marginal = Semi_symbolic_impl.make_marginal
 let value = Semi_symbolic_impl.value
 let observe = Semi_symbolic_impl.observe
 
+let eval = Semi_symbolic_impl.eval
 let eval_sample = Semi_symbolic_impl.eval_sample
 
 let pp_approx_status = Semi_symbolic_impl.pp_approx_status
-
-let get_marginal_expr = Semi_symbolic_impl.get_marginal_expr
-
-let pp_distribution = Semi_symbolic_impl.pp_distribution
-let mean_float = Semi_symbolic_impl.mean_float
-let mean_int = Semi_symbolic_impl.mean_int
-let mean_bool = Semi_symbolic_impl.mean_bool
 
 
 module type Conversion_fn = sig
@@ -99,6 +91,7 @@ module type Conversion_fn = sig
   val poisson : float -> int t
   val mv_gaussian : Mat.mat -> Mat.mat -> Mat.mat t
   val delta : 'a -> 'a t
+  val mixture : ('a t * float) list -> 'a t
   val sampler : (unit -> 'a) -> ('a -> float) -> 'a t
   val categorical : lower:int -> upper:int -> (int -> float) -> int t
 end
@@ -163,6 +156,7 @@ module Convert(Fn : Conversion_fn) = struct
         | (ExConst mu_v, ExConst var_v) -> Fn.mv_gaussian mu_v var_v
         | _ -> raise (NonMarginal ())
         end
+      | Mixture l -> Fn.mixture (List.map (fun (e, p) -> (convert e, p)) l)
       | Sampler (f, g) -> Fn.sampler f g
       | Categorical ({ lower; upper }, e) ->
         begin match Semi_symbolic_impl.eval e with

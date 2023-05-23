@@ -132,6 +132,7 @@ module Convert_fn_distr : Semi_symbolic.Conversion_fn with type 'a t = 'a Types.
   let poisson lambda = Dist_poisson lambda
   let delta x = Distribution.dirac x
   let mv_gaussian mu var = Dist_mv_gaussian (mu, var, None)
+  let mixture l = Dist_mixture l
   let sampler draw score = Dist_sampler (draw, score)
   let categorical ~lower ~upper _ =
     ignore (lower, upper);

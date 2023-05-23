@@ -59,6 +59,7 @@ and 'a distribution =
   | Gamma : float expr * float expr -> float distribution
   | Poisson : float expr -> int distribution
   | Delta : 'a expr -> 'a distribution
+  | Mixture : ('a expr * float) list -> 'a distribution (* probabilities NOT logscale *)
   | Sampler : ((unit -> 'a) * ('a -> float)) -> 'a distribution
 and 'a random_var = {
     name : string; (* Used only for debugging *)
@@ -224,6 +225,8 @@ and size_distr: type a. a distribution -> int =
     | Gamma (e1, e2) -> 1 + size_expr e1 + size_expr e2
     | Poisson e -> 1 + size_expr e
     | Delta e -> 1 + size_expr e
+    | Mixture l -> 
+      1 + List.fold_left (fun acc (e, _) -> max acc (size_expr e)) 1 l
     | Sampler _ -> 1
 
 (* Utility functions *)
@@ -455,6 +458,7 @@ fun distr ->
   | Gamma(a, b) -> Gamma(eval a, eval b)
   | Poisson(l) -> Poisson(eval l)
   | Delta e -> Delta (eval e)
+  | Mixture l -> Mixture (List.map (fun (e, p) -> (eval e, p)) l)
   | Sampler e -> Sampler e
 
 (* Returns Some(a,b) if e can be written as an affine function of
@@ -601,6 +605,7 @@ fun e rv_in transitive ->
         | Categorical (_, e) -> depends_on e rv_in transitive
         | Delta e -> (depends_on e rv_in transitive)
         | MvNormal (mu, var) -> (depends_on mu rv_in transitive) || (depends_on var rv_in transitive)
+        | Mixture l -> List.exists (fun (e, _) -> depends_on e rv_in transitive) l
         | Sampler _ -> false
         end
       else
@@ -712,6 +717,7 @@ let has_parents_rv : type a. a random_var -> bool = fun rv' ->
   | Poisson (lambda) -> has_parents lambda
   | Delta e -> has_parents e
   | MvNormal (mu, var) -> (has_parents mu) || (has_parents var)
+  | Mixture l -> List.exists (fun (e, _) -> has_parents e) l
   | Sampler _ -> false
 
 (* Returns whether the expression has any parents that are _not_ _direct_
@@ -736,6 +742,7 @@ fun e rv_child ->
       | Poisson (lambda) -> depends_on lambda rv false
       | Delta e_inner -> depends_on e_inner rv false
       | MvNormal (mu, var) -> (depends_on mu rv false) || (depends_on var rv false)
+      | Mixture l -> List.exists (fun (e, _) -> depends_on e rv false) l
       | Sampler _ -> false
     in
     not is_parent_rv_child
@@ -784,6 +791,7 @@ fun rv_parent rv_child ->
   | Poisson (lambda) -> has_parents_except lambda rv_child
   | Delta e_inner -> has_parents_except e_inner rv_child
   | MvNormal (mu, var) -> (has_parents_except mu rv_child) || (has_parents_except var rv_child)
+  | Mixture l -> List.exists (fun (e, _) -> has_parents_except e rv_child) l
   | Sampler _ -> false
 
 (* Assumes rv1 and rv2 have Gaussian distributions and
@@ -1180,6 +1188,7 @@ fun rv_parent rv_child ->
         | Delta e_inner -> depends_on e_inner rv_parent true
         | MvNormal (mu, var) ->
             (depends_on mu rv_parent true) || (depends_on var rv_parent true)
+        | Mixture l -> List.exists (fun (e, _) -> depends_on e rv_parent true) l
         | Sampler _ -> false
       else
         false
@@ -1244,6 +1253,7 @@ fun rv_parent rv_child ->
       (depends_on var rv_parent false)) &&
     (not (has_other_deps mu)) &&
     (not (has_other_deps var))
+  | Mixture l -> List.exists (fun (e, _) -> depends_on e rv_parent false) l
   | Sampler _ -> false
 
 type rvwrapper = 
@@ -1309,6 +1319,7 @@ let get_parents : type a. a random_var -> rvset =
         | Gamma(a, b) -> List.append (get_parents_expr a) (get_parents_expr b)
         | Poisson(lambda) -> get_parents_expr lambda
         | Delta(e) -> get_parents_expr e
+        | Mixture(l) -> List.fold_left (fun lst (e, _) -> List.append lst (get_parents_expr e)) [] l
         | Sampler(_, _) -> []
         end
     in
@@ -1421,10 +1432,6 @@ fun rv ->
 (* Operations *)
 
 let const v = ExConst v
-let get_const e =
-  match e with
-  | ExConst v -> v
-  | _ -> raise (InternalError "not a constant")
 let add a b = ex_add(a, b)
 let mul a b = ex_mul(a, b)
 let div a b = ex_div(a, b)
@@ -1432,25 +1439,10 @@ let exp a = ex_unop(Exp, a)
 let eq a b = ex_cmp (Eq, a, b)
 let lt a b = ex_cmp(Lt, a, b)
 let pair a b = ExPair(a, b)
-let split p = 
-  match p with
-  | ExPair(a, b) -> (a, b)
-  | _ -> raise (InternalError "not a pair")
-
 let array a = ExArray a
-let get_array a =
-  match a with
-  | ExArray a -> a
-  | ExConst l -> Array.map ((fun x -> ExConst x)) l
-  | _ -> raise (InternalError "not an array")
 let matrix m = ExMatrix m
 let ite i t e = ExIte(i, t, e)
 let lst l = ExList l
-let get_lst l =
-  match l with
-  | ExList l -> l
-  | ExConst l -> List.map ((fun x -> ExConst x)) l
-  | _ -> raise (InternalError "not a list")
 
 let mat_add a b = ex_mat_add(a, b)
 let mat_scalar_mult s e = ex_mat_scalar_mul (s, e)
@@ -1458,6 +1450,7 @@ let mat_dot a b = ex_mat_mul(a, b)
 let vec_get e i = ex_mat_get (e, i)
 let int_to_float i = ex_int_to_float i
 
+let delta v = Delta v
 let gaussian mu var = Normal(mu, var)
 let beta a b = Beta(a, b)
 let categorical ~lower ~upper f = Categorical ({ lower; upper }, ExConst (Array.init (upper - lower + 1) (fun i -> f (i + lower)), { lower; upper }))
@@ -1469,6 +1462,7 @@ let exponential l = Gamma(ExConst(1.), l)
 let gamma a b = Gamma(a, b)
 let poisson l = Poisson(l)
 let mv_gaussian mu var = MvNormal(mu, var)
+let mixture l = Mixture(l)
 let sampler f g = Sampler (f, g)
 
 let sample n d =
@@ -1481,31 +1475,12 @@ let sample n d =
     (*(Printf.printf "Sampling %s from %s\n" n (string_of_rvset (get_parents rv)));*)
     ExRand rv
 
-let score : type a. a random_var -> a -> float =
-fun rv ->
-  hoist_and_eval rv;
-  fun x ->
-    match rv.distr with
-    | Normal (ExConst(mu), ExConst(var)) -> Distr_operations.gaussian_score mu var x
-    | Beta (ExConst(a), ExConst(b)) -> Distr_operations.beta_score a b x
-    | Categorical (d, ExConst a) ->
-      Distr_operations.categorical_score
-      (List.combine (List.init (d.upper - d.lower + 1) (fun i -> i + d.lower))
-      (Array.to_list (fst a))) x
-    | Bernoulli(ExConst(p)) -> Distr_operations.bernoulli_score p x
-    | Binomial(ExConst(n), ExConst(p)) -> Distr_operations.binomial_score n p x
-    | BetaBinomial(ExConst(n), ExConst(a), ExConst(b)) -> Distr_operations.beta_binomial_score n a b x
-    | NegativeBinomial(ExConst(n), ExConst(p)) -> Distr_operations.negative_binomial_score n p x
-    | Gamma(ExConst(a), ExConst(b)) -> 
-      if a = 1. then Distr_operations.exponential_score b x
-      else Distr_operations.gamma_score a b x
-    | Poisson(ExConst(l)) -> Distr_operations.poisson_score l x
-    | Delta _ -> raise (InternalError ("Not implemented"))
-    | Sampler (_, g) -> g x
-    | MvNormal (ExConst mu, ExConst var) -> Distr_operations.mv_gaussian_score mu var x
-    | _ -> raise (InternalError ("Score did not properly hoist and evaluate random variable"))
+let intervene : type a. a random_var -> a -> unit =
+fun rv x ->
+  (*(Printf.printf "intervening %s\n" rv.name);*)
+  rv.distr <- Delta (ExConst x)
 
-let draw : type a. a random_var -> unit -> a =
+let rec draw : type a. a random_var -> unit -> a =
 fun rv ->
   record_approx_status rv.name (Approx 1);
   hoist_and_eval rv;
@@ -1528,17 +1503,23 @@ fun rv ->
     | Delta (ExConst v) -> v
     | Sampler (f, _) -> f ()
     | MvNormal (ExConst mu, ExConst var) -> Distr_operations.mv_gaussian_draw mu var
+    | Mixture l ->
+      (* Check for cyclic dependency *)
+      let cyclic = List.fold_left (fun cyclic (e, _) -> cyclic || (depends_on e rv true)) false l in
+      if cyclic then raise (InternalError ("Cyclic dependency in mixture distribution"));
+
+      let sample = Random.float 1.0 in
+      let rec draw' sum l =
+        match l with
+        | [] -> raise (InternalError ("Invalid mixture distribution"))
+        | (e, p) :: rest ->
+          let sum = sum +. p in
+          if sample <= sum then eval_sample e else draw' sum rest
+      in
+      draw' 0. l
     | _ -> raise (InternalError ("Draw did not properly hoist and evaluate random variable"))
 
-let intervene : type a. a random_var -> a -> unit =
-fun rv x ->
-  (*(Printf.printf "intervening %s\n" rv.name);*)
-  rv.distr <- Delta (ExConst x)
-
-let make_marginal : type a. a random_var -> unit =
-fun rv -> hoist_and_eval rv
-
-let rec value : type a. a random_var -> a =
+and value : type a. a random_var -> a =
 fun rv ->
   (* (Printf.printf "approxing %s\n" rv.name); *)
   let rec do_value _ =
@@ -1552,35 +1533,7 @@ fun rv ->
   intervene rv new_val;
   new_val
 
-let observe_inner : type a. float -> a random_var -> a -> float =
-fun w rv x ->
-  (* (Printf.printf "observing %s\n" rv.name); *)
-  let rec do_observe _ =
-    try score rv x
-    with NonConjugate rv_nc ->
-      (* (Printf.printf "NonConjugate %s\n" rv_nc.name); *)
-      let _ = value rv_nc in
-      do_observe ()
-  in
-  let s = do_observe () in
-  intervene rv x;
-  w +. s
-
-let obsnum = ref 0
-let get_obsnum _ =
-  obsnum := !obsnum + 1;
-  !obsnum
-
-let observe : type a. float -> a distribution -> a -> float =
-fun w distr x ->
-  let new_rv =
-    match sample ("obs" ^ (string_of_int (get_obsnum ()))) distr with
-    | ExRand rv -> rv
-    | _ -> raise (InternalError("Sample always returns a random variable"))
-  in
-  observe_inner w new_rv x
-
-let rec eval_sample : type a. a expr -> a =
+and eval_sample : type a. a expr -> a =
 fun e ->
   begin match e with
   | ExConst c -> c
@@ -1618,134 +1571,65 @@ fun e ->
   | ExLet (v, e1, e2) -> let c = eval_sample e1 in eval_sample (subst e2 v (ExConst c))
   end
 
-(* TODO: 
-  Similar to how SSI expr are converted to Types.distr,
-  constants are converted to a distribution with single point
-  of support, except here we use Delta to achieve the same results.
-  If the expression is already a random variable, we can
-  return the distribution of the random variable exactly.
-  Everything else can't be marginalized into an
-  exact distribution so they are sampled.
+let rec score : type a. a random_var -> a -> float =
+fun rv ->
+  hoist_and_eval rv;
+  fun x ->
+    match rv.distr with
+    | Normal (ExConst(mu), ExConst(var)) -> Distr_operations.gaussian_score mu var x
+    | Beta (ExConst(a), ExConst(b)) -> Distr_operations.beta_score a b x
+    | Categorical (d, ExConst a) ->
+      Distr_operations.categorical_score
+      (List.combine (List.init (d.upper - d.lower + 1) (fun i -> i + d.lower))
+      (Array.to_list (fst a))) x
+    | Bernoulli(ExConst(p)) -> Distr_operations.bernoulli_score p x
+    | Binomial(ExConst(n), ExConst(p)) -> Distr_operations.binomial_score n p x
+    | BetaBinomial(ExConst(n), ExConst(a), ExConst(b)) -> Distr_operations.beta_binomial_score n a b x
+    | NegativeBinomial(ExConst(n), ExConst(p)) -> Distr_operations.negative_binomial_score n p x
+    | Gamma(ExConst(a), ExConst(b)) -> 
+      if a = 1. then Distr_operations.exponential_score b x
+      else Distr_operations.gamma_score a b x
+    | Poisson(ExConst(l)) -> Distr_operations.poisson_score l x
+    | Delta _ -> raise (InternalError ("Not implemented"))
+    | Sampler (_, g) -> g x
+    | MvNormal (ExConst mu, ExConst var) -> Distr_operations.mv_gaussian_score mu var x
+    | Mixture l -> 
+      let score' e =
+        match e with
+        | ExRand rv' -> Float.exp (score rv' x)
+        | _ -> if eval_sample e = x then 1. else 0.
+      in
+      let p = List.fold_left (fun acc (e, p) -> acc +. p *. (score' e)) 0. l in
+      log p
+    | _ -> raise (InternalError ("Score did not properly hoist and evaluate random variable"))
 
-  Some other expressions can probably be evaluated more exactly *)
-let rec get_marginal_expr : type a. a expr -> a expr =
-fun e ->
-  let e = eval e in
-  match e with
-  | ExConst c -> ExConst c
-  | ExRand rv -> 
-    hoist_and_eval rv;
-    (* rv should now be marginal *)
-    ExRand rv
-  | ExAdd (e1, e2) -> ExAdd (get_marginal_expr e1, get_marginal_expr e2)
-  | ExMul (e1, e2) -> ExMul (get_marginal_expr e1, get_marginal_expr e2)
-  | ExDiv (e1, e2) -> ExDiv (get_marginal_expr e1, get_marginal_expr e2)
-  | ExList l -> ExList (List.map get_marginal_expr l)
-  | ExPair (e1, e2) -> ExPair (get_marginal_expr e1, get_marginal_expr e2)
-  | ExArray a -> ExArray (Array.map get_marginal_expr a)
-  | _ -> ExConst (eval_sample e)
+let make_marginal : type a. a random_var -> unit =
+fun rv -> hoist_and_eval rv
 
-(* Takes only marginal distributions *)
-let pp_distribution : type a. a distribution -> string =
-fun d ->
-  match d with
-  | Normal (ExConst(mu), ExConst(var)) ->
-    Format.sprintf "Gaussian(%f, %f)" mu var
-  | Beta (ExConst(a), ExConst(b)) ->
-    Format.sprintf "Beta(%f, %f)" a b
-  | Bernoulli (ExConst(p)) ->
-    Format.sprintf "Bernoulli(%f)" p
-  | Binomial (ExConst(n), ExConst(p)) ->
-    Format.sprintf "Binomial(%d, %f)" n p
-  | BetaBinomial (ExConst(n), ExConst(a), ExConst(b)) ->
-    Format.sprintf "BetaBinomial(%d, %f, %f)" n a b
-  | NegativeBinomial (ExConst(n), ExConst(p)) ->
-    Format.sprintf "NegativeBinomial(%d, %f)" n p
-  | Gamma (ExConst(a), ExConst(b)) ->
-    Format.sprintf "Gamma(%f, %f)" a b
-  | Poisson (ExConst(p)) ->
-    Format.sprintf "Poisson(%f)" p
-  | Delta (ExConst(_)) ->
-    (* TODO: any way to print the value? *)
-    Format.sprintf "Delta (_)" 
-  | Sampler _ | MvNormal _ | Categorical _ -> 
-    raise (InternalError "not implemented")
-  | _ -> raise (InternalError "not marginal")
+let observe_inner : type a. float -> a random_var -> a -> float =
+fun w rv x ->
+  (* (Printf.printf "observing %s\n" rv.name); *)
+  let rec do_observe _ =
+    try score rv x
+    with NonConjugate rv_nc ->
+      (* (Printf.printf "NonConjugate %s\n" rv_nc.name); *)
+      let _ = value rv_nc in
+      do_observe ()
+  in
+  let s = do_observe () in
+  intervene rv x;
+  w +. s
 
-let mean_float_d : float distribution -> float =
-fun d ->
-  begin match d with
-  | Normal (ExConst(mu), ExConst(_)) -> mu
-  | Beta (ExConst(a), ExConst(b)) -> Distr_operations.beta_mean a b
-  | Gamma (ExConst(a), ExConst(b)) -> Distr_operations.gamma_mean a b
-  | Delta (ExConst v) -> v
-  | Sampler _ -> raise (InternalError "not implemented")
-  | _ -> raise (InternalError "not marginal")
-  end
-  
-let mean_int_d : int distribution -> float =
-fun d ->
-  match d with
-  | Binomial (ExConst(n), ExConst(p)) -> Distr_operations.binomial_mean n p
-  | BetaBinomial (ExConst(n), ExConst(a), ExConst(b)) ->
-    Distr_operations.beta_binomial_mean n a b
-  | NegativeBinomial (ExConst(n), ExConst(p)) ->
-    Distr_operations.negative_binomial_mean n p
-  | Poisson (ExConst(l)) -> Distr_operations.poisson_mean l
-  | Delta (ExConst v) -> float_of_int v
-  | Sampler _ | Categorical _ -> raise (InternalError "not implemented")
-  | _ -> raise (InternalError "not marginal")
+let obsnum = ref 0
+let get_obsnum _ =
+  obsnum := !obsnum + 1;
+  !obsnum
 
-let mean_bool_d : bool distribution -> float =
-fun d ->
-  match d with
-  | Bernoulli (ExConst p) -> Distr_operations.bernoulli_mean p
-  | Delta (ExConst v) -> if v then 1. else 0.
-  | Sampler _ -> raise (InternalError "not implemented")
-  | _ -> raise (InternalError "not marginal")
-
-let mean_int : int expr -> float expr =
-  fun e ->
-    let e = eval e in
-    let rec mean_int' : int expr -> float =
-    fun e ->
-      match e with
-      | ExConst c -> float_of_int c
-      | ExRand rv -> mean_int_d rv.distr
-      | ExIte (i, t, e) -> if (eval_sample i) then (mean_int' t) else (mean_int' e)
-      | _ -> raise (InternalError "not marginal")
-    in
-    ExConst (mean_int' e)
-
-let mean_float : float expr -> float expr =
-  fun e ->
-    let e = eval e in
-    let rec mean_float' : float expr -> float =
-    fun e ->
-      match e with
-      | ExConst c -> c
-      | ExRand rv -> mean_float_d rv.distr
-      | ExAdd (e1, e2) -> mean_float' e1 +. mean_float' e2
-      | ExMul (e1, e2) -> mean_float' e1 *. mean_float' e2
-      | ExDiv (e1, e2) -> mean_float' e1 /. mean_float' e2
-      | ExIte (i, t, e) -> if (eval_sample i) then (mean_float' t) else (mean_float' e)
-      | ExUnop (Squared, e_inner) -> (mean_float' e_inner) ** 2.
-      | ExUnop (SquareRoot, e_inner) -> Float.sqrt (mean_float' e_inner)
-      | ExUnop (Exp, e_inner) -> Float.exp (mean_float' e_inner)
-      | ExIntToFloat e_inner -> get_const (mean_int e_inner)
-      | _ -> raise (InternalError "not marginal")
-    in 
-    ExConst (mean_float' e)
-
-let mean_bool : bool expr -> float expr =
-  fun e ->
-    let e = eval e in
-    let rec mean_bool' : bool expr -> float =
-    fun e ->
-      match e with
-      | ExConst c -> if c then 1. else 0.
-      | ExRand rv -> mean_bool_d rv.distr
-      | ExIte (i, t, e) -> if (eval_sample i) then (mean_bool' t) else (mean_bool' e)
-      | _ -> raise (InternalError "not marginal")
-    in
-    ExConst (mean_bool' e)
+let observe : type a. float -> a distribution -> a -> float =
+fun w distr x ->
+  let new_rv =
+    match sample ("obs" ^ (string_of_int (get_obsnum ()))) distr with
+    | ExRand rv -> rv
+    | _ -> raise (InternalError("Sample always returns a random variable"))
+  in
+  observe_inner w new_rv x
