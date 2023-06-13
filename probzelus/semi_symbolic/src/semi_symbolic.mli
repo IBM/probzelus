@@ -36,6 +36,7 @@ val negative_binomial : int expr -> float expr -> int distribution;;
 val exponential : float expr -> float distribution;;
 val gamma : float expr -> float expr -> float distribution;;
 val poisson : float expr -> int distribution;;
+val student_t : float expr -> float expr -> float expr -> float distribution;;
 val mv_gaussian : Mat.mat expr -> Mat.mat expr -> Mat.mat distribution;;
 val mixture : ('a expr * float) list -> 'a distribution;;
 val sampler : (unit -> 'a) -> ('a -> float) -> 'a distribution;;
@@ -89,6 +90,7 @@ module type Conversion_fn = sig
   val exponential : float -> float t
   val gamma : float -> float -> float t
   val poisson : float -> int t
+  val student_t : float -> float -> float -> float t
   val mv_gaussian : Mat.mat -> Mat.mat -> Mat.mat t
   val delta : 'a -> 'a t
   val mixture : ('a t * float) list -> 'a t

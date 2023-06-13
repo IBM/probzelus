@@ -58,6 +58,7 @@ and 'a distribution =
   | NegativeBinomial : int expr * float expr -> int distribution
   | Gamma : float expr * float expr -> float distribution
   | Poisson : float expr -> int distribution
+  | StudentT : float expr * float expr * float expr -> float distribution
   | Delta : 'a expr -> 'a distribution
   | Mixture : ('a expr * float) list -> 'a distribution (* probabilities NOT logscale *)
   | Sampler : ((unit -> 'a) * ('a -> float)) -> 'a distribution
@@ -224,6 +225,7 @@ and size_distr: type a. a distribution -> int =
     | NegativeBinomial (e1, e2) -> 1 + size_expr e1 + size_expr e2
     | Gamma (e1, e2) -> 1 + size_expr e1 + size_expr e2
     | Poisson e -> 1 + size_expr e
+    | StudentT (e1, e2, e3) -> 1 + size_expr e1 + size_expr e2 + size_expr e3
     | Delta e -> 1 + size_expr e
     | Mixture l -> 
       1 + List.fold_left (fun acc (e, _) -> max acc (size_expr e)) 1 l
@@ -457,6 +459,7 @@ fun distr ->
   | NegativeBinomial(n, p) -> NegativeBinomial(eval n, eval p)
   | Gamma(a, b) -> Gamma(eval a, eval b)
   | Poisson(l) -> Poisson(eval l)
+  | StudentT (mu, tau2, nu) -> StudentT (eval mu, eval tau2, eval nu)
   | Delta e -> Delta (eval e)
   | Mixture l -> Mixture (List.map (fun (e, p) -> (eval e, p)) l)
   | Sampler e -> Sampler e
@@ -602,6 +605,9 @@ fun e rv_in transitive ->
                                     (depends_on p rv_in transitive)
         | Gamma (a, b) -> (depends_on a rv_in transitive) || (depends_on b rv_in transitive)
         | Poisson (lambda) -> (depends_on lambda rv_in transitive)
+        | StudentT (mu, tau2, nu) -> (depends_on mu rv_in transitive) || 
+                                    (depends_on tau2 rv_in transitive) || 
+                                    (depends_on nu rv_in transitive)
         | Categorical (_, e) -> depends_on e rv_in transitive
         | Delta e -> (depends_on e rv_in transitive)
         | MvNormal (mu, var) -> (depends_on mu rv_in transitive) || (depends_on var rv_in transitive)
@@ -715,6 +721,7 @@ let has_parents_rv : type a. a random_var -> bool = fun rv' ->
   | NegativeBinomial (n, p) -> (has_parents n) || (has_parents p)
   | Gamma (a, b) -> (has_parents a) || (has_parents b)
   | Poisson (lambda) -> has_parents lambda
+  | StudentT (mu, tau2, nu) -> (has_parents mu) || (has_parents tau2) || (has_parents nu)
   | Delta e -> has_parents e
   | MvNormal (mu, var) -> (has_parents mu) || (has_parents var)
   | Mixture l -> List.exists (fun (e, _) -> has_parents e) l
@@ -740,6 +747,9 @@ fun e rv_child ->
       | NegativeBinomial (n, p) -> (depends_on n rv false) || (depends_on p rv false)
       | Gamma (a, b) -> (depends_on a rv false) || (depends_on b rv false)
       | Poisson (lambda) -> depends_on lambda rv false
+      | StudentT (mu, tau, nu) -> (depends_on mu rv false) || 
+                                  (depends_on tau rv false) || 
+                                  (depends_on nu rv false)
       | Delta e_inner -> depends_on e_inner rv false
       | MvNormal (mu, var) -> (depends_on mu rv false) || (depends_on var rv false)
       | Mixture l -> List.exists (fun (e, _) -> depends_on e rv false) l
@@ -789,6 +799,9 @@ fun rv_parent rv_child ->
   | NegativeBinomial (n, p) -> (has_parents_except n rv_child) || (has_parents_except p rv_child)
   | Gamma (a, b) -> (has_parents_except a rv_child) || (has_parents_except b rv_child)
   | Poisson (lambda) -> has_parents_except lambda rv_child
+  | StudentT (mu, tau2, nu) -> (has_parents_except mu rv_child) || 
+                              (has_parents_except tau2 rv_child) || 
+                              (has_parents_except nu rv_child)
   | Delta e_inner -> has_parents_except e_inner rv_child
   | MvNormal (mu, var) -> (has_parents_except mu rv_child) || (has_parents_except var rv_child)
   | Mixture l -> List.exists (fun (e, _) -> has_parents_except e rv_child) l
@@ -995,6 +1008,37 @@ fun rv1 rv2 ->
      None
   | _ -> None
 
+(* Assumes rv1 and rv2 have a inverse Gamma and Normal distribution, resp.
+  * Returns the marginal distribution of rv2 *)
+let gamma_normal_marginal : float random_var -> float random_var -> float distribution option =
+fun rv1 rv2 ->
+  let prior, likelihood = rv1.distr, rv2.distr in
+  match (prior, likelihood) with
+  | (Gamma(a, b), Normal(ExConst(mu), ExDiv(ExConst(1.), ExRand(rv)))) ->
+    if rv == rv1 &&
+        (not (depends_on a rv2 true)) &&
+        (not (depends_on b rv2 true)) then
+      Some(StudentT(ExConst(mu), ex_div(b, a), ex_mul(ExConst(2.), a)))
+    else 
+      None
+  | _ -> None
+
+let gamma_normal_posterior : float random_var -> float random_var -> float distribution option =
+fun rv1 rv2 ->
+  let prior, likelihood = rv1.distr, rv2.distr in
+  match (prior, likelihood) with
+  | (Gamma(a, b), Normal(ExConst(mu), ExDiv(ExConst(1.), ExRand(rv)))) ->
+    if rv == rv1 &&
+        (not (depends_on a rv2 true)) &&
+        (not (depends_on b rv2 true)) then
+      let a' = ex_add(a, ExConst(0.5)) in
+      let b' = ex_add(b, ex_mul(ExConst(0.5), 
+        ex_unop(Squared, ex_add(ExRand(rv2), ExConst(-. mu))))) in
+      Some(Gamma(a', b'))
+    else 
+      None
+  | _ -> None
+
 (* Assumes rv1 and rv2 have Categorical distributions.
  * Returns the marginal distribution of rv2 *)
 let categorical_marginal : category random_var -> category random_var -> category distribution option =
@@ -1076,6 +1120,14 @@ fun rv1 rv2 ->
     end
   | (Gamma (_), Poisson (_)) ->
     begin match (gamma_poisson_marginal rv1 rv2, gamma_poisson_posterior rv1 rv2) with
+    | Some(dist_marg), Some(dist_post) ->
+      rv2.distr <- dist_marg;
+      rv1.distr <- dist_post;
+      true
+    | _ -> false
+    end
+  | (Gamma (_), Normal (_)) ->
+    begin match (gamma_normal_marginal rv1 rv2, gamma_normal_posterior rv1 rv2) with
     | Some(dist_marg), Some(dist_post) ->
       rv2.distr <- dist_marg;
       rv1.distr <- dist_post;
@@ -1185,6 +1237,9 @@ fun rv_parent rv_child ->
         | Gamma (a, b) -> (depends_on a rv_parent true) ||
                           (depends_on b rv_parent true)
         | Poisson (lambda) -> depends_on lambda rv_parent true
+        | StudentT (mu, tau2, nu) -> (depends_on mu rv_parent true) ||
+                                    (depends_on tau2 rv_parent true) ||
+                                    (depends_on nu rv_parent true)
         | Delta e_inner -> depends_on e_inner rv_parent true
         | MvNormal (mu, var) ->
             (depends_on mu rv_parent true) || (depends_on var rv_parent true)
@@ -1246,6 +1301,12 @@ fun rv_parent rv_child ->
                     (not (has_other_deps b))
   | Poisson (lambda) -> (depends_on lambda rv_parent false) &&
                         (not (has_other_deps lambda))
+  | StudentT (mu, tau2, nu) -> ((depends_on mu rv_parent false) ||
+                                (depends_on tau2 rv_parent false) ||
+                                (depends_on nu rv_parent false)) &&
+                               (not (has_other_deps mu)) &&
+                               (not (has_other_deps tau2)) &&
+                               (not (has_other_deps nu))
   | Delta e_inner -> (depends_on e_inner rv_parent false) &&
                      (not (has_other_deps e_inner))
   | MvNormal (mu, var) ->
@@ -1318,6 +1379,7 @@ let get_parents : type a. a random_var -> rvset =
         | NegativeBinomial(n, p) -> List.append (get_parents_expr n) (get_parents_expr p)
         | Gamma(a, b) -> List.append (get_parents_expr a) (get_parents_expr b)
         | Poisson(lambda) -> get_parents_expr lambda
+        | StudentT (mu, tau2, nu) -> List.append (List.append (get_parents_expr mu) (get_parents_expr tau2)) (get_parents_expr nu)
         | Delta(e) -> get_parents_expr e
         | Mixture(l) -> List.fold_left (fun lst (e, _) -> List.append lst (get_parents_expr e)) [] l
         | Sampler(_, _) -> []
@@ -1370,8 +1432,6 @@ fun rvs ->
     end
   ) !sorted_nodes
 
-
-  
 
 let hoist : type a. a random_var -> unit =
 fun rv ->
@@ -1461,6 +1521,7 @@ let negative_binomial n p = NegativeBinomial(n, p)
 let exponential l = Gamma(ExConst(1.), l)
 let gamma a b = Gamma(a, b)
 let poisson l = Poisson(l)
+let student_t mu tau2 nu = StudentT(mu, tau2, nu)
 let mv_gaussian mu var = MvNormal(mu, var)
 let mixture l = Mixture(l)
 let sampler f g = Sampler (f, g)
@@ -1500,6 +1561,7 @@ fun rv ->
       if a = 1. then Distr_operations.exponential_draw b
       else Distr_operations.gamma_draw a b
     | Poisson(ExConst(l)) -> Distr_operations.poisson_draw l
+    | StudentT(ExConst(mu), ExConst(tau2), ExConst(nu)) -> Distr_operations.student_t_draw mu tau2 nu
     | Delta (ExConst v) -> v
     | Sampler (f, _) -> f ()
     | MvNormal (ExConst mu, ExConst var) -> Distr_operations.mv_gaussian_draw mu var
@@ -1590,6 +1652,7 @@ fun rv ->
       if a = 1. then Distr_operations.exponential_score b x
       else Distr_operations.gamma_score a b x
     | Poisson(ExConst(l)) -> Distr_operations.poisson_score l x
+    | StudentT (ExConst(mu), ExConst(tau2), ExConst(nu)) -> Distr_operations.student_t_score mu tau2 nu x
     | Delta _ -> raise (InternalError ("Not implemented"))
     | Sampler (_, g) -> g x
     | MvNormal (ExConst mu, ExConst var) -> Distr_operations.mv_gaussian_score mu var x

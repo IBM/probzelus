@@ -130,6 +130,7 @@ module Convert_fn_distr : Semi_symbolic.Conversion_fn with type 'a t = 'a Types.
   let exponential lambda = Dist_exponential lambda
   let gamma a b = Dist_gamma (a, b)
   let poisson lambda = Dist_poisson lambda
+  let student_t _mu _tau2 _nu = assert false (* TODO: implement for probzelus distr *)
   let delta x = Distribution.dirac x
   let mv_gaussian mu var = Dist_mv_gaussian (mu, var, None)
   let mixture l = Dist_mixture l

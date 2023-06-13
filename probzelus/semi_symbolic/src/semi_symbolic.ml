@@ -36,6 +36,7 @@ let negative_binomial = Semi_symbolic_impl.negative_binomial
 let exponential = Semi_symbolic_impl.exponential
 let gamma = Semi_symbolic_impl.gamma
 let poisson = Semi_symbolic_impl.poisson
+let student_t = Semi_symbolic_impl.student_t
 let mv_gaussian = Semi_symbolic_impl.mv_gaussian
 let mixture = Semi_symbolic_impl.mixture
 let sampler = Semi_symbolic_impl.sampler
@@ -89,6 +90,7 @@ module type Conversion_fn = sig
   val exponential : float -> float t
   val gamma : float -> float -> float t
   val poisson : float -> int t
+  val student_t : float -> float -> float -> float t
   val mv_gaussian : Mat.mat -> Mat.mat -> Mat.mat t
   val delta : 'a -> 'a t
   val mixture : ('a t * float) list -> 'a t
@@ -139,6 +141,11 @@ module Convert(Fn : Conversion_fn) = struct
       | Poisson (lambda) ->
         begin match (Semi_symbolic_impl.eval lambda) with
         | (ExConst lambda_v) -> Fn.poisson lambda_v
+        | _ -> raise (NonMarginal ())
+        end
+      | StudentT (mu, tau2, nu) ->
+        begin match (Semi_symbolic_impl.eval mu, Semi_symbolic_impl.eval tau2, Semi_symbolic_impl.eval nu) with
+        | (ExConst mu_v, ExConst tau2_v, ExConst nu_v) -> Fn.student_t mu_v tau2_v nu_v
         | _ -> raise (NonMarginal ())
         end
       | BetaBinomial (n, a, b) ->
