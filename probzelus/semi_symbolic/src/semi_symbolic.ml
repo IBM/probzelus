@@ -20,6 +20,8 @@ let matrix = Semi_symbolic_impl.matrix
 let ite = Semi_symbolic_impl.ite
 let lst = Semi_symbolic_impl.lst
 
+let int_add = Semi_symbolic_impl.int_add
+
 let mat_add = Semi_symbolic_impl.mat_add
 let mat_scalar_mult = Semi_symbolic_impl.mat_scalar_mult
 let mat_dot = Semi_symbolic_impl.mat_dot
@@ -191,6 +193,6 @@ module Convert(Fn : Conversion_fn) = struct
     | ExMatScalarMul (s, e) -> Fn.mat_scalar_mult (convert s) (convert e)
     | ExMatGet (e, i) -> Fn.vec_get (convert e) i
     | ExMatSingle (e) -> Fn.mat_single (convert e)
-    | ExVar _ | ExFactor _ | ExSum _ | ExGet _ | ExLet _ -> failwith "Unimplemented"
+    | ExVar _ | ExFactor _ | ExSum _ | ExGet _ | ExLet _ | ExIntAdd _ -> failwith "Unimplemented"
     end
 end

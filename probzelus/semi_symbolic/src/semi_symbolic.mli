@@ -20,6 +20,8 @@ val matrix : 'a expr array array -> 'a array array expr
 val ite : bool expr -> 'a expr -> 'a expr -> 'a expr;;
 val lst : 'a expr list -> 'a list expr;;
 
+val int_add : int expr -> int expr -> int expr;;
+
 val mat_add : Mat.mat expr -> Mat.mat expr -> Mat.mat expr;;
 val mat_scalar_mult : float expr -> Mat.mat expr -> Mat.mat expr;;
 val mat_dot : Mat.mat expr -> Mat.mat expr -> Mat.mat expr;;
