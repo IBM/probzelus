@@ -110,6 +110,12 @@ let ex_cmp ope1e2 =
   | Lt, ExConst c1, ExConst c2 -> ExConst (c1 < c2)
   | (op, e1 , e2) -> ExCmp (op, e1, e2)
 
+let ex_ite e1e2e3 =
+  match e1e2e3 with
+  | ExConst true, e2, _ -> e2
+  | ExConst false, _, e3 -> e3
+  | (e1, e2, e3) -> ExIte (e1, e2, e3)
+
 let ex_int_to_float e =
   match e with
   | ExConst c -> ExConst (float_of_int c)
@@ -268,7 +274,7 @@ let rec subst : type a b. a expr -> b var -> b expr -> a expr =
   | ExPair (e1, e2) -> ExPair (subst e1 v e', subst e2 v e')
   | ExArray e -> ExArray (Array.map (fun e -> subst e v e') e)
   | ExMatrix e -> ExMatrix (Array.map (Array.map (fun e -> subst e v e')) e)
-  | ExIte (e1, e2, e3) -> ExIte (subst e1 v e', subst e2 v e', subst e3 v e')
+  | ExIte (e1, e2, e3) -> ex_ite (subst e1 v e', subst e2 v e', subst e3 v e')
   | ExList e -> ExList (List.map (fun e -> subst e v e') e)
   | ExUnop (op, e) -> ex_unop (op, subst e v e')
   | ExIntToFloat e -> ex_int_to_float (subst e v e')
@@ -299,7 +305,7 @@ let rec subst_rv : type a b. a expr -> b random_var -> b expr -> a expr =
   | ExPair (e1, e2) -> ExPair (subst_rv e1 v e', subst_rv e2 v e')
   | ExArray e -> ExArray (Array.map (fun e -> subst_rv e v e') e)
   | ExMatrix e -> ExMatrix (Array.map (Array.map (fun e -> subst_rv e v e')) e)
-  | ExIte (e1, e2, e3) -> ExIte (subst_rv e1 v e', subst_rv e2 v e', subst_rv e3 v e')
+  | ExIte (e1, e2, e3) -> ex_ite (subst_rv e1 v e', subst_rv e2 v e', subst_rv e3 v e')
   | ExList e -> ExList (List.map (fun e -> subst_rv e v e') e)
   | ExUnop (op, e) -> ex_unop (op, subst_rv e v e')
   | ExIntToFloat e -> ex_int_to_float (subst_rv e v e')
@@ -451,7 +457,7 @@ fun expr ->
   | ExIte (i, t, e) ->
     begin match (eval i, eval t, eval e) with
     | (ExConst ci, t', e') -> if ci then t' else e'
-    | (i', t', e') -> ExIte(i', t', e')
+    | (i', t', e') -> ex_ite(i', t', e')
     end
   | ExUnop(Squared, e_inner) -> ex_unop(Squared, eval e_inner)
   | ExUnop(SquareRoot, e_inner) -> ex_unop(SquareRoot, eval e_inner)
@@ -953,8 +959,8 @@ fun rv1 rv2 ->
     if rv == rv1 &&
        (not (depends_on a rv2 true)) &&
        (not (depends_on b rv2 true)) then
-      Some(Beta(ex_add(a, ExIte(ExRand(rv2), ExConst(1.), ExConst(0.))),
-       ex_add(b, ExIte(ExRand(rv2), ExConst(0.), ExConst(1.)))))
+      Some(Beta(ex_add(a, ex_ite(ExRand(rv2), ExConst(1.), ExConst(0.))),
+       ex_add(b, ex_ite(ExRand(rv2), ExConst(0.), ExConst(1.)))))
     else
       None
   | _ -> None
@@ -1052,6 +1058,42 @@ fun rv1 rv2 ->
         ex_unop(Squared, ex_add(ExRand(rv2), ExConst(-. mu))))) in
       Some(Gamma(a', b'))
     else 
+      None
+  | _ -> None
+
+(* Assumes rv1 and rv2 both have a Bernoulli distribution. 
+  * Returns the marginal distribution of rv2 *)
+let bernoulli_marginal : bool random_var -> bool random_var -> bool distribution option =
+fun rv1 rv2 ->
+  let prior, likelihood = rv1.distr, rv2.distr in
+  match (prior, likelihood) with
+  | Bernoulli(p1), Bernoulli(p2) ->
+    if depends_on p2 rv1 false &&
+        (not (depends_on p1 rv2 true)) then
+
+      let p2' = ex_add(ex_mul(p1, subst_rv p2 rv1 (ExConst true)), 
+        ex_mul(ex_add(ExConst 1., ex_mul(ExConst(-1.), p1)), subst_rv p2 rv1 (ExConst false))) in
+      Some(Bernoulli(p2'))
+    else
+      None
+  | _ -> None
+
+let bernoulli_posterior : bool random_var -> bool random_var -> bool distribution option =
+fun rv1 rv2 ->
+  let prior, likelihood = rv1.distr, rv2.distr in
+  match (prior, likelihood) with
+  | Bernoulli(p1), Bernoulli(p2) ->
+    if depends_on p2 rv1 false &&
+        (not (depends_on p1 rv2 true)) then
+
+      let p2' = ex_add(ex_mul(p1, subst_rv p2 rv1 (ExConst true)), 
+        ex_mul(ex_add(ExConst 1., ex_mul(ExConst(-1.), p1)), subst_rv p2 rv1 (ExConst false))) in
+
+      let p1'_num_sub = ex_ite (ExRand rv2, p2, ex_add(ExConst 1., ex_mul(ExConst(-1.), p2))) in
+      let p1'_num = ex_mul(p1, subst_rv p1'_num_sub rv1 (ExConst true)) in
+      let p1'_denom = ex_ite(ExRand rv2, p2', ex_add(ExConst 1., ex_mul(ExConst(-1.), p2'))) in
+      Some(Bernoulli(ex_div(p1'_num, p1'_denom)))
+    else
       None
   | _ -> None
 
@@ -1194,34 +1236,12 @@ fun rv1 rv2 ->
       true
     | _ -> false
     end
-  | (Bernoulli p1, Bernoulli p2) ->
-    let d = { lower = 0; upper = 1 } in
-    let cat_of_bool e = ExIte (e, ExConst 1, ExConst 0) in
-    let bool_of_cat e = ex_cmp (Eq, e, ExConst 1) in
-    let factor_of_prob p =
-      let v = gensym_semi_symbolic () in
-      ExFactor (v, d, ExIte (bool_of_cat (ExVar v), p, ex_add (ExConst 1., ex_mul (ExConst (-1.), p)))) in
-    let prob_of_factor f = ExGet (f, ExConst 1) in
-    let rv1' = {
-      name = "tmp1";
-      distr = Categorical (d, factor_of_prob p1)
-    } in
-    let rv2' = {
-      name = "tmp2";
-      (* rv2 may refer to rv1, so make rv2' refer to rv1' *)
-      distr = Categorical (d, subst_rv (factor_of_prob p2) rv1 (bool_of_cat (ExRand rv1')))
-    } in
-    begin match (categorical_marginal rv1' rv2', categorical_posterior rv1' rv2') with
+  | (Bernoulli _, Bernoulli _) ->
+    begin match (bernoulli_marginal rv1 rv2, bernoulli_posterior rv1 rv2) with
     | Some dist_marg, Some dist_post ->
-      begin match dist_marg, dist_post with
-      | Categorical (_, f_marg), Categorical (_, f_post) ->
-        (* f_marg may not refer to rv1 *)
-        rv2.distr <- Bernoulli (prob_of_factor f_marg);
-        (* f_post may refer to rv2', make it refer to rv2 instead *)
-        rv1.distr <- Bernoulli (prob_of_factor (subst_rv f_post rv2' (cat_of_bool (ExRand rv2))));
-        true
-      | _ -> false
-      end
+      rv2.distr <- dist_marg;
+      rv1.distr <- dist_post;
+      true
     | _ -> false
     end
   | _ -> false (* TODO: other distributions *)
@@ -1519,7 +1539,7 @@ let lt a b = ex_cmp(Lt, a, b)
 let pair a b = ExPair(a, b)
 let array a = ExArray a
 let matrix m = ExMatrix m
-let ite i t e = ExIte(i, t, e)
+let ite i t e = ex_ite(i, t, e)
 let lst l = ExList l
 
 let int_add a b = ex_int_add(a, b)
