@@ -1512,7 +1512,7 @@ fun rv ->
             (if swap rv_par rv_current then record_approx_status rv_par.name (Exact 1)
             else raise (NonConjugate rv_par));
             swap_with_parents rest
-          ) else ())
+          ) else swap_with_parents rest)
         end
       in
       swap_with_parents (List.rev parents);
