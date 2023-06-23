@@ -280,20 +280,12 @@ let poisson_variance lambda =
   lambda
 
 let student_t_draw mu tau2 nu =
-  let n = int_of_float nu + 1 in
-  let xs = List.init n (fun _ -> gaussian_draw mu tau2) in
-  
-  let mean = List.fold_left (+.) 0. xs /. float_of_int n in
-  let var = List.fold_left (fun acc x -> 
-    acc +. (x -. mean) ** 2.) 0. xs /. float_of_int (n - 1) in
-  
-  let t = (mean -. mu) /. (sqrt (var /. float_of_int n)) in
-  t
+  (* TODO:  *)
+  Owl_stats.t_rvs ~df:nu ~loc:mu ~scale:(sqrt tau2)
 
 let student_t_score mu tau2 nu x =
-  log_gamma ((nu +. 1.) /. 2.) -. log_gamma (nu /. 2.) 
-    -. 0.5 *. (log pi +. log nu +. log tau2)
-    -. (nu +. 1.) /. 2. *. log (1. +. 1. /. nu *. (x -. mu) ** 2. /. tau2)
+  assert (nu > 1.);
+  Owl_stats.t_logpdf ~df:nu ~loc:mu ~scale:(sqrt tau2) x
 
 let student_t_mean mu _ nu =
   assert (nu > 1.);
