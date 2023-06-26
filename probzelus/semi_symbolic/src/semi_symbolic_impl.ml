@@ -32,6 +32,7 @@ type 'a expr =
   | ExMul : float expr * float expr -> float expr
   | ExDiv : float expr * float expr -> float expr
   | ExIntAdd : int expr * int expr -> int expr
+  | ExIntMul : int expr * int expr -> int expr
   | ExMatAdd : Mat.mat expr * Mat.mat expr -> Mat.mat expr
   | ExMatSub : Mat.mat expr * Mat.mat expr -> Mat.mat expr
   | ExMatMul : Mat.mat expr * Mat.mat expr -> Mat.mat expr
@@ -91,6 +92,14 @@ let rec ex_mul e1e2 =
   | ExConst c1, ExMul (e2, ExConst c3) -> ex_mul (ExConst (c1 *. c3), e2)
   | ExConst c1, ExAdd (ExConst c2, e3) -> ex_add (ExConst (c1 *. c2), ex_mul (ExConst c1, e3))
   | (e1, e2) -> ExMul (e1, e2)
+
+let rec ex_int_mul e1e2 =
+  match e1e2 with
+  | ExConst c1, ExConst c2 -> ExConst (c1 * c2)
+  | ExConst c1, ExIntMul (ExConst c2, e3) -> ex_int_mul (ExConst (c1 * c2), e3)
+  | ExConst c1, ExIntMul (e2, ExConst c3) -> ex_int_mul (ExConst (c1 * c3), e2)
+  | ExConst c1, ExIntAdd (ExConst c2, e3) -> ex_int_add (ExConst (c1 * c2), ex_int_mul (ExConst c1, e3))
+  | (e1, e2) -> ExIntMul (e1, e2)
 
 let ex_div e1e2 =
   match e1e2 with
@@ -208,6 +217,7 @@ let rec size_expr:  type a. a expr -> int =
     | ExMul (e1, e2) -> 1 + size_expr e1 + size_expr e2
     | ExDiv (e1, e2) -> 1 + size_expr e1 + size_expr e2
     | ExIntAdd (e1, e2) -> 1 + size_expr e1 + size_expr e2
+    | ExIntMul (e1, e2) -> 1 + size_expr e1 + size_expr e2
     | ExMatAdd (e1, e2) -> 1 + size_expr e1 + size_expr e2
     | ExMatSub (e1, e2) -> 1 + size_expr e1 + size_expr e2
     | ExMatMul (e1, e2) -> 1 + size_expr e1 + size_expr e2
@@ -262,6 +272,7 @@ let rec subst : type a b. a expr -> b var -> b expr -> a expr =
   | ExMul (e1, e2) -> ex_mul (subst e1 v e', subst e2 v e')
   | ExDiv (e1, e2) -> ex_div (subst e1 v e', subst e2 v e')
   | ExIntAdd (e1, e2) -> ex_int_add (subst e1 v e', subst e2 v e')
+  | ExIntMul (e1, e2) -> ex_int_mul (subst e1 v e', subst e2 v e')
   | ExMatAdd (e1, e2) -> ex_mat_add (subst e1 v e', subst e2 v e')
   | ExMatSub (e1, e2) -> ex_mat_sub (subst e1 v e', subst e2 v e')
   | ExMatMul (e1, e2) -> ex_mat_mul (subst e1 v e', subst e2 v e')
@@ -293,6 +304,7 @@ let rec subst_rv : type a b. a expr -> b random_var -> b expr -> a expr =
   | ExMul (e1, e2) -> ex_mul (subst_rv e1 v e', subst_rv e2 v e')
   | ExDiv (e1, e2) -> ex_div (subst_rv e1 v e', subst_rv e2 v e')
   | ExIntAdd (e1, e2) -> ex_int_add (subst_rv e1 v e', subst_rv e2 v e')
+  | ExIntMul (e1, e2) -> ex_int_mul (subst_rv e1 v e', subst_rv e2 v e')
   | ExMatAdd (e1, e2) -> ex_mat_add (subst_rv e1 v e', subst_rv e2 v e')
   | ExMatSub (e1, e2) -> ex_mat_sub (subst_rv e1 v e', subst_rv e2 v e')
   | ExMatMul (e1, e2) -> ex_mat_mul (subst_rv e1 v e', subst_rv e2 v e')
@@ -419,6 +431,7 @@ fun expr ->
   | ExMul (e1, e2) -> ex_mul (eval e1, eval e2)
   | ExDiv (e1, e2) -> ex_div(eval e1, eval e2)
   | ExIntAdd (e1, e2) -> ex_int_add (eval e1, eval e2)
+  | ExIntMul (e1, e2) -> ex_int_mul (eval e1, eval e2)
   | ExMatAdd (e1, e2) -> ex_mat_add (eval e1, eval e2)
   | ExMatSub (e1, e2) -> ex_mat_sub (eval e1, eval e2)
   | ExMatMul (e1, e2) -> ex_mat_mul (eval e1, eval e2)
@@ -568,7 +581,7 @@ fun e ->
     end
   | ExMatSingle (_) -> (1, 1)
   | ExMatScalarMul (_, m_inner) -> mat_shape m_inner
-  | ExAdd _  | ExMul _ | ExDiv _ | ExIntAdd _ | ExArray _ | ExMatrix _ | ExList _
+  | ExAdd _  | ExMul _ | ExDiv _ | ExIntAdd _ | ExIntMul _ | ExArray _ | ExMatrix _ | ExList _
   | ExPair _ | ExUnop _ | ExCmp _ | ExMatGet _ | ExIntToFloat _
   | ExFactor _ | ExLet _ | ExVar _ | ExSum _ | ExGet _ -> raise (MatrixShapeError ())
   end
@@ -640,6 +653,7 @@ fun e rv_in transitive ->
   | ExMul (e1, e2) -> (depends_on e1 rv_in transitive) || (depends_on e2 rv_in transitive)
   | ExDiv (e1, e2) -> (depends_on e1 rv_in transitive) || (depends_on e2 rv_in transitive)
   | ExIntAdd (e1, e2) -> (depends_on e1 rv_in transitive) || (depends_on e2 rv_in transitive)
+  | ExIntMul (e1, e2) -> (depends_on e1 rv_in transitive) || (depends_on e2 rv_in transitive)
   | ExCmp (_, e1, e2) -> (depends_on e1 rv_in transitive) || (depends_on e2 rv_in transitive)
   | ExPair (e1, e2) -> (depends_on e1 rv_in transitive) || (depends_on e2 rv_in transitive)
   | ExArray a -> Array.exists (fun e -> depends_on e rv_in transitive) a
@@ -713,6 +727,7 @@ fun e ->
   | ExMul (e1, e2) -> (has_parents e1) || (has_parents e2)
   | ExDiv (e1, e2) -> (has_parents e1) || (has_parents e2)
   | ExIntAdd (e1, e2) -> (has_parents e1) || (has_parents e2)
+  | ExIntMul (e1, e2) -> (has_parents e1) || (has_parents e2)
   | ExPair (e1, e2) -> (has_parents e1) || (has_parents e2)
   | ExArray a -> Array.exists has_parents a
   | ExMatrix m -> Array.exists (Array.exists has_parents) m
@@ -781,6 +796,7 @@ fun e rv_child ->
   | ExMul (e1, e2) -> (has_parents_except e1 rv_child) || (has_parents_except e2 rv_child)
   | ExDiv (e1, e2) -> (has_parents_except e1 rv_child) || (has_parents_except e2 rv_child)
   | ExIntAdd (e1, e2) -> (has_parents_except e1 rv_child) || (has_parents_except e2 rv_child)
+  | ExIntMul (e1, e2) -> (has_parents_except e1 rv_child) || (has_parents_except e2 rv_child)
   | ExCmp (_, e1, e2) -> (has_parents_except e1 rv_child) || (has_parents_except e2 rv_child)
   | ExPair (e1, e2) -> (has_parents_except e1 rv_child) || (has_parents_except e2 rv_child)
   | ExArray a ->
@@ -1287,6 +1303,7 @@ fun rv_parent rv_child ->
     | ExMul (e1, e2) -> (has_other_deps e1) || (has_other_deps e2)
     | ExDiv (e1, e2) -> (has_other_deps e1) || (has_other_deps e2)
     | ExIntAdd (e1, e2) -> (has_other_deps e1) || (has_other_deps e2)
+    | ExIntMul (e1, e2) -> (has_other_deps e1) || (has_other_deps e2)
     | ExCmp (_, e1, e2) -> (has_other_deps e1) || (has_other_deps e2)
     | ExPair (e1, e2) -> (has_other_deps e1) || (has_other_deps e2)
     | ExArray a -> Array.exists has_other_deps a
@@ -1380,6 +1397,7 @@ let get_parents : type a. a random_var -> rvset =
         | ExMul (e1, e2) -> List.append (get_parents_expr e1) (get_parents_expr e2)
         | ExDiv (e1, e2) -> List.append (get_parents_expr e1) (get_parents_expr e2)
         | ExIntAdd (e1, e2) -> List.append (get_parents_expr e1) (get_parents_expr e2)
+        | ExIntMul (e1, e2) -> List.append (get_parents_expr e1) (get_parents_expr e2)
         | ExMatAdd (e1, e2) -> List.append (get_parents_expr e1) (get_parents_expr e2)
         | ExMatSub (e1, e2) -> List.append (get_parents_expr e1) (get_parents_expr e2)
         | ExMatMul (e1, e2) -> List.append (get_parents_expr e1) (get_parents_expr e2)
@@ -1543,6 +1561,7 @@ let ite i t e = ex_ite(i, t, e)
 let lst l = ExList l
 
 let int_add a b = ex_int_add(a, b)
+let int_mul a b = ex_int_mul(a, b)
 
 let mat_add a b = ex_mat_add(a, b)
 let mat_scalar_mult s e = ex_mat_scalar_mul (s, e)
@@ -1581,9 +1600,9 @@ fun rv x ->
   (*(Printf.printf "intervening %s\n" rv.name);*)
   rv.distr <- Delta (ExConst x)
 
-let rec draw : type a. a random_var -> unit -> a =
-fun rv ->
-  record_approx_status rv.name (Approx 1);
+let rec draw : type a. a random_var -> record:bool -> unit -> a =
+fun rv ~record ->
+  if record then record_approx_status rv.name (Approx 1);
   hoist_and_eval rv;
   fun _ ->
     match rv.distr with
@@ -1621,14 +1640,14 @@ fun rv ->
       draw' 0. l
     | _ -> raise (InternalError ("Draw did not properly hoist and evaluate random variable"))
 
-and value : type a. a random_var -> a =
-fun rv ->
+and value : type a. a random_var -> record:bool -> a =
+fun rv ~record ->
   (* (Printf.printf "approxing %s\n" rv.name); *)
   let rec do_value _ =
-    try draw rv ()
+    try draw rv ~record:record ()
     with NonConjugate rv_nc ->
       (* (Printf.printf "NonConjugate %s\n" rv_nc.name); *)
-      let _ = value rv_nc in
+      let _ = value rv_nc ~record in
       do_value ()
   in
   let new_val = do_value () in
@@ -1640,11 +1659,12 @@ fun e ->
   begin match e with
   | ExConst c -> c
   | ExVar _ -> assert false
-  | ExRand rv -> value rv
+  | ExRand rv -> value rv ~record:true
   | ExAdd (e1, e2) -> eval_sample e1 +. eval_sample e2
   | ExMul (e1, e2) -> eval_sample e1 *. eval_sample e2
   | ExDiv (e1, e2) -> eval_sample e1 /. eval_sample e2
   | ExIntAdd (e1, e2) -> eval_sample e1 + eval_sample e2
+  | ExIntMul (e1, e2) -> eval_sample e1 * eval_sample e2
   | ExCmp (Eq, e1, e2) -> eval_sample e1 = eval_sample e2
   | ExCmp (Lt, e1, e2) -> eval_sample e1 < eval_sample e2
   | ExPair (e1, e2) -> (eval_sample e1, eval_sample e2)
@@ -1717,7 +1737,7 @@ fun w rv x ->
     try score rv x
     with NonConjugate rv_nc ->
       (* (Printf.printf "NonConjugate %s\n" rv_nc.name); *)
-      let _ = value rv_nc in
+      let _ = value rv_nc ~record:true in
       do_observe ()
   in
   let s = do_observe () in

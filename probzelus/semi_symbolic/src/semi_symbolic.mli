@@ -21,6 +21,7 @@ val ite : bool expr -> 'a expr -> 'a expr -> 'a expr;;
 val lst : 'a expr list -> 'a list expr;;
 
 val int_add : int expr -> int expr -> int expr;;
+val int_mul : int expr -> int expr -> int expr;;
 
 val mat_add : Mat.mat expr -> Mat.mat expr -> Mat.mat expr;;
 val mat_scalar_mult : float expr -> Mat.mat expr -> Mat.mat expr;;
@@ -47,11 +48,11 @@ val categorical : lower:int -> upper:int -> (int -> float) -> int distribution;;
 val sample : string -> 'a distribution -> 'a expr;;
 
 val score : 'a random_var -> 'a -> float;;
-val draw : 'a random_var -> unit -> 'a;;
+val draw : 'a random_var -> record:bool -> unit -> 'a;;
 val intervene : 'a random_var -> 'a -> unit;;
 val make_marginal : 'a random_var -> unit;;
 
-val value : 'a random_var -> 'a;;
+val value : 'a random_var -> record:bool -> 'a;;
 val observe : float -> 'a distribution -> 'a -> float;;
 
 val eval : 'a expr -> 'a expr;;
