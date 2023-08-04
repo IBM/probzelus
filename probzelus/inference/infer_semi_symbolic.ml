@@ -32,8 +32,6 @@ let vec_get (a, b) = Semi_symbolic.vec_get a b
 
 let eval = Semi_symbolic.eval_sample
 
-let pp_approx_status = Semi_symbolic.pp_approx_status
-
 type 'a ds_distribution = 'a Semi_symbolic.distribution
 
 let of_distribution d =

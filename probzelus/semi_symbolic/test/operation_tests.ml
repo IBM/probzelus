@@ -26,7 +26,7 @@ Printf.printf "Marginal -- mu = %f, var = %f\n" mu var;;
 Printf.printf "Score x = 20: %f\n" (scorefn 50.);;
 Printf.printf "Score x = -20: %f\n" (scorefn (-. 50.))
 
-let drawfn = draw rv2_inner ~record:true;;
+let drawfn = draw rv2_inner;;
 for _ = 1 to 10 do
   Printf.printf "Sample from marginal: %f\n" (drawfn ())
 done;;
@@ -37,7 +37,7 @@ Printf.printf "----------------\n";;
 
 let score = observe_inner 0. rv2_inner 45.
 
-let drawfn = draw rv1_inner ~record:true;;
+let drawfn = draw rv1_inner;;
 for _ = 1 to 10 do
   Printf.printf "Sample from posterior: %f\n" (drawfn ())
 done;;

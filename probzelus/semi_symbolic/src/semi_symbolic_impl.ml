@@ -344,49 +344,6 @@ let is_const_array a =
 let is_const_list a =
   List.for_all (function ExConst _ -> true | _ -> false) a
 
-type approx_status = 
-| Exact of int
-| Approx of int
-
-let rv_approx_status : (string, approx_status * approx_status) Hashtbl.t= Hashtbl.create 100
-
-let record_new_rv var =
-  match Hashtbl.find_opt rv_approx_status var with
-  | None -> Hashtbl.add rv_approx_status var (Exact 0, Approx 0)
-  | Some _ -> ()
-
-let record_approx_status var status =
-  match Hashtbl.find_opt rv_approx_status var with
-  | None -> 
-    begin match status with
-    | Exact _ -> Hashtbl.add rv_approx_status var (Exact 1, Approx 0)
-    | Approx _ -> Hashtbl.add rv_approx_status var (Exact 0, Approx 1)
-    end
-  | Some (Exact(e), Approx(a)) ->
-    begin match status with
-    | Exact _ -> 
-      Hashtbl.replace rv_approx_status var (Exact (e + 1), Approx(a))
-    | Approx _ -> 
-      Hashtbl.replace rv_approx_status var (Exact(e), Approx (a + 1))
-    end
-  | _ -> failwith "Approx status error"
-    
-let pp_approx_status : bool -> string =
-fun obs ->
-  Hashtbl.fold (fun key value acc -> (key, value)::acc) rv_approx_status []
-  |> List.sort compare
-  |> List.fold_left (fun acc (var, status) ->
-    match status with
-    | Exact(e), Approx(a) ->
-      if not obs && String.starts_with ~prefix: "obs" var then acc
-      else if not (e = 0) && not (a = 0) then
-        Format.sprintf "%s%s: DYNAMIC (e-%d,a-%d)\n" acc var e a
-      else if not (a = 0) then
-        Format.sprintf "%s%s: APPROX (%d)\n" acc var a
-      else
-        Format.sprintf "%s%s: EXACT (%d)\n" acc var e
-    | _ -> failwith "Approx status error") ""
-
 (* Partially evaluates expressions *)
 let rec eval : type a. a expr -> a expr =
 fun expr ->
@@ -1527,7 +1484,7 @@ fun rv ->
               (*(Printf.printf "rv_current: %s, rv_current's parents: %s\n" rv_current.name (string_of_rvset (get_parents rv_current)));*)
               assert (0 = 1))
             );
-            (if swap rv_par rv_current then record_approx_status rv_par.name (Exact 1)
+            (if swap rv_par rv_current then ()
             else raise (NonConjugate rv_par));
             swap_with_parents rest
           ) else swap_with_parents rest)
@@ -1586,23 +1543,20 @@ let mixture l = Mixture(l)
 let sampler f g = Sampler (f, g)
 
 let sample n d =
-    record_new_rv n;
-    
-    let rv = {
-      name = n;
-      distr = d
-    } in
-    (*(Printf.printf "Sampling %s from %s\n" n (string_of_rvset (get_parents rv)));*)
-    ExRand rv
+  let rv = {
+    name = n;
+    distr = d
+  } in
+  (*(Printf.printf "Sampling %s from %s\n" n (string_of_rvset (get_parents rv)));*)
+  ExRand rv
 
 let intervene : type a. a random_var -> a -> unit =
 fun rv x ->
   (*(Printf.printf "intervening %s\n" rv.name);*)
   rv.distr <- Delta (ExConst x)
 
-let rec draw : type a. a random_var -> record:bool -> unit -> a =
-fun rv ~record ->
-  if record then record_approx_status rv.name (Approx 1);
+let rec draw : type a. a random_var -> unit -> a =
+fun rv ->
   hoist_and_eval rv;
   fun _ ->
     match rv.distr with
@@ -1640,14 +1594,14 @@ fun rv ~record ->
       draw' 0. l
     | _ -> raise (InternalError ("Draw did not properly hoist and evaluate random variable"))
 
-and value : type a. a random_var -> record:bool -> a =
-fun rv ~record ->
+and value : type a. a random_var -> a =
+fun rv ->
   (* (Printf.printf "approxing %s\n" rv.name); *)
   let rec do_value _ =
-    try draw rv ~record:record ()
+    try draw rv ()
     with NonConjugate rv_nc ->
       (* (Printf.printf "NonConjugate %s\n" rv_nc.name); *)
-      let _ = value rv_nc ~record in
+      let _ = value rv_nc in
       do_value ()
   in
   let new_val = do_value () in
@@ -1659,7 +1613,7 @@ fun e ->
   begin match e with
   | ExConst c -> c
   | ExVar _ -> assert false
-  | ExRand rv -> value rv ~record:true
+  | ExRand rv -> value rv
   | ExAdd (e1, e2) -> eval_sample e1 +. eval_sample e2
   | ExMul (e1, e2) -> eval_sample e1 *. eval_sample e2
   | ExDiv (e1, e2) -> eval_sample e1 /. eval_sample e2
@@ -1737,7 +1691,7 @@ fun w rv x ->
     try score rv x
     with NonConjugate rv_nc ->
       (* (Printf.printf "NonConjugate %s\n" rv_nc.name); *)
-      let _ = value rv_nc ~record:true in
+      let _ = value rv_nc in
       do_observe ()
   in
   let s = do_observe () in

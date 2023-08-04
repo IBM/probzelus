@@ -48,17 +48,15 @@ val categorical : lower:int -> upper:int -> (int -> float) -> int distribution;;
 val sample : string -> 'a distribution -> 'a expr;;
 
 val score : 'a random_var -> 'a -> float;;
-val draw : 'a random_var -> record:bool -> unit -> 'a;;
+val draw : 'a random_var -> unit -> 'a;;
 val intervene : 'a random_var -> 'a -> unit;;
 val make_marginal : 'a random_var -> unit;;
 
-val value : 'a random_var -> record:bool -> 'a;;
+val value : 'a random_var -> 'a;;
 val observe : float -> 'a distribution -> 'a -> float;;
 
 val eval : 'a expr -> 'a expr;;
 val eval_sample : 'a expr -> 'a;;
-
-val pp_approx_status : bool -> string;;
 
 module type Conversion_fn = sig
   type 'a t

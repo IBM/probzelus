@@ -57,8 +57,6 @@ let observe = Semi_symbolic_impl.observe
 let eval = Semi_symbolic_impl.eval
 let eval_sample = Semi_symbolic_impl.eval_sample
 
-let pp_approx_status = Semi_symbolic_impl.pp_approx_status
-
 
 module type Conversion_fn = sig
   type 'a t
