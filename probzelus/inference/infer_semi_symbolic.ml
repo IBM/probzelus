@@ -66,9 +66,8 @@ let get_samplenum _ =
   samplenum := !samplenum + 1;
   !samplenum
 
-let sample' (_pstate, (name, dist)) =
-  let name = match name with | "" -> "var" ^ (string_of_int (get_samplenum())) | _ -> name in
-  Semi_symbolic.sample name dist
+let sample' (_pstate, dist) =
+  Semi_symbolic.sample ("var" ^ (string_of_int (get_samplenum ())))  dist
 
 let sample =
   let alloc () = () in
