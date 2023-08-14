@@ -567,12 +567,11 @@ module rec Distribution_rec: DISTRIBUTION = struct
   let log_beta a b =
     log_gamma a +. log_gamma b -. log_gamma (a +. b)
 
-  let beta_score =
-    fun a b x ->
-      if x > 0. && x < 1. then
-        (a -. 1.) *. log x +. (b -. 1.) *. log (1. -. x) -. log_beta a b
-      else
-        neg_infinity
+  let beta_score a b x =
+    if x > 0. && x < 1. then
+      (a -. 1.) *. log x +. (b -. 1.) *. log (1. -. x) -. log_beta a b
+    else
+      neg_infinity
 
   let beta_mean a b =
     a /. (a +. b)

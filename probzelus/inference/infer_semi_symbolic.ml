@@ -39,7 +39,7 @@ let of_distribution d =
   let score x = Distribution.score (d, x) in
   Semi_symbolic.sampler draw score
 
-let gaussian (mu, var) = Semi_symbolic.gaussian mu var
+let gaussian (mu, var) = Semi_symbolic.gaussian mu (Semi_symbolic.const var)
 let beta (a, b) =
   Semi_symbolic.beta (Semi_symbolic.const a) (Semi_symbolic.const b)
 let bernoulli p = Semi_symbolic.bernoulli p
