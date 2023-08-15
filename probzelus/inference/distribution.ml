@@ -119,6 +119,8 @@ module rec Distribution_rec: DISTRIBUTION = struct
         Format.fprintf ppf "gamma (%f, %f)" a b
     | Dist_poisson lambda ->
         Format.fprintf ppf "poisson %f" lambda
+    | Dist_student_t (mu, tau2, nu) ->
+        Format.fprintf ppf "studentt (%f, %f, %f)" mu tau2 nu
     | Dist_add (a, b) ->
         Format.fprintf ppf "(%a + %a)"
           (pp_print pp_v) a (pp_print pp_v) b
@@ -788,6 +790,32 @@ module rec Distribution_rec: DISTRIBUTION = struct
     assert (lambda > 0.);
     Dist_poisson lambda
 
+  (** [student_t(mu, tau2, nu)] is a location-scale t-distribution with 
+      location parameter mu, scale parameter tau, and degree of freedom nu.
+      @see<https://en.wikipedia.org/wiki/Student%27s_t-distribution#Location-scale_t-distribution>
+  *)
+  
+  let student_t_draw mu tau2 nu =
+    Owl_stats.t_rvs ~df:nu ~loc:mu ~scale:(sqrt tau2)
+  
+  let student_t_score mu tau2 nu x =
+    assert (nu > 1.);
+    Owl_stats.t_logpdf ~df:nu ~loc:mu ~scale:(sqrt tau2) x
+  
+  let student_t_mean mu _ nu =
+    assert (nu > 1.);
+    mu
+  
+  let student_t_variance _ tau2 nu =
+    assert (nu > 1.);
+    if nu <= 2. then
+      infinity
+    else
+      tau2 *. nu /. (nu -. 2.)
+
+  let student_t (mu, tau2, nu) =
+    assert (nu > 1.);
+    Dist_student_t (mu, tau2, nu)
 
   (** [alias_method_unsafe values probabilities] is the [alias_method]
       where the arrays [values] and [probabilities] are not copied.
@@ -881,6 +909,7 @@ module rec Distribution_rec: DISTRIBUTION = struct
     | (Dist_uniform_float (_, _), _) | (_, Dist_uniform_float (_, _))
     | (Dist_exponential _, _) | (_, Dist_exponential _)
     | (Dist_gamma (_, _), _) | (_, Dist_gamma (_, _))
+    | (Dist_student_t (_, _, _), _) | (_, Dist_student_t (_, _, _))
     | (Dist_add (_, _), _) | (_, Dist_add (_, _))
     | (Dist_mult (_, _), _) | (_, Dist_mult (_, _))
     | (Dist_app (_, _), _) | (_, Dist_app (_, _))
@@ -907,6 +936,7 @@ module rec Distribution_rec: DISTRIBUTION = struct
     | (Dist_uniform_float (_, _), _) | (_, Dist_uniform_float (_, _))
     | (Dist_exponential _, _) | (_, Dist_exponential _)
     | (Dist_gamma (_, _), _) | (_, Dist_gamma (_, _))
+    | (Dist_student_t (_, _, _), _) | (_, Dist_student_t (_, _, _))
     | (Dist_add (_, _), _) | (_, Dist_add (_, _))
     | (Dist_mult (_, _), _) | (_, Dist_mult (_, _))
     | (Dist_app (_, _), _) | (_, Dist_app (_, _))
@@ -983,6 +1013,7 @@ module rec Distribution_rec: DISTRIBUTION = struct
     | Dist_exponential _ -> assert false
     | Dist_gamma (_, _) -> assert false
     | Dist_poisson _ -> assert false
+    | Dist_student_t (_, _, _) -> assert false
     | Dist_add (d1, d2) ->
         begin match to_dist_support d1, to_dist_support d2 with
         | Dist_support s1, Dist_support s2 ->
@@ -1040,6 +1071,7 @@ module rec Distribution_rec: DISTRIBUTION = struct
         | Dist_exponential lambda -> exponential_draw lambda
         | Dist_gamma (a, b) -> gamma_draw a b
         | Dist_poisson lambda -> poisson_draw lambda
+        | Dist_student_t (mu, tau2, nu) -> student_t_draw mu tau2 nu
         | Dist_pair (d1, d2) ->
             (draw d1, draw d2)
         | Dist_list a ->
@@ -1129,6 +1161,7 @@ module rec Distribution_rec: DISTRIBUTION = struct
     | Dist_exponential lambda -> exponential_score lambda x
     | Dist_gamma (a, b) -> gamma_score a b x
     | Dist_poisson lambda -> poisson_score lambda x
+    | Dist_student_t (mu, tau2, nu) -> student_t_score mu tau2 nu x
     | Dist_pair (d1, d2) ->
         (* XXX TO CHECK XXX *)
         let v1, v2 = x in
@@ -1245,6 +1278,9 @@ module rec Distribution_rec: DISTRIBUTION = struct
         let x = draw dist in
         (x, score (dist, x))
     | Dist_poisson _ ->
+        let x = draw dist in
+        (x, score (dist, x))
+    | Dist_student_t _ ->
         let x = draw dist in
         (x, score (dist, x))
     | Dist_add _ ->
@@ -1718,6 +1754,8 @@ module rec Distribution_rec: DISTRIBUTION = struct
         (exponential_mean a, exponential_variance a)
     | Dist_gamma (a, b) ->
         (gamma_mean a b, gamma_variance a b)
+    | Dist_student_t (mu, tau2, nu) ->
+        (student_t_mean mu tau2 nu, student_t_variance mu tau2 nu)
     | Dist_support sup ->
         let rec stats sup sum sq_sum =
           begin match sup with
@@ -1798,6 +1836,7 @@ module rec Distribution_rec: DISTRIBUTION = struct
     | Dist_uniform_float (a, b) -> uniform_float_mean a b
     | Dist_exponential a -> exponential_mean a
     | Dist_gamma (a, b) -> gamma_mean a b
+    | Dist_student_t (a, b, c) -> student_t_mean a b c
     | Dist_mixture l ->
         List.fold_left (fun acc (d, w) -> acc +. w *. mean_float d) 0. l
     | Dist_add (d1, d2) ->
@@ -1883,6 +1922,8 @@ module rec Distribution_rec: DISTRIBUTION = struct
           sample_mean meanfn (fun () -> gamma_draw a b)
       | Dist_poisson lambda ->
           sample_mean meanfn (fun () -> poisson_draw lambda)
+      | Dist_student_t (mu, tau2, nu) ->
+          sample_mean meanfn (fun () -> student_t_draw mu tau2 nu)
       | Dist_support sup ->
           List.fold_left (fun acc (v, w) -> acc +. w *. (meanfn v)) 0. sup
       | Dist_mixture l ->
@@ -1958,8 +1999,7 @@ module rec Distribution_rec: DISTRIBUTION = struct
     | Dist_beta_binomial (n, a, b) -> beta_binomial_mean n a b
     | Dist_negative_binomial (n, p) -> negative_binomial_mean n p
     | Dist_uniform_int (a, b) -> uniform_int_mean a b
-    | Dist_poisson a ->
-        poisson_mean a
+    | Dist_poisson a -> poisson_mean a
     | Dist_mv_gaussian (_, _, _) -> assert false
     | Dist_joint j -> mean_int_joint j
     end
@@ -2076,6 +2116,7 @@ module rec Distribution_rec: DISTRIBUTION = struct
     | Dist_exponential _ -> assert false
     | Dist_gamma _ -> assert false
     | Dist_poisson _ -> assert false
+    | Dist_student_t _ -> assert false
     | Dist_add _ -> assert false
     | Dist_mult _ -> assert false
     | Dist_app _ -> assert false
@@ -2127,6 +2168,7 @@ module rec Distribution_rec: DISTRIBUTION = struct
     | Dist_exponential _ -> to_sampler dist
     | Dist_gamma _ -> to_sampler dist
     | Dist_poisson _ -> to_sampler dist
+    | Dist_student_t (_, _, _) -> to_sampler dist
     | Dist_add _ -> to_sampler dist
     | Dist_mult _ -> to_sampler dist
     | Dist_app (_, _) -> to_sampler dist

@@ -55,6 +55,7 @@ type _ distr =
   | Dist_exponential : float -> float distr
   | Dist_gamma : float * float -> float distr
   | Dist_poisson : float -> int distr
+  | Dist_student_t: float * float * float -> float distr
   | Dist_add : float distr * float distr -> float distr
   | Dist_mult : float distr * float distr -> float distr
   | Dist_app : ('a -> 'b) distr * 'a distr -> 'b distr
@@ -242,6 +243,11 @@ module type DISTRIBUTION = sig
   val poisson_mean : 'a -> 'a
   val poisson_variance : 'a -> 'a
   val poisson : float -> int t
+  val student_t_draw : float -> float -> float -> float
+  val student_t_score : float -> float -> float -> float -> float
+  val student_t_mean : float -> float -> float -> float
+  val student_t_variance : float -> float -> float -> float
+  val student_t : float * float * float -> float t
   val alias_method_unsafe : 'a array -> float array -> 'a t
   val alias_method_list : ('a * float) list -> 'a t
   val alias_method : 'a array -> float array -> 'a t

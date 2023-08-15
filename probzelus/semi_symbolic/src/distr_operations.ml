@@ -280,7 +280,6 @@ let poisson_variance lambda =
   lambda
 
 let student_t_draw mu tau2 nu =
-  (* TODO:  *)
   Owl_stats.t_rvs ~df:nu ~loc:mu ~scale:(sqrt tau2)
 
 let student_t_score mu tau2 nu x =
@@ -292,7 +291,7 @@ let student_t_mean mu _ nu =
   mu
 
 let student_t_variance _ tau2 nu =
-  assert (nu < 1.);
+  assert (nu > 1.);
   if nu <= 2. then
     infinity
   else

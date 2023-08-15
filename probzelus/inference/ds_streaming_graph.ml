@@ -181,6 +181,7 @@ module Make(Distribution: DISTRIBUTION) = struct
     | DSgraph_Marginalized (Dist_exponential _, _) -> KOthers
     | DSgraph_Marginalized (Dist_gamma _, _) -> KOthers
     | DSgraph_Marginalized (Dist_poisson _, _) -> KOthers
+    | DSgraph_Marginalized (Dist_student_t _, _) -> KOthers
     | DSgraph_Marginalized (Dist_lognormal _, _) -> KOthers
     | DSgraph_Marginalized (Dist_add _, _) -> KOthers
     | DSgraph_Marginalized (Dist_mult _, _) -> KOthers
