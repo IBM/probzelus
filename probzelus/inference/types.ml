@@ -47,10 +47,15 @@ type _ distr =
   | Dist_lognormal : float * float -> float distr
   | Dist_beta : float * float -> float distr
   | Dist_bernoulli : float -> bool distr
+  | Dist_binomial : int * float -> int distr
+  | Dist_beta_binomial : int * float * float -> int distr
+  | Dist_negative_binomial : int * float -> int distr
   | Dist_uniform_int : int * int -> int distr
   | Dist_uniform_float : float * float -> float distr
   | Dist_exponential : float -> float distr
+  | Dist_gamma : float * float -> float distr
   | Dist_poisson : float -> int distr
+  | Dist_student_t: float * float * float -> float distr
   | Dist_add : float distr * float distr -> float distr
   | Dist_mult : float distr * float distr -> float distr
   | Dist_app : ('a -> 'b) distr * 'a distr -> 'b distr
@@ -160,7 +165,7 @@ module type DISTRIBUTION = sig
   val print_t : ('a -> string) -> 'a t -> unit
 
   val sampler : (unit -> 'a) * ('a -> float) -> 'a t
-  val gamma : float -> float
+  val gamma_f : float -> float
   val log_gamma : float -> float
   val dirac : 'a -> 'a t
   val bernoulli_draw : float -> bool
@@ -168,6 +173,21 @@ module type DISTRIBUTION = sig
   val bernoulli_mean : 'a -> 'a
   val bernoulli_variance : float -> float
   val bernoulli : float -> bool t
+  val binomial_draw : int -> float -> int
+  val binomial_score : int -> float -> int -> float
+  val binomial_mean : int -> float -> float
+  val binomial_variance : int -> float -> float
+  val binomial : int * float -> int t
+  val negative_binomial_draw : int -> float -> int
+  val negative_binomial_score : int -> float -> int -> float
+  val negative_binomial_mean : int -> float -> float
+  val negative_binomial_variance : int -> float -> float
+  val negative_binomial : int * float -> int t
+  val beta_binomial_draw : int -> float -> float -> int
+  val beta_binomial_score : int -> float -> float -> int -> float
+  val beta_binomial_mean : int -> float -> float -> float
+  val beta_binomial_variance : int -> float -> float -> float
+  val beta_binomial : int * float * float -> int t
   val gaussian_draw : float -> float -> float
   val gaussian_score : float -> float -> float -> float
   val gaussian_mean : 'a -> 'b -> 'a
@@ -213,11 +233,21 @@ module type DISTRIBUTION = sig
   val exponential_mean : float -> float
   val exponential_variance : float -> float
   val exponential : float -> float t
+  val gamma_draw : float -> float -> float
+  val gamma_score : float -> float -> float -> float
+  val gamma_mean : float -> float -> float
+  val gamma_variance : float -> float -> float
+  val gamma : float * float -> float t
   val poisson_draw : float -> int
   val poisson_score : float -> int -> float
   val poisson_mean : 'a -> 'a
   val poisson_variance : 'a -> 'a
   val poisson : float -> int t
+  val student_t_draw : float -> float -> float -> float
+  val student_t_score : float -> float -> float -> float -> float
+  val student_t_mean : float -> float -> float -> float
+  val student_t_variance : float -> float -> float -> float
+  val student_t : float * float * float -> float t
   val alias_method_unsafe : 'a array -> float array -> 'a t
   val alias_method_list : ('a * float) list -> 'a t
   val alias_method : 'a array -> float array -> 'a t

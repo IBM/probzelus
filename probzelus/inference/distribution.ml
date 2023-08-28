@@ -103,14 +103,24 @@ module rec Distribution_rec: DISTRIBUTION = struct
         Format.fprintf ppf "beta (%f, %f)" a b
     | Dist_bernoulli p ->
         Format.fprintf ppf "bernoulli %f" p
+    | Dist_binomial (n, p) ->
+        Format.fprintf ppf "binomial (%d, %f)" n p
+    | Dist_beta_binomial (n, a, b) ->
+        Format.fprintf ppf "beta_binomial (%d, %f, %f)" n a b
+    | Dist_negative_binomial (n, p) ->
+        Format.fprintf ppf "negative_binomial (%d, %f)" n p
     | Dist_uniform_int (a, b) ->
         Format.fprintf ppf "uniform_int (%d, %d)" a b
     | Dist_uniform_float (a, b) ->
         Format.fprintf ppf "uniform_float (%f, %f)" a b
     | Dist_exponential lambda ->
         Format.fprintf ppf "exponential %f" lambda
+    | Dist_gamma (a, b) ->
+        Format.fprintf ppf "gamma (%f, %f)" a b
     | Dist_poisson lambda ->
         Format.fprintf ppf "poisson %f" lambda
+    | Dist_student_t (mu, tau2, nu) ->
+        Format.fprintf ppf "studentt (%f, %f, %f)" mu tau2 nu
     | Dist_add (a, b) ->
         Format.fprintf ppf "(%a + %a)"
           (pp_print pp_v) a (pp_print pp_v) b
@@ -243,6 +253,20 @@ module rec Distribution_rec: DISTRIBUTION = struct
   let two_pi = 2.0 *. pi
   let sqrt_two_pi = sqrt two_pi
 
+  let combination n k =
+    let rec comb acc n k =
+      if k = 0 then acc
+      else comb (acc * n / k) (n - 1) (k - 1)
+    in
+    comb 1 n k
+
+  let log_combination n k =
+    let rec comb acc n k =
+      if k = 0 then acc
+      else comb (acc +. log (float_of_int n) -. log (float_of_int k)) (n - 1) (k - 1)
+    in
+    comb 0. n k
+
   let flatten_suport op s1 s2 =
     let support =
       List.fold_left
@@ -260,7 +284,7 @@ module rec Distribution_rec: DISTRIBUTION = struct
     Map_float.fold (fun v p acc -> (v, p)::acc) support []
 
 
-  let gamma =
+  let gamma_f =
     let g = 7. in
     let c =
       [|0.99999999999980993; 676.5203681218851; -1259.1392167224028;
@@ -279,7 +303,7 @@ module rec Distribution_rec: DISTRIBUTION = struct
 
   let log_gamma x =
     (* XXX TODO: better implementation XXX *)
-    log (gamma x)
+    log (gamma_f x)
 
   (** {2 Distributions} *)
 
@@ -308,6 +332,70 @@ module rec Distribution_rec: DISTRIBUTION = struct
   let bernoulli p =
     assert (0. <= p && p <= 1.);
     Dist_bernoulli p
+
+
+  (** [binomial n p] is a binomial distribution of n trials and
+    probability p of succcess per trial.
+    @see<https://en.wikipedia.org/wiki/Binomial_distribution>
+  *)
+  let binomial_draw n p =
+    let rec run_trials n n_success =
+      if n = 0 then n_success
+      else begin
+        if Random.float 1.0 < p then
+          run_trials (n - 1) (n_success + 1)
+        else
+          run_trials (n - 1) n_success
+      end
+    in
+    run_trials n 0
+  
+  let binomial_score n p k =
+    log_combination n k +.
+      float_of_int k *. (log p) +. float_of_int (n - k) *. log (1. -. p)
+  
+  let binomial_mean n p =
+    float_of_int n *. p
+  
+  let binomial_variance n p =
+    float_of_int n *. p *. (1. -. p)  
+
+  let binomial (n, p) =
+    assert (n >= 0);
+    assert (0. <= p && p <= 1.);
+    Dist_binomial (n, p)
+
+
+  (** [negative_binomial n p] is a negative_binomial distribution of n successes and
+    probability p of succcess per trial.
+    @see<https://en.wikipedia.org/wiki/Negative_binomial_distribution>
+  *)
+  let negative_binomial_draw n p =
+    let rec run_trials n_success n_failure =
+      if n_success = 0 then n_failure
+      else begin
+        if Random.float 1.0 < p then
+          run_trials (n_success - 1) n_failure
+        else
+          run_trials n_success (n_failure + 1)
+      end
+    in
+    run_trials n 0
+  
+  let negative_binomial_score n p k =
+    log_combination (n + k - 1) k +.
+      float_of_int k *. log (1. -. p) +. float_of_int n *. log p
+  
+  let negative_binomial_mean n p =
+    float_of_int n *. (1. -. p) /. p
+  
+  let negative_binomial_variance n p =
+    float_of_int n *. (1. -. p) /. (p *. p)  
+
+  let negative_binomial (n, p) =
+    assert (n >= 0);
+    assert (0. <= p && p <= 1.);
+    Dist_negative_binomial (n, p)
 
 
   (** [gaussian(mu, sigma2)] is a normal distribution of mean [mu] and
@@ -478,15 +566,14 @@ module rec Distribution_rec: DISTRIBUTION = struct
         1. -. epsilon_float /. 2.
       else v
 
-  let beta_score =
-    let log_beta a b =
-      log_gamma a +. log_gamma b -. log_gamma (a +. b)
-    in
-    fun a b x ->
-      if x > 0. && x < 1. then
-        (a -. 1.) *. log x +. (b -. 1.) *. log (1. -. x) -. log_beta a b
-      else
-        neg_infinity
+  let log_beta a b =
+    log_gamma a +. log_gamma b -. log_gamma (a +. b)
+
+  let beta_score a b x =
+    if x > 0. && x < 1. then
+      (a -. 1.) *. log x +. (b -. 1.) *. log (1. -. x) -. log_beta a b
+    else
+      neg_infinity
 
   let beta_mean a b =
     a /. (a +. b)
@@ -498,6 +585,33 @@ module rec Distribution_rec: DISTRIBUTION = struct
     assert (a > 0.);
     assert (b > 0.);
     Dist_beta (a, b)
+
+  (** [beta_binomial(n, a, b)] is a a compound distribution where
+    the [p] parameter of the binomial distribution is drawn from a beta of [a] [b]
+      @see<https://en.wikipedia.org/wiki/Beta-binomial_distribution>
+  *)
+
+  let beta_binomial_draw n a b =
+    let p = beta_draw a b in
+    binomial_draw n p
+
+  let beta_binomial_score n a b k =
+    log_combination n k +. 
+      log_beta (float_of_int k +. a) (float_of_int (n - k) +. b) -. 
+      log_beta a b
+
+  let beta_binomial_mean n a b =
+    float_of_int n *. a /. (a +. b)
+
+  let beta_binomial_variance n a b =
+    let n = float_of_int n in
+    n *. a *. b *. (a +. b +. n) /. ((a +. b) ** 2. *. (a +. b +. 1.))
+
+  let beta_binomial (n, a, b) =
+    assert (n >= 0);
+    assert (a > 0.);
+    assert (b > 0.);
+    Dist_beta_binomial (n, a, b)
 
   (** [sph_gaussian(mus, sigma2s)] is a spherical normal distribution.
       @see<https://en.wikipedia.org/wiki/Multivariate_normal_distribution>
@@ -606,6 +720,47 @@ module rec Distribution_rec: DISTRIBUTION = struct
     assert (lambda > 0.);
     Dist_exponential lambda
 
+  (** [gamma a b] is an exponential distribution of parameter shape parameter a and rate parameter b.
+      @see<https://en.wikipedia.org/wiki/Gamma_distribution>
+  *)
+
+  let rec gamma_draw a b =
+    if a < 1. then
+      let u = Random.float 1. in
+      gamma_draw (1. +. a) b *. (u ** (1. /. a))
+    else
+      let d = a -. 1. /. 3. in
+      let c = 1. /. sqrt (9. *. d) in
+      let rec loop () =
+        let x = gaussian_draw 0. 1. in
+        let v = 1. +. c *. x in
+        let v = v *. v *. v in
+        if v <= 0. then loop ()
+        else
+          let u = Random.float 1. in
+          if log (u) < 0.5 *. x *. x +. d -. d *. v +. d *. log v then
+            d *. v /. b
+          else
+            loop ()
+      in
+      loop ()
+  
+  let gamma_score a b x =
+    if x >= 0. then
+      (a -. 1.) *. log x -. b *. x +. a *. log b -. log_gamma a
+    else
+      neg_infinity
+  
+  let gamma_mean a b =
+    a /. b
+  
+  let gamma_variance a b =
+    a /. (b *. b)
+
+  let gamma (a, b) =
+    assert (a > 0.);
+    assert (b > 0.);
+    Dist_gamma (a, b)
 
   (** [poisson lambda] is an poisson distribution of parameter lambda.
       @see<https://en.wikipedia.org/wiki/Poisson_distribution>
@@ -635,6 +790,32 @@ module rec Distribution_rec: DISTRIBUTION = struct
     assert (lambda > 0.);
     Dist_poisson lambda
 
+  (** [student_t(mu, tau2, nu)] is a location-scale t-distribution with 
+      location parameter mu, scale parameter tau, and degree of freedom nu.
+      @see<https://en.wikipedia.org/wiki/Student%27s_t-distribution#Location-scale_t-distribution>
+  *)
+  
+  let student_t_draw mu tau2 nu =
+    Owl_stats.t_rvs ~df:nu ~loc:mu ~scale:(sqrt tau2)
+  
+  let student_t_score mu tau2 nu x =
+    assert (nu > 1.);
+    Owl_stats.t_logpdf ~df:nu ~loc:mu ~scale:(sqrt tau2) x
+  
+  let student_t_mean mu _ nu =
+    assert (nu > 1.);
+    mu
+  
+  let student_t_variance _ tau2 nu =
+    assert (nu > 1.);
+    if nu <= 2. then
+      infinity
+    else
+      tau2 *. nu /. (nu -. 2.)
+
+  let student_t (mu, tau2, nu) =
+    assert (nu > 1.);
+    Dist_student_t (mu, tau2, nu)
 
   (** [alias_method_unsafe values probabilities] is the [alias_method]
       where the arrays [values] and [probabilities] are not copied.
@@ -727,6 +908,8 @@ module rec Distribution_rec: DISTRIBUTION = struct
     | (Dist_beta (_, _), _) | (_, Dist_beta (_, _))
     | (Dist_uniform_float (_, _), _) | (_, Dist_uniform_float (_, _))
     | (Dist_exponential _, _) | (_, Dist_exponential _)
+    | (Dist_gamma (_, _), _) | (_, Dist_gamma (_, _))
+    | (Dist_student_t (_, _, _), _) | (_, Dist_student_t (_, _, _))
     | (Dist_add (_, _), _) | (_, Dist_add (_, _))
     | (Dist_mult (_, _), _) | (_, Dist_mult (_, _))
     | (Dist_app (_, _), _) | (_, Dist_app (_, _))
@@ -752,6 +935,8 @@ module rec Distribution_rec: DISTRIBUTION = struct
     | (Dist_beta (_, _), _) | (_, Dist_beta (_, _))
     | (Dist_uniform_float (_, _), _) | (_, Dist_uniform_float (_, _))
     | (Dist_exponential _, _) | (_, Dist_exponential _)
+    | (Dist_gamma (_, _), _) | (_, Dist_gamma (_, _))
+    | (Dist_student_t (_, _, _), _) | (_, Dist_student_t (_, _, _))
     | (Dist_add (_, _), _) | (_, Dist_add (_, _))
     | (Dist_mult (_, _), _) | (_, Dist_mult (_, _))
     | (Dist_app (_, _), _) | (_, Dist_app (_, _))
@@ -785,6 +970,37 @@ module rec Distribution_rec: DISTRIBUTION = struct
     | Dist_beta (_, _) -> assert false
     | Dist_bernoulli p ->
         Dist_support [ (true, p); (false, 1. -. p); ]
+    | Dist_binomial (n, p) ->
+        let rec build k acc =
+          if k = 0 then acc
+          else
+            let p_x = (float_of_int (combination n k)) *. 
+              (p ** (float_of_int k)) *. 
+              ((1. -. p) ** (float_of_int k)) in
+            build (n - 1) ((n, p_x)::acc)
+        in
+        Dist_support (build n [])
+    | Dist_beta_binomial (n, a, b) ->
+        let rec build k acc =
+          if k = 0 then acc
+          else
+            let p_x = (float_of_int (combination n k)) *. 
+              exp((log_beta ((float_of_int k) +. a) ((float_of_int (n - k)) +. b)) -. 
+                  (log_beta a b))
+            in
+            build (n - 1) ((n, p_x)::acc)
+        in
+        Dist_support (build n [])
+    | Dist_negative_binomial (n, p) ->
+        let rec build k acc =
+          if k = 0 then acc
+          else
+            let p_x = (float_of_int (combination (n + k - 1) k)) *. 
+              (p ** (float_of_int n)) *. 
+              ((1. -. p) ** (float_of_int k)) in
+            build (n - 1) ((n, p_x)::acc)
+        in
+        Dist_support (build n [])
     | Dist_uniform_int (a, b) ->
         let p = 1. /. float (b - a) in
         let rec build n acc =
@@ -795,7 +1011,9 @@ module rec Distribution_rec: DISTRIBUTION = struct
         Dist_support (build b [])
     | Dist_uniform_float (_, _) -> assert false
     | Dist_exponential _ -> assert false
+    | Dist_gamma (_, _) -> assert false
     | Dist_poisson _ -> assert false
+    | Dist_student_t (_, _, _) -> assert false
     | Dist_add (d1, d2) ->
         begin match to_dist_support d1, to_dist_support d2 with
         | Dist_support s1, Dist_support s2 ->
@@ -845,10 +1063,15 @@ module rec Distribution_rec: DISTRIBUTION = struct
             end
         | Dist_beta (a, b) -> beta_draw a b
         | Dist_bernoulli p -> bernoulli_draw p
+        | Dist_binomial (n, p) -> binomial_draw n p
+        | Dist_beta_binomial (n, a, b) -> beta_binomial_draw n a b
+        | Dist_negative_binomial (n, p) -> negative_binomial_draw n p
         | Dist_uniform_int (a, b) -> uniform_int_draw a b
         | Dist_uniform_float (a, b) -> uniform_float_draw a b
         | Dist_exponential lambda -> exponential_draw lambda
+        | Dist_gamma (a, b) -> gamma_draw a b
         | Dist_poisson lambda -> poisson_draw lambda
+        | Dist_student_t (mu, tau2, nu) -> student_t_draw mu tau2 nu
         | Dist_pair (d1, d2) ->
             (draw d1, draw d2)
         | Dist_list a ->
@@ -930,10 +1153,15 @@ module rec Distribution_rec: DISTRIBUTION = struct
         mv_gaussian_score mu sigma x
     | Dist_beta (a, b) -> beta_score a b x
     | Dist_bernoulli p -> bernoulli_score p x
+    | Dist_binomial (n, p) -> binomial_score n p x
+    | Dist_beta_binomial (n, a, b) -> beta_binomial_score n a b x
+    | Dist_negative_binomial (n, p) -> negative_binomial_score n p x
     | Dist_uniform_int (a, b) -> uniform_int_score a b x
     | Dist_uniform_float (a, b) -> uniform_float_score a b x
     | Dist_exponential lambda -> exponential_score lambda x
+    | Dist_gamma (a, b) -> gamma_score a b x
     | Dist_poisson lambda -> poisson_score lambda x
+    | Dist_student_t (mu, tau2, nu) -> student_t_score mu tau2 nu x
     | Dist_pair (d1, d2) ->
         (* XXX TO CHECK XXX *)
         let v1, v2 = x in
@@ -1028,6 +1256,15 @@ module rec Distribution_rec: DISTRIBUTION = struct
     | Dist_bernoulli _ ->
         let x = draw dist in
         (x, score (dist, x))
+    | Dist_binomial _ ->
+        let x = draw dist in
+        (x, score (dist, x))
+    | Dist_beta_binomial _ ->
+        let x = draw dist in
+        (x, score (dist, x))
+    | Dist_negative_binomial _ ->
+        let x = draw dist in
+        (x, score (dist, x))
     | Dist_uniform_int _ ->
         let x = draw dist in
         (x, score (dist, x))
@@ -1037,7 +1274,13 @@ module rec Distribution_rec: DISTRIBUTION = struct
     | Dist_exponential _ ->
         let x = draw dist in
         (x, score (dist, x))
+    | Dist_gamma _ ->
+        let x = draw dist in
+        (x, score (dist, x))
     | Dist_poisson _ ->
+        let x = draw dist in
+        (x, score (dist, x))
+    | Dist_student_t _ ->
         let x = draw dist in
         (x, score (dist, x))
     | Dist_add _ ->
@@ -1509,6 +1752,10 @@ module rec Distribution_rec: DISTRIBUTION = struct
         (uniform_float_mean a b, uniform_float_variance a b)
     | Dist_exponential a ->
         (exponential_mean a, exponential_variance a)
+    | Dist_gamma (a, b) ->
+        (gamma_mean a b, gamma_variance a b)
+    | Dist_student_t (mu, tau2, nu) ->
+        (student_t_mean mu tau2 nu, student_t_variance mu tau2 nu)
     | Dist_support sup ->
         let rec stats sup sum sq_sum =
           begin match sup with
@@ -1588,6 +1835,8 @@ module rec Distribution_rec: DISTRIBUTION = struct
     | Dist_beta (a, b) -> beta_mean a b
     | Dist_uniform_float (a, b) -> uniform_float_mean a b
     | Dist_exponential a -> exponential_mean a
+    | Dist_gamma (a, b) -> gamma_mean a b
+    | Dist_student_t (a, b, c) -> student_t_mean a b c
     | Dist_mixture l ->
         List.fold_left (fun acc (d, w) -> acc +. w *. mean_float d) 0. l
     | Dist_add (d1, d2) ->
@@ -1657,14 +1906,24 @@ module rec Distribution_rec: DISTRIBUTION = struct
       | Dist_beta (a, b) -> beta_draw a b
       | Dist_bernoulli p ->
           (p *. (meanfn true)) +. ((1. -. p) *. (meanfn false))
+      | Dist_binomial (n, p) ->
+          sample_mean meanfn (fun () -> binomial_draw n p)
+      | Dist_beta_binomial (n, a, b) ->
+          sample_mean meanfn (fun () -> beta_binomial_draw n a b)
+      | Dist_negative_binomial (n, p) ->
+          sample_mean meanfn (fun () -> negative_binomial_draw n p)
       | Dist_uniform_int (a, b) ->
           sample_mean meanfn (fun () -> uniform_int_draw a b)
       | Dist_uniform_float (a, b) ->
           sample_mean meanfn (fun () -> uniform_float_draw a b)
       | Dist_exponential lambda ->
           sample_mean meanfn (fun () -> exponential_draw lambda)
+      | Dist_gamma (a, b) ->
+          sample_mean meanfn (fun () -> gamma_draw a b)
       | Dist_poisson lambda ->
           sample_mean meanfn (fun () -> poisson_draw lambda)
+      | Dist_student_t (mu, tau2, nu) ->
+          sample_mean meanfn (fun () -> student_t_draw mu tau2 nu)
       | Dist_support sup ->
           List.fold_left (fun acc (v, w) -> acc +. w *. (meanfn v)) 0. sup
       | Dist_mixture l ->
@@ -1736,9 +1995,11 @@ module rec Distribution_rec: DISTRIBUTION = struct
         List.fold_left (fun acc (d, w) -> acc +. w *. mean_int d) 0. l
     | Dist_app (_, _) ->
         mean_int (Dist_sampler ((fun () -> draw d), (fun _ -> assert false)))
+    | Dist_binomial (n, p) -> binomial_mean n p
+    | Dist_beta_binomial (n, a, b) -> beta_binomial_mean n a b
+    | Dist_negative_binomial (n, p) -> negative_binomial_mean n p
     | Dist_uniform_int (a, b) -> uniform_int_mean a b
-    | Dist_poisson a ->
-        poisson_mean a
+    | Dist_poisson a -> poisson_mean a
     | Dist_mv_gaussian (_, _, _) -> assert false
     | Dist_joint j -> mean_int_joint j
     end
@@ -1847,10 +2108,15 @@ module rec Distribution_rec: DISTRIBUTION = struct
     | Dist_lognormal _ -> assert false
     | Dist_beta _ -> assert false
     | Dist_bernoulli _ -> assert false
+    | Dist_binomial _ -> assert false
+    | Dist_beta_binomial _ -> assert false
+    | Dist_negative_binomial _ -> assert false
     | Dist_uniform_int _ -> assert false
     | Dist_uniform_float _ -> assert false
     | Dist_exponential _ -> assert false
+    | Dist_gamma _ -> assert false
     | Dist_poisson _ -> assert false
+    | Dist_student_t _ -> assert false
     | Dist_add _ -> assert false
     | Dist_mult _ -> assert false
     | Dist_app _ -> assert false
@@ -1894,10 +2160,15 @@ module rec Distribution_rec: DISTRIBUTION = struct
     | Dist_mv_gaussian (_, _, _) -> to_sampler dist
     | Dist_beta (_, _) -> to_sampler dist
     | Dist_bernoulli _ -> to_sampler dist
+    | Dist_binomial _ -> to_sampler dist
+    | Dist_beta_binomial _ -> to_sampler dist
+    | Dist_negative_binomial _ -> to_sampler dist
     | Dist_uniform_int _ -> to_sampler dist
     | Dist_uniform_float (_, _) -> to_sampler dist
     | Dist_exponential _ -> to_sampler dist
+    | Dist_gamma _ -> to_sampler dist
     | Dist_poisson _ -> to_sampler dist
+    | Dist_student_t (_, _, _) -> to_sampler dist
     | Dist_add _ -> to_sampler dist
     | Dist_mult _ -> to_sampler dist
     | Dist_app (_, _) -> to_sampler dist

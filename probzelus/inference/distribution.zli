@@ -66,6 +66,24 @@ val bernoulli_mean : 'a -> 'a
 val bernoulli_variance : float -> float
 val bernoulli : float -> bool t
 
+val binomial_draw : int -> float -> int
+val binomial_score : int -> float -> int -> float
+val binomial_mean : int -> float -> float
+val binomial_variance : int -> float -> float
+val binomial : int * float -> int t
+
+val negative_binomial_draw : int -> float -> int
+val negative_binomial_score : int -> float -> int -> float
+val negative_binomial_mean : int -> float -> float
+val negative_binomial_variance : int -> float -> float
+val negative_binomial : int * float -> int t
+
+val beta_binomial_draw : int -> float -> float -> int
+val beta_binomial_score : int -> float -> float -> int -> float
+val beta_binomial_mean : int -> float -> float -> float
+val beta_binomial_variance : int -> float -> float -> float
+val beta_binomial : int * float * float -> int t
+
 val gaussian_draw : float -> float -> float
 val gaussian_score : float -> float -> float -> float
 val gaussian_mean : 'a -> 'b -> 'a
@@ -114,11 +132,23 @@ val exponential_mean : float -> float
 val exponential_variance : float -> float
 val exponential : float -> float t
 
+val gamma_draw : float -> float -> float
+val gamma_score : float -> float -> float -> float
+val gamma_mean : float -> float -> float
+val gamma_variance : float -> float -> float
+val gamma : float * float -> float t
+
 val poisson_draw : float -> int
 val poisson_score : float -> float -> float
 val poisson_mean : float -> float
 val poisson_variance : float -> float
 val poisson : float -> int t
+
+val student_t_draw : float -> float -> float -> float
+val student_t_score : float -> float -> float -> float
+val student_t_mean : float -> float -> float -> float
+val student_t_variance : float -> float -> float -> float
+val student_t : float * float * float -> float t
 
 val alias_method_unsafe : 'a array -> float array -> 'a t
 val alias_method_list : ('a * float) list -> 'a t

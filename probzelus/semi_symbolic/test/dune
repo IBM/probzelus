@@ -1,5 +1,5 @@
 (tests
-  (names create_graph gaussian_tests gaussian_test2 gaussian_test3 graph_tests operation_tests beta_bernoulli_tests mv_gaussian_tests mv_gaussian_tests2 hoist_test hoist_test2)
+  (names create_graph gaussian_tests gaussian_test2 gaussian_test3 graph_tests operation_tests beta_bernoulli_tests beta_binomial_tests mv_gaussian_tests mv_gaussian_tests2 hoist_test hoist_test2)
   (modes native byte)
   (libraries semi_symbolic))
 

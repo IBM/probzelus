@@ -4,26 +4,15 @@ let pi = 4. *. atan 1.
 let two_pi = 2.0 *. pi
 let sqrt_two_pi = sqrt two_pi
 
-let gamma =
-  let g = 7. in
-  let c =
-    [|0.99999999999980993; 676.5203681218851; -1259.1392167224028;
-      771.32342877765313; -176.61502916214059; 12.507343278686905;
-      -0.13857109526572012; 9.9843695780195716e-6; 1.5056327351493116e-7|]
+let log_combination n k =
+  let rec comb acc n k =
+    if k = 0 then acc
+    else comb (acc +. log (float_of_int n) -. log (float_of_int k)) (n - 1) (k - 1)
   in
-  let rec ag z d =
-    if d = 0 then c.(0) +. ag z 1
-    else if d < 8 then c.(d) /. (z +. float d) +. ag z (succ d)
-    else c.(d) /. (z +. float d)
-  in
-  fun z ->
-    let z = z -. 1. in
-    let p = z +. g +. 0.5 in
-    sqrt_two_pi *. p ** (z +. 0.5) *. exp (-. p) *. ag z 0
+  comb 0. n k
 
 let log_gamma x =
-  (* XXX TODO: better implementation XXX *)
-  log (gamma x)
+  Owl_maths.loggamma x
 
 let gaussian_draw =
   let rec rand_pair () =
@@ -78,6 +67,28 @@ let bernoulli_mean p = p
 
 let bernoulli_variance p = p *. (1. -. p)
 
+let binomial_draw n p =
+  let rec run_trials n n_success =
+    if n = 0 then n_success
+    else begin
+      if Random.float 1.0 < p then
+        run_trials (n - 1) (n_success + 1)
+      else
+        run_trials (n - 1) n_success
+    end
+  in
+  run_trials n 0
+
+let binomial_score n p k =
+  log_combination n k +.
+    float_of_int k *. (log p) +. float_of_int (n - k) *. log (1. -. p)
+
+let binomial_mean n p =
+  float_of_int n *. p
+
+let binomial_variance n p =
+  float_of_int n *. p *. (1. -. p)
+
 let beta_draw =
   let rec exp_gamma_sample shape scale =
     if (shape < 1.) then
@@ -125,10 +136,10 @@ let beta_draw =
       1. -. epsilon_float /. 2.
     else v
 
+let log_beta a b =
+  log_gamma a +. log_gamma b -. log_gamma (a +. b)
+
 let beta_score =
-  let log_beta a b =
-    log_gamma a +. log_gamma b -. log_gamma (a +. b)
-  in
   fun a b x ->
     if x > 0. && x < 1. then
       (a -. 1.) *. log x +. (b -. 1.) *. log (1. -. x) -. log_beta a b
@@ -140,6 +151,46 @@ let beta_mean a b =
 
 let beta_variance a b =
   a *. b /. ((a +. b) *. (a +. b) *. (a +. b +. 1.))
+
+(* Beta-Binomial distribution is a compound distribution where
+   the p parameter of the binomial distribution is drawn from a beta *)
+let beta_binomial_draw n a b =
+  let p = beta_draw a b in
+  binomial_draw n p
+
+let beta_binomial_score n a b k =
+  log_combination n k +. 
+    log_beta (float_of_int k +. a) (float_of_int (n - k) +. b) -. 
+    log_beta a b
+
+let beta_binomial_mean n a b =
+  float_of_int n *. a /. (a +. b)
+
+let beta_binomial_variance n a b =
+  let n = float_of_int n in
+  n *. a *. b *. (a +. b +. n) /. ((a +. b) ** 2. *. (a +. b +. 1.))
+
+let negative_binomial_draw n p =
+  let rec run_trials n_success n_failure =
+    if n_success = 0 then n_failure
+    else begin
+      if Random.float 1.0 < p then
+        run_trials (n_success - 1) n_failure
+      else
+        run_trials n_success (n_failure + 1)
+    end
+  in
+  run_trials n 0
+
+let negative_binomial_score n p k =
+  log_combination (n + k - 1) k +.
+    float_of_int k *. log (1. -. p) +. float_of_int n *. log p
+
+let negative_binomial_mean n p =
+  float_of_int n *. (1. -. p) /. p
+
+let negative_binomial_variance n p =
+  float_of_int n *. (1. -. p) /. (p *. p)  
 
 let categorical_draw sup =
   let sample = Random.float 1.0 in
@@ -160,3 +211,88 @@ let categorical_score sup x =
       0. sup
   in
   log p
+
+let exponential_draw lambda =
+  let u = Random.float 1. in
+  -. log u /. lambda
+
+let exponential_score lambda x =
+  if x >= 0. then log lambda -. lambda *. x
+  else neg_infinity
+
+let exponential_mean lambda =
+  1. /. lambda
+
+let exponential_variance lambda =
+  1. /. (lambda ** 2.)
+
+let rec gamma_draw a b =
+  if a < 1. then
+    let u = Random.float 1. in
+    gamma_draw (1. +. a) b *. (u ** (1. /. a))
+  else
+    let d = a -. 1. /. 3. in
+    let c = 1. /. sqrt (9. *. d) in
+    let rec loop () =
+      let x = gaussian_draw 0. 1. in
+      let v = 1. +. c *. x in
+      let v = v *. v *. v in
+      if v <= 0. then loop ()
+      else
+        let u = Random.float 1. in
+        if log (u) < 0.5 *. x *. x +. d -. d *. v +. d *. log v then
+          d *. v /. b
+        else
+          loop ()
+    in
+    loop ()
+
+let gamma_score a b x =
+  if x >= 0. then
+    (a -. 1.) *. log x -. b *. x +. a *. log b -. log_gamma a
+  else
+    neg_infinity
+
+let gamma_mean a b =
+  a /. b
+
+let gamma_variance a b =
+  a /. (b *. b)
+
+let poisson_draw lambda =
+  let rec draw t k =
+    let t = t +. exponential_draw lambda in
+    if t > 1. then k
+    else draw t (k+1)
+  in
+  draw 0. 0
+
+let poisson_score lambda x =
+  if x < 0 then
+    neg_infinity
+  else
+    float_of_int x *. log lambda -. lambda -. log_gamma (float_of_int (x + 1))
+
+let poisson_mean lambda =
+  lambda
+
+let poisson_variance lambda =
+  lambda
+
+let student_t_draw mu tau2 nu =
+  Owl_stats.t_rvs ~df:nu ~loc:mu ~scale:(sqrt tau2)
+
+let student_t_score mu tau2 nu x =
+  assert (nu > 1.);
+  Owl_stats.t_logpdf ~df:nu ~loc:mu ~scale:(sqrt tau2) x
+
+let student_t_mean mu _ nu =
+  assert (nu > 1.);
+  mu
+
+let student_t_variance _ tau2 nu =
+  assert (nu > 1.);
+  if nu <= 2. then
+    infinity
+  else
+    tau2 *. nu /. (nu -. 2.)

@@ -7,13 +7,20 @@ type 'a expr = 'a Semi_symbolic.expr
 let const = Semi_symbolic.const
 let add (a, b) = Semi_symbolic.add a b
 let ( +~ ) = Semi_symbolic.add
+let subtract (a, b) = 
+  Semi_symbolic.add a (Semi_symbolic.mul (Semi_symbolic.const (-1.)) b)
+let ( -~ ) = (fun a b -> subtract (a, b))
 let mult (a, b) = Semi_symbolic.mul a b
 let ( *~ ) = Semi_symbolic.mul
+let div (a, b) = Semi_symbolic.div a b
+let ( /~ ) = Semi_symbolic.div
+let expp = Semi_symbolic.exp
 let pair (a, b) = Semi_symbolic.pair a b
 let array = Semi_symbolic.array
 let matrix = Semi_symbolic.matrix
 let lst = Semi_symbolic.lst
 let ite = Semi_symbolic.ite
+let lt (a, b) = Semi_symbolic.lt a b  
 
 let mat_add (a, b) = Semi_symbolic.mat_add a b
 let ( +@~) = Semi_symbolic.mat_add
@@ -36,6 +43,15 @@ let gaussian (mu, var) = Semi_symbolic.gaussian mu (Semi_symbolic.const var)
 let beta (a, b) =
   Semi_symbolic.beta (Semi_symbolic.const a) (Semi_symbolic.const b)
 let bernoulli p = Semi_symbolic.bernoulli p
+let binomial (n, p) = Semi_symbolic.binomial (Semi_symbolic.const n) p
+let beta_binomial (n, a, b) =
+  Semi_symbolic.beta_binomial (Semi_symbolic.const n) a b
+let negative_binomial (n, p) = Semi_symbolic.negative_binomial (Semi_symbolic.const n) p
+let exponential lambda = Semi_symbolic.exponential lambda
+let gamma (a, b) = Semi_symbolic.gamma a b
+let poisson lambda = Semi_symbolic.poisson lambda
+let student_t (mu, tau2, nu) = Semi_symbolic.student_t mu tau2 nu
+let uniform_int (a, b) = Semi_symbolic.categorical ~lower:a ~upper:b (fun _ -> 1./.(float_of_int (b-a+1)))
 let mv_gaussian (mu, var) = Semi_symbolic.mv_gaussian mu (Semi_symbolic.const var)
 let mv_gaussian_curried var mu = mv_gaussian (mu, var)
 
@@ -85,7 +101,10 @@ module Convert_fn_distr : Semi_symbolic.Conversion_fn with type 'a t = 'a Types.
   let const v = Dist_support [v, 1.]
   let add d1 d2 = Dist_add(d1, d2)
   let mul d1 d2 = Dist_mult(d1, d2)
+  let div _ _ = assert false
+  let exp _ = assert false
   let eq _ _ = assert false (* TODO: what to do here? *)
+  let lt _ _ = assert false (* TODO: what to do here? *)
   let pair d1 d2 = Dist_pair(d1, d2)
   let array d = Dist_array d
   let lst l = Dist_list l
@@ -103,8 +122,16 @@ module Convert_fn_distr : Semi_symbolic.Conversion_fn with type 'a t = 'a Types.
   let gaussian mu var = Dist_gaussian (mu, var)
   let beta a b = Dist_beta(a, b)
   let bernoulli p = Dist_bernoulli p
+  let binomial n p = Dist_binomial (n, p)
+  let beta_binomial n a b = Dist_beta_binomial (n, a, b)
+  let negative_binomial n p = Dist_negative_binomial (n, p)
+  let exponential lambda = Dist_exponential lambda
+  let gamma a b = Dist_gamma (a, b)
+  let poisson lambda = Dist_poisson lambda
+  let student_t mu tau2 nu = Dist_student_t (mu, tau2, nu)
   let delta x = Distribution.dirac x
   let mv_gaussian mu var = Dist_mv_gaussian (mu, var, None)
+  let mixture l = Dist_mixture l
   let sampler draw score = Dist_sampler (draw, score)
   let categorical ~lower ~upper _ =
     ignore (lower, upper);
