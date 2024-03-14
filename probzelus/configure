@@ -1,4 +1,4 @@
-#!/usr/bin/env ocaml -I +unix
+#!/usr/bin/env -S ocaml -I +unix
 
 #load "unix.cma"
 
