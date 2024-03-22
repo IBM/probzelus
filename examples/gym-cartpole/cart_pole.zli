@@ -13,23 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *)
-
-type cart_observation = {
+ 
+type observation = {
   cart_position: float;
   cart_velocity: float;
   pole_angle: float;
   pole_velocity: float;
 }
 
-type cart_action = Left | Right
+type action = Left | Right
 
-type instance_id
+type env
 
-val cart_init: unit -AD-> instance_id
-val cart_reset: instance_id -AD-> cart_observation
-val cart_step: instance_id -> cart_action -> bool -> cart_observation * float * bool
-val print_cart_observation: cart_observation -AD-> unit
-val init_graph: unit -AD-> unit
-val draw_obs: cart_observation -AD-> unit
-val draw_obs_back: cart_observation -AD-> unit
-val draw_obs_front: cart_observation -AD-> unit
+val cart_make: unit -AD-> env
+val cart_reset: env -AD-> observation
+val cart_step: env -> action -> observation * float * bool * bool
+val cart_close: env -AD-> unit
