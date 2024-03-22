@@ -1,31 +1,31 @@
-To compile and execute this example, you need [gym-http-api](https://github.com/openai/gym-http-api), the [openai-gym](https://github.com/openai/gym) REST API and [openai-gym-ocaml](https://github.com/IBM/openai-gym-ocaml), its OCaml binding.
+To compile and execute this example, you need [pyml](https://github.com/thierry-martinez/pyml) OCaml bindings for Pythom and [gymnasium](https://gymnasium.farama.org/index.html)
+The (Python) Gymnasium package is called from OCaml via pyml.
 
-The gym-http-api can be installed as follows:
+The gymnasium package can be installed as follows. First, create a conda environment called gymnasium. Then, install gymnasium.
 
+``` shell
+conda create --name gymnasium python=3.11
+conda activate gymnasium
+pip install gymnasium
 ```
-cd ~
-git clone https://github.com/openai/gym-http-api
-cd gym-http-api
-cat << EOF > requirements.txt
-Flask==0.12.4
-numpy==1.16.3
-gym==0.7.4
-requests==2.12.4
-pytest
-EOF
-pip install -r requirements.txt
+
+The first time I had tried this, I had an error message ("failed to open iris") which can be fixed with
+
+``` shell
+conda install -c conda-forge libstdcxx-ng
 ```
+
 
 The Ocaml binding can be installed as follows:
 
-```
-opam install openai-gym
+``` shell
+opam install pyml
 ```
 
-To execute this example, you first have to launch the openai-gym:
+To execute this example, you first have to activate the (conda) gymnasium environment:
 
-```
-python $PATH_TO_gym-http-api/gym_http_server.py &
+``` shell
+conda activate gymnasium
 ```
 
 Then the example can be executed from `~/probzelus/examples/gym-cartpole` with
