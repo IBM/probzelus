@@ -28,6 +28,10 @@ type observation = {
 
 (* Action we can perform *)
 type action = Left | Right
+type render = Human | Human_multi
+
+let cast_render (render : render) : Utils.render =
+  match render with Human -> Utils.Human | Human_multi -> Utils.Human_multi
 
 (* Translation of observation (from gym to OCaml)*)
 let to_observation obs =
@@ -43,7 +47,9 @@ let to_observation obs =
 let from_action = function Left -> Py.Int.of_int 0 | Right -> Py.Int.of_int 1
 
 (* Function to interact with gym *)
-let cart_make ?(render = "human") () = Utils.make "CartPole-v1" ~render
+let cart_make render =
+  let render = cast_render render in
+  Utils.make "CartPole-v1" ~render
 
 let cart_reset env =
   let obs, _info = Py.Tuple.to_pair (Utils.reset env) in

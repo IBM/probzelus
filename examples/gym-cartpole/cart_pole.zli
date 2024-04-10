@@ -21,11 +21,13 @@ type observation = {
   pole_velocity: float;
 }
 
+type render = Human | Human_multi | Ascii | Rgb_array
+
 type action = Left | Right
 
 type env
 
-val cart_make: unit -AD-> env
+val cart_make: render -AD-> env
 val cart_reset: env -AD-> observation
 val cart_step: env -> action -> observation * float * bool * bool
 val cart_close: env -AD-> unit

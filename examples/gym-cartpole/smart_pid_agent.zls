@@ -73,10 +73,10 @@ let proba pid_model (obs, ctrl_action) = p, (i, d) where
 let node smart_pid_main () = () where
   rec reset action_smart = Infer_pf.plan 10 10 smart_model obs_smart
       every true
-  and obs_smart, _, _ = cart_pole_gym true (Right fby action_smart)
+  and obs_smart, _, _ = cart_pole_gym Human_multi (Right fby action_smart)
   and pid_dist = Infer_pf.infer 1000 pid_model (obs_smart, action_smart)
   and (p, (i, d)) = Distribution.draw pid_dist
-  and obs, _, stop = cart_pole_gym true (Right fby action)
+  and obs, _, stop = cart_pole_gym Human_multi (Right fby action)
   and reset action = pid_controller (obs.pole_angle, (p, i, d))
       every stop
   (* and () = draw_obs_front obs *)
