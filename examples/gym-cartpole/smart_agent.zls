@@ -30,4 +30,4 @@ let proba model obs_gym = action where
 
 let node smart_main () = () where
   rec reset action = Infer_pf.plan 10 10 model obs  every true
-  and obs, _, stop = cart_pole_gym true (Right fby action)
+  and obs, _, stop = cart_pole_gym Human (Right fby action)

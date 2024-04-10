@@ -16,7 +16,7 @@
  
 (** Connect with the physical model of the openai gym **)
 let node cart_pole_gym render action = obs, reward, terminated where
-  rec init env = Cart_pole.cart_make ()
+  rec init env = Cart_pole.cart_make render
   and init r = 0.
   and automaton
       | Reset -> local dummy
