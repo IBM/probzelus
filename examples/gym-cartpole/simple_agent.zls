@@ -48,5 +48,5 @@ let proba model (obs_init) = net where
 let node main () = () where
   rec net_dist = Infer_pf.infer 3000 model obs
   and net = Distribution.draw net_dist
-  and obs, _, _ = cart_pole_gym true (Right fby action)
+  and obs, _, _ = cart_pole_gym Human (Right fby action)
   and action = controller (net, obs)

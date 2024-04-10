@@ -3,8 +3,7 @@
 type render = Human | Human_multi | Ascii | Rgb_array
 
 let () =
-  Py.add_python_path
-    "/home/victor/Documents/Info_et_maths/probzelus/examples/gymnasium"
+  Py.add_python_path "../gymnasium/python_src" (* TODO: improve this code *)
 
 let () = Py.initialize ()
 let gym = Py.import "gymnasium"
@@ -26,7 +25,6 @@ let fresh_name : string -> string =
 
 (** Create a new gym environment, using by default a human render. *)
 let make ~render game =
-  print_string @@ render_to_str render;
   let env =
     Py.Module.get_function_with_keywords gym "make"
       [| Py.String.of_string game |]
