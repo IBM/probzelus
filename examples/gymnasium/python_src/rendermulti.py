@@ -15,7 +15,6 @@ class RenderMultiHuman(Wrapper) :
         cv2.imshow(self.name,bgr_array)
         cv2.waitKey(1)
         
-        
     def step(self, action) :
         step = self.env.step(action)
         self.render()
@@ -28,4 +27,4 @@ class RenderMultiHuman(Wrapper) :
 
     def close(self) :
         self.env.close()
-        cv2.destroyWindow(name)
+        cv2.destroyWindow(self.name)

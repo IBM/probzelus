@@ -50,7 +50,7 @@ let step env action =
     Py.Bool.to_bool truncated,
     info )
 
-let close env = Py.Object.call_method env "close" [||]
+let close env = ignore @@ Py.Object.call_method env "close" [||]
 
 let sample_action env =
   let action_space = Py.Object.find_attr_string env "action_space" in

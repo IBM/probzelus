@@ -30,6 +30,16 @@ type observation = {
 type action = Left | Right
 type render = Human | Human_multi
 
+(* Closing all the window when receiving a sigint *)
+let current_env = ref []
+
+let () =
+  Sys.set_signal Sys.sigint
+    (Signal_handle
+       (fun _ ->
+         List.iter Utils.close !current_env;
+         exit 1))
+
 let cast_render (render : render) : Utils.render =
   match render with Human -> Utils.Human | Human_multi -> Utils.Human_multi
 
@@ -49,7 +59,9 @@ let from_action = function Left -> Py.Int.of_int 0 | Right -> Py.Int.of_int 1
 (* Function to interact with gym *)
 let cart_make render =
   let render = cast_render render in
-  Utils.make "CartPole-v1" ~render
+  let env = Utils.make "CartPole-v1" ~render in
+  current_env := env :: !current_env;
+  env
 
 let cart_reset env =
   let obs, _info = Py.Tuple.to_pair (Utils.reset env) in
