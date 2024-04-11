@@ -59,6 +59,11 @@ val plan :
       ('t1 ~D~> 't2) -S->
         't1 -D-> 't2
 
+val plan_pf :
+    int -S-> int -S-> int -S->
+      ('t1 ~D~> 't2) -S->
+        't1 -D-> 't2
+
 val infer_depth :
     int -S-> int -S->
       ('t1 ~D~> 't2) -S->

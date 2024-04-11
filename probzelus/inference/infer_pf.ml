@@ -26,6 +26,7 @@
 
 open Ztypes
 open Owl
+open Printf
 
 type pstate = {
   idx : int;  (** particle index *)
@@ -203,6 +204,7 @@ let expectation scores =
   let s = Array.fold_left ( +. ) 0. scores in
   s /. float (Array.length scores)
 
+(** [plan_step n k model_step model_copy] return a function [step] that duplicates the current particle [n] times and advances it forward [k] times.*)
 let plan_step n k model_step model_copy =
   let table = Hashtbl.create 7 in
   let rec expected_utility (state, score) (ttl, input) =
@@ -244,13 +246,74 @@ let plan_step n k model_step model_copy =
   in
   step
 
-(* [plan n k f x] runs n instances of [f] on the input stream *)
-(* [x] but at each step, do a prediction of depth k *)
+(** [plan_step_pf n k model_step model_copy] returns a function [step] that duplicates the current particle [n] times, advances it forward, copies it [n] times, applies a particle filter of size [h], and repeats this process [k] times. *)
+let plan_step_pf n h k model_step model_copy =
+  let table = Hashtbl.create 7 in
+  let rec expected_utility state (ttl, input) =
+    let states = Array.init h (fun _ -> Probzelus_utils.copy state) in
+    let scores = Array.make h 0.0 in
+    Array.iteri
+      (fun i state -> ignore @@ model_step state ({ idx = i; scores }, input))
+      states;
+    let norm = Normalize.log_sum_exp scores in
+    let probabilities = Array.map (fun score -> exp (score -. norm)) scores in
+    let dist = Normalize.to_distribution (Array.init h id) probabilities in
+    let index = Distribution.draw dist in
+    let state, score = (states.(index), scores.(index)) in
+    if ttl < 1 then score else norm +. expected_utility state (ttl - 1, input)
+  in
+  let state_value_copy (src_st, src_val) (dst_st, dst_val) =
+    model_copy src_st dst_st;
+    dst_val := !src_val
+  in
+  let step { infer_states = states; infer_scores = scores } input =
+    let values =
+      Array.mapi
+        (fun i state ->
+          let value = model_step state ({ idx = i; scores }, input) in
+          scores.(i) <- expected_utility state (k, input);
+          value)
+        states
+    in
+    let states_values =
+      Array.mapi (fun i state -> (state, ref values.(i))) states
+    in
+    let norm = Normalize.log_sum_exp scores in
+    let probabilities = Array.map (fun score -> exp (score -. norm)) scores in
+    Normalize.resample state_value_copy n probabilities states_values;
+    Array.fill scores 0 n 0.0;
+    Hashtbl.clear table;
+    states_values
+  in
+  step
+
+(** [plan n k f x] runs n instances of [f] on the input stream
+    [x] but at each step, do a prediction of depth [k] *)
 let plan n k (Cnode model : (pstate * 't1, 't2) Ztypes.cnode) =
   let alloc () = ref (model.alloc ()) in
   let reset state = model.reset !state in
   let copy src dst = model.copy !src !dst in
   let step_body = plan_step n k model.step model.copy in
+  let step plan_state input =
+    let states = Array.init n (fun _ -> Probzelus_utils.copy !plan_state) in
+    let scores = Array.make n 0.0 in
+    let states_values =
+      step_body { infer_states = states; infer_scores = scores } input
+    in
+    let dist = Normalize.normalize states_values in
+    let state', value = Distribution.draw dist in
+    plan_state := state';
+    !value
+  in
+  Cnode { alloc; reset; copy; step }
+
+(** [plan n k f x] runs n instances of [f] on the input stream
+    [x] but at each step, do a prediction of depth [k] and use a particle filter of size [h] *)
+let plan_pf n h k (Cnode model : (pstate * 't1, 't2) Ztypes.cnode) =
+  let alloc () = ref (model.alloc ()) in
+  let reset state = model.reset !state in
+  let copy src dst = model.copy !src !dst in
+  let step_body = plan_step_pf n h k model.step model.copy in
   let step plan_state input =
     let states = Array.init n (fun _ -> Probzelus_utils.copy !plan_state) in
     let scores = Array.make n 0.0 in
