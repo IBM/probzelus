@@ -4,7 +4,7 @@
 
 (executables
  (names main smart_main pid_main smart_pid_main simple_pid_main)
- (libraries openai-gym zelus yojson graphics probzelus)
+ (libraries zelus gymnasium probzelus)
  (link_flags -linkall))
 
 (rule

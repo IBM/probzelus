@@ -36,6 +36,6 @@ let i = 0.041460471604
 let d = 0.0705417538223
 
 node simple_pid_main () = () where
-  rec obs, _, stop = cart_pole_gym true (Right -> pre action)
+  rec obs, _, stop = cart_pole_gym Human (Right -> pre action)
   and reset action = controller (obs.pole_angle, (p, i, d))
       every stop
