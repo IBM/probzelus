@@ -273,7 +273,7 @@ module rec Distribution_rec: DISTRIBUTION = struct
         (fun acc (v1, p1) ->
            let m =
              List.fold_left
-               (fun acc (v2, p2) -> Map_float.add (op v1 v2) (p1 +. p2) acc)
+               (fun acc (v2, p2) -> Map_float.add (op v1 v2) (p1 *. p2) acc)
                Map_float.empty
                s2
            in
